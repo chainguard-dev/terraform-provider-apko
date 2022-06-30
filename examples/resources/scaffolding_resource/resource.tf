@@ -1,3 +1,3 @@
-resource "scaffolding_resource" "example" {
+resource "apko_image" "example" {
   sample_attribute = "foo"
 }

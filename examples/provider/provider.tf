@@ -1,3 +1,3 @@
-provider "scaffolding" {
+provider "apko" {
   # example configuration here
 }

@@ -1,4 +1,4 @@
-module github.com/hashicorp/terraform-provider-scaffolding
+module github.com/chainguard-dev/terraform-provider-apko
 
 go 1.17
 
