@@ -2,8 +2,8 @@ package provider
 
 import (
 	"context"
+	"log"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -15,7 +15,6 @@ func resourceApkoImage() *schema.Resource {
 
 		CreateContext: resourceApkoImageCreate,
 		ReadContext:   resourceApkoImageRead,
-		UpdateContext: resourceApkoImageUpdate,
 		DeleteContext: resourceApkoImageDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -24,43 +23,58 @@ func resourceApkoImage() *schema.Resource {
 				Description: "Sample attribute.",
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true, // Any time this changes, don't try to update in-place, just create it.
+			},
+			"image_ref": {
+				Description: "built image reference by digest",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}
 }
 
+type buildOptions struct {
+	// TODO
+}
+
+func fromData(d *schema.ResourceData, repo string) buildOptions {
+	return buildOptions{
+		// TODO
+	}
+}
+
+func doBuild(ctx context.Context, opts buildOptions) (string, error) {
+	return "TODO", nil
+}
+
 func resourceApkoImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// use the meta value to retrieve your client from the provider configure method
-	// client := meta.(*apiClient)
+	ref, err := doBuild(ctx, fromData(d, meta.(string)))
+	if err != nil {
+		return diag.Errorf("doBuild: %v", err)
+	}
 
-	idFromAPI := "my-id"
-	d.SetId(idFromAPI)
-
-	// write logs using the tflog package
-	// see https://pkg.go.dev/github.com/hashicorp/terraform-plugin-log/tflog
-	// for more information
-	tflog.Trace(ctx, "created a resource")
-
-	return diag.Errorf("not implemented")
+	d.Set("image_ref", ref)
+	d.SetId(ref)
+	return nil
 }
 
 func resourceApkoImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// use the meta value to retrieve your client from the provider configure method
-	// client := meta.(*apiClient)
+	ref, err := doBuild(ctx, fromData(d, meta.(string)))
+	if err != nil {
+		return diag.Errorf("doBuild: %v", err)
+	}
 
-	return diag.Errorf("not implemented")
-}
-
-func resourceApkoImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// use the meta value to retrieve your client from the provider configure method
-	// client := meta.(*apiClient)
-
-	return diag.Errorf("not implemented")
+	d.Set("image_ref", ref)
+	if ref != d.Id() {
+		d.SetId("")
+	} else {
+		log.Println("image not changed")
+	}
+	return nil
 }
 
 func resourceApkoImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// use the meta value to retrieve your client from the provider configure method
-	// client := meta.(*apiClient)
-
-	return diag.Errorf("not implemented")
+	// TODO: If we ever want to delete the image from the registry, we can do it here.
+	return nil
 }

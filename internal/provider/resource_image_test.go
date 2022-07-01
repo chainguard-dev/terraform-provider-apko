@@ -20,6 +20,8 @@ func TestAccResourceApkoImage(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
 						"apko_image.foo", "sample_attribute", regexp.MustCompile("^ba")),
+					resource.TestMatchResourceAttr(
+						"apko_image.foo", "image_ref", regexp.MustCompile("^TODO$")),
 				),
 			},
 		},

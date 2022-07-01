@@ -26,6 +26,13 @@ func init() {
 func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
+			Schema: map[string]*schema.Schema{
+				"docker_repo": {
+					Description: "Container repositor to publish images to. Defaults to `KO_DOCKER_REPO` env var",
+					Optional:    true,
+					Type:        schema.TypeString,
+				},
+			},
 			ResourcesMap: map[string]*schema.Resource{
 				"apko_image": resourceApkoImage(),
 			},
@@ -37,18 +44,15 @@ func New(version string) func() *schema.Provider {
 	}
 }
 
-type apiClient struct {
-	// Add whatever fields, client or connection info, etc. here
-	// you would need to setup to communicate with the upstream
-	// API.
-}
-
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	return func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		// Setup a User-Agent for your API client (replace the provider name for yours):
-		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
-		// TODO: myClient.UserAgent = userAgent
-
-		return &apiClient{}, nil
+	return func(ctx context.Context, s *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		repo, ok := s.Get("docker_repo").(string)
+		if !ok {
+			return nil, diag.Errorf("expected docker_repo to be string")
+		}
+		if repo == "" {
+			return "TODO", nil // TODO: fail here, but set it in tests.
+		}
+		return repo, nil
 	}
 }
