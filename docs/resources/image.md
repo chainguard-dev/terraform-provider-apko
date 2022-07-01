@@ -22,5 +22,6 @@ Sample resource in the Terraform provider ApkoImage.
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `image_ref` (String) built image reference by digest
 
 
