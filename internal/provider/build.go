@@ -48,24 +48,12 @@ func doBuild(ctx context.Context, bc *build.Context) (v1.Hash, coci.SignedEntity
 			// TODO(kaniini): clean up everything correctly for multitag scenario
 			// defer os.Remove(layerTarGZ)
 
-			var img coci.SignedImage
-
-			if bc.Options.UseDockerMediaTypes {
-				_, img, err = oci.PublishDockerImageFromLayer(
-					layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
-					bc.Options.SBOMPath, bc.Options.SBOMFormats, false /* local */, true, /* shouldPushTags */
-				)
-				if err != nil {
-					return fmt.Errorf("failed to build Docker image for %q: %w", arch, err)
-				}
-			} else {
-				_, img, err = oci.PublishImageFromLayer(
-					layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
-					bc.Options.SBOMPath, bc.Options.SBOMFormats, false /* local */, true, /* shouldPushTags */
-				)
-				if err != nil {
-					return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
-				}
+			_, img, err := oci.PublishImageFromLayer(
+				layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
+				bc.Options.SBOMPath, bc.Options.SBOMFormats, false /* local */, true, /* shouldPushTags */
+			)
+			if err != nil {
+				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
 			}
 
 			imgs[arch] = img
@@ -88,14 +76,7 @@ func doBuild(ctx context.Context, bc *build.Context) (v1.Hash, coci.SignedEntity
 		}
 	}
 
-	var mediaType ggcrtypes.MediaType
-	if bc.Options.UseDockerMediaTypes {
-		mediaType = ggcrtypes.DockerManifestList
-	} else {
-		mediaType = ggcrtypes.OCIImageIndex
-	}
-
-	idx := signed.ImageIndex(mutate.IndexMediaType(empty.Index, mediaType))
+	idx := signed.ImageIndex(mutate.IndexMediaType(empty.Index, ggcrtypes.OCIImageIndex))
 	archs := make([]types.Architecture, 0, len(imgs))
 	for arch := range imgs {
 		archs = append(archs, arch)
