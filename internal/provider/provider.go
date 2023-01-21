@@ -26,18 +26,11 @@ func init() {
 func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
-			Schema: map[string]*schema.Schema{
-				"docker_repo": {
-					Description: "Container repositor to publish images to. Defaults to `KO_DOCKER_REPO` env var",
-					Optional:    true,
-					Type:        schema.TypeString,
-				},
-			},
+			Schema: map[string]*schema.Schema{},
 			ResourcesMap: map[string]*schema.Resource{
-				"apko_image": resourceApkoImage(),
+				"apko_build": resourceApkoBuild(),
 			},
 		}
-
 		p.ConfigureContextFunc = configure(version, p)
 
 		return p
@@ -46,13 +39,6 @@ func New(version string) func() *schema.Provider {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, s *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		repo, ok := s.Get("docker_repo").(string)
-		if !ok {
-			return nil, diag.Errorf("expected docker_repo to be string")
-		}
-		if repo == "" {
-			return "TODO", nil // TODO: fail here, but set it in tests.
-		}
-		return repo, nil
+		return nil, nil
 	}
 }
