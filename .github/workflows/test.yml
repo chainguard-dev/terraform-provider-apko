@@ -34,11 +34,15 @@ jobs:
       with:
         go-version: '1.18'
 
+    - uses: chainguard-dev/actions/setup-registry@main
+      with:
+        port: 5000
+
     - uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: ${{ matrix.terraform }}
         terraform_wrapper: false
 
     - run: go mod download
-    - run: go build -v .  
-    - run: TF_ACC=1 go test -v -cover ./internal/provider/
+    - run: go build -v .
+    - run: TEST_REPOSITORY=localhost:5000/apko-testing TF_ACC=1 go test -v -cover ./internal/provider/
