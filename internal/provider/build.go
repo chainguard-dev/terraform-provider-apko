@@ -6,36 +6,44 @@ import (
 	"path/filepath"
 	"sort"
 
-	"chainguard.dev/apko/pkg/build"
 	"chainguard.dev/apko/pkg/build/oci"
 	"chainguard.dev/apko/pkg/build/types"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	ggcrtypes "github.com/google/go-containerregistry/pkg/v1/types"
-	coci "github.com/sigstore/cosign/pkg/oci"
-	ocimutate "github.com/sigstore/cosign/pkg/oci/mutate"
-	"github.com/sigstore/cosign/pkg/oci/signed"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	coci "github.com/sigstore/cosign/v2/pkg/oci"
+	ocimutate "github.com/sigstore/cosign/v2/pkg/oci/mutate"
+	"github.com/sigstore/cosign/v2/pkg/oci/signed"
 	"golang.org/x/sync/errgroup"
 )
 
-func doBuild(ctx context.Context, bc *build.Context) (v1.Hash, coci.SignedEntity, error) {
+func doBuild(ctx context.Context, d *schema.ResourceData, wd string) (v1.Hash, coci.SignedEntity, error) {
+	// Parse things once to determine the architectures to build from
+	// the config.
+	obc, err := fromImageData(d, wd)
+	if err != nil {
+		return v1.Hash{}, nil, err
+	}
+
 	var errg errgroup.Group
-	workDir := bc.Options.WorkDir
-	imgs := map[types.Architecture]coci.SignedImage{}
+	imgs := make(map[types.Architecture]coci.SignedImage, len(obc.ImageConfiguration.Archs))
 
-	// This is a hack to skip the SBOM generation during
-	// image build. Will be removed when global options are a thing.
-	bc.Options.SBOMFormats = []string{}
-	bc.Options.WantSBOM = false
-
-	for _, arch := range bc.ImageConfiguration.Archs {
+	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
-		bc := *bc
+
+		bc, err := fromImageData(d, filepath.Join(wd, arch.ToAPK()))
+		if err != nil {
+			return v1.Hash{}, nil, err
+		}
+		// This is a hack to skip the SBOM generation during
+		// image build. Will be removed when global options are a thing.
+		bc.Options.SBOMFormats = []string{}
+		bc.Options.WantSBOM = false
 
 		errg.Go(func() error {
 			bc.Options.Arch = arch
-			bc.Options.WorkDir = filepath.Join(workDir, arch.ToAPK())
 
 			if err := bc.Refresh(); err != nil {
 				return fmt.Errorf("failed to update build context for %q: %w", arch, err)
