@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/sigstore/cosign/pkg/oci"
+	"github.com/sigstore/cosign/v2/pkg/oci"
 	"gopkg.in/yaml.v3"
 )
 
@@ -86,20 +86,11 @@ func resourceApkoBuildCreate(ctx context.Context, d *schema.ResourceData, _ inte
 	}
 	defer os.RemoveAll(wd)
 
-	bc, err := fromImageData(d, wd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	// The build context options is sometimes copied in the next functions. Ensure
-	// we have the directory defined and created by invoking the function early.
-	bc.Options.TempDir()
-	defer os.RemoveAll(bc.Options.TempDir())
-
 	repo, err := name.NewRepository(d.Get("repo").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	h, se, err := doBuild(ctx, bc)
+	h, se, err := doBuild(ctx, d, wd)
 	if err != nil {
 		return diag.Errorf("doBuild: %v", err)
 	}
@@ -135,16 +126,11 @@ func resourceApkoBuildRead(ctx context.Context, d *schema.ResourceData, _ interf
 	}
 	defer os.RemoveAll(wd)
 
-	bc, err := fromImageData(d, wd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	repo, err := name.NewRepository(d.Get("repo").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	h, _, err := doBuild(ctx, bc)
+	h, _, err := doBuild(ctx, d, wd)
 	if err != nil {
 		return diag.Errorf("doBuild: %v", err)
 	}
