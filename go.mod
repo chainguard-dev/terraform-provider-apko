@@ -3,12 +3,12 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.19
 
 require (
-	chainguard.dev/apko v0.7.0
+	chainguard.dev/apko v0.7.1
 	github.com/google/go-containerregistry v0.13.1-0.20230203223142-b3c23b4c3f28
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/terraform-plugin-docs v0.11.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
-	github.com/sigstore/cosign/v2 v2.0.0-rc.3
+	github.com/sigstore/cosign/v2 v2.0.0
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v3 v3.0.1
 )

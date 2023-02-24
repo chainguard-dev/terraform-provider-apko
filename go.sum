@@ -2,6 +2,8 @@ chainguard.dev/apko v0.6.1-0.20230223220911-f07212b9907a h1:pdHdI/sYvt0k6Q6mM6LI
 chainguard.dev/apko v0.6.1-0.20230223220911-f07212b9907a/go.mod h1:xVZlrL7b8f7JEyu7Wu1w9/Y7VjoV0QDiHXSbqngjPX8=
 chainguard.dev/apko v0.7.0 h1:Pj2tN1s5t9H2HOKGkYLnjUrWEX9mAEVS/hX6J8a61nY=
 chainguard.dev/apko v0.7.0/go.mod h1:xVZlrL7b8f7JEyu7Wu1w9/Y7VjoV0QDiHXSbqngjPX8=
+chainguard.dev/apko v0.7.1 h1:6zbIB1lEQwZQMO9GInp6EJr9yiNmK5w3bzL82hGTK7Q=
+chainguard.dev/apko v0.7.1/go.mod h1:+k7Fw1yD4NjSj/A8HZa+jXWYVjF1r7KMhFmmiK+0Ctk=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go/compute v1.18.0 h1:FEigFqoDbys2cvFkZ9Fjq4gnHBP55anJ0yQyau2f9oY=
 cloud.google.com/go/compute v1.18.0/go.mod h1:1X7yHxec2Ga+Ss6jPyjxRxpu2uu7PLgsOVXvgU0yacs=
@@ -482,6 +484,8 @@ github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFR
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sigstore/cosign/v2 v2.0.0-rc.3 h1:Px8xCvmHeDuxqw1AV8kPIczYWu6liWjHANdqimEQvi8=
 github.com/sigstore/cosign/v2 v2.0.0-rc.3/go.mod h1:/+OqaKtAGnfljXeKhNd7fupG1kWX6HgBSxQiEp4gIyw=
+github.com/sigstore/cosign/v2 v2.0.0 h1:x+K6VQKtrBR9/MYOx6ebJB6/Aux56nmf2Zn3chZlP5w=
+github.com/sigstore/cosign/v2 v2.0.0/go.mod h1:MeJyYfKll3AAsb+CdnhI3YkecDPX2erPvf1JaUaFCrM=
 github.com/sigstore/rekor v1.0.1 h1:rcESXSNkAPRWFYZel9rarspdvneET60F2ngNkadi89c=
 github.com/sigstore/rekor v1.0.1/go.mod h1:ecTKdZWGWqE1pl3U1m1JebQJLU/hSjD9vYHOmHQ7w4g=
 github.com/sigstore/sigstore v1.5.1 h1:iUou0QJW8eQKMUkTXbFyof9ZOblDtfaW2Sn2+QI8Tcs=
