@@ -1,3 +1,1 @@
-provider "apko" {
-  # example configuration here
-}
+provider "apko" {}
