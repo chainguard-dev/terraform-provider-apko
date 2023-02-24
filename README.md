@@ -16,7 +16,7 @@ resource "apko_build" "example" {
   repo   = "..."
 
   # Pass in the apko configuration here.  If you'd like to define this in a file
-  # so it cane be used with apko as well, you can make this something like this
+  # so it can be used with apko as well, you can make this something like this
   # instead:  config = file("${path.module}/apko.yaml")
   config = jsonencode({
     contents = {
