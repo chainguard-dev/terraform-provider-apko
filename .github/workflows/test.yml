@@ -34,11 +34,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v4
       with:
-        go-version: '1.18'
-
-    - uses: chainguard-dev/actions/setup-registry@main
-      with:
-        port: 5000
+        go-version: '1.20'
 
     - uses: hashicorp/setup-terraform@v2
       with:
@@ -47,4 +43,4 @@ jobs:
 
     - run: go mod download
     - run: go build -v .
-    - run: TEST_REPOSITORY=localhost:5000/apko-testing TF_ACC=1 go test -v -cover ./internal/provider/
+    - run: TF_ACC=1 go test -v -cover ./internal/provider/

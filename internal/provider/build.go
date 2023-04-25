@@ -3,26 +3,58 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 
+	"chainguard.dev/apko/pkg/build"
 	"chainguard.dev/apko/pkg/build/oci"
 	"chainguard.dev/apko/pkg/build/types"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	ggcrtypes "github.com/google/go-containerregistry/pkg/v1/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	coci "github.com/sigstore/cosign/v2/pkg/oci"
 	ocimutate "github.com/sigstore/cosign/v2/pkg/oci/mutate"
 	"github.com/sigstore/cosign/v2/pkg/oci/signed"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v2"
 )
 
-func doBuild(ctx context.Context, d *schema.ResourceData, wd string) (v1.Hash, coci.SignedEntity, error) {
+func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
+	opts := []build.Option{}
+
+	var ic types.ImageConfiguration
+	if err := yaml.Unmarshal([]byte(data.Config.ValueString()), &ic); err != nil {
+		return nil, err
+	}
+	opts = append(opts,
+		build.WithImageConfiguration(ic),
+		// TODO(mattmoor): SBOMs would be nice
+	)
+
+	bc, err := build.New(wd, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	bc.Options.WantSBOM = len(bc.Options.SBOMFormats) > 0
+	if len(bc.ImageConfiguration.Archs) == 0 {
+		bc.ImageConfiguration.Archs = types.AllArchs
+	}
+	return bc, nil
+}
+
+func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, error) {
+	wd, err := os.MkdirTemp("", "apko-*")
+	if err != nil {
+		return v1.Hash{}, nil, fmt.Errorf("failed to create temporary directory: %w", err)
+	}
+	defer os.RemoveAll(wd)
+
 	// Parse things once to determine the architectures to build from
 	// the config.
-	obc, err := fromImageData(d, wd)
+	obc, err := fromImageData(data, wd)
 	if err != nil {
 		return v1.Hash{}, nil, err
 	}
@@ -33,7 +65,7 @@ func doBuild(ctx context.Context, d *schema.ResourceData, wd string) (v1.Hash, c
 	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
 
-		bc, err := fromImageData(d, filepath.Join(wd, arch.ToAPK()))
+		bc, err := fromImageData(data, filepath.Join(wd, arch.ToAPK()))
 		if err != nil {
 			return v1.Hash{}, nil, err
 		}

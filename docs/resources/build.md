@@ -60,7 +60,7 @@ resource "apko_build" "example" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
 - `image_ref` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
 
 
