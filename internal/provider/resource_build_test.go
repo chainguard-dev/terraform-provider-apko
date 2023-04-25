@@ -2,18 +2,50 @@ package provider
 
 import (
 	"fmt"
+	"net/http/httptest"
 	"os"
+	"path"
 	"regexp"
+	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccResourceApkoBuild(t *testing.T) {
-	repo := os.Getenv("TEST_REPOSITORY")
+// TODO: move this into a shared testing library where tf-{ko,apko,cosign} can use it too.
+func setupRegistry(t *testing.T) (name.Registry, func()) {
+	t.Helper()
+	if got := os.Getenv("TF_OCI_REGISTRY"); got != "" {
+		reg, err := name.NewRegistry(got)
+		if err != nil {
+			t.Fatalf("failed to parse TF_OCI_REGISTRY: %v", err)
+		}
+		return reg, func() {}
+	}
+	srv := httptest.NewServer(registry.New())
+	t.Logf("Started registry: %s", srv.URL)
+	reg, err := name.NewRegistry(strings.TrimPrefix(srv.URL, "http://"))
+	if err != nil {
+		t.Fatalf("failed to parse TF_OCI_REGISTRY: %v", err)
+	}
+	return reg, srv.Close
+}
 
-	resource.UnitTest(t, resource.TestCase{
-		ProviderFactories: providerFactories,
+func TestAccResourceApkoBuild(t *testing.T) {
+	reg, cleanup := setupRegistry(t)
+	defer cleanup()
+
+	repo, err := name.NewRepository(path.Join(reg.RegistryStr(), "test"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repostr := repo.String()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{{
 			Config: fmt.Sprintf(`
 resource "apko_build" "foo" {
@@ -43,12 +75,12 @@ archs:
   - x86_64
   - aarch64
 EOF
-}`, repo),
+}`, repostr),
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestMatchResourceAttr(
-					"apko_build.foo", "repo", regexp.MustCompile("^"+repo)),
+					"apko_build.foo", "repo", regexp.MustCompile("^"+repostr)),
 				resource.TestMatchResourceAttr(
-					"apko_build.foo", "image_ref", regexp.MustCompile("^"+repo+"@sha256:")),
+					"apko_build.foo", "image_ref", regexp.MustCompile("^"+repostr+"@sha256:")),
 			),
 		}},
 	})

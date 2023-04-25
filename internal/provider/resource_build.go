@@ -2,147 +2,164 @@ package provider
 
 import (
 	"context"
-	"os"
+	"fmt"
 
-	"chainguard.dev/apko/pkg/build"
-	"chainguard.dev/apko/pkg/build/types"
-	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/sigstore/cosign/v2/pkg/oci"
-	"gopkg.in/yaml.v3"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-func resourceApkoBuild() *schema.Resource {
-	return &schema.Resource{
-		Description: "This performs an apko build from the provided config file",
+var _ resource.Resource = &BuildResource{}
+var _ resource.ResourceWithImportState = &BuildResource{}
 
-		CreateContext: resourceApkoBuildCreate,
-		ReadContext:   resourceApkoBuildRead,
-		DeleteContext: resourceApkoBuildDelete,
+func NewBuildResource() resource.Resource {
+	return &BuildResource{}
+}
 
-		Schema: map[string]*schema.Schema{
-			"repo": {
-				Description: "The name of the container repository to which we should publish the image.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				ValidateDiagFunc: func(data interface{}, _ cty.Path) diag.Diagnostics {
-					raw, ok := data.(string)
-					if !ok {
-						return diag.Errorf("%v is a %T, wanted a string", data, data)
-					}
-					_, err := name.NewRepository(raw)
-					return diag.FromErr(err)
+type BuildResource struct {
+}
+
+type BuildResourceModel struct {
+	Id       types.String `tfsdk:"id"`
+	Repo     types.String `tfsdk:"repo"`
+	Config   types.String `tfsdk:"config"`
+	ImageRef types.String `tfsdk:"image_ref"`
+}
+
+func (r *BuildResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_build"
+}
+
+func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "This performs an apko build from the provided config file",
+		Attributes: map[string]schema.Attribute{
+			"repo": schema.StringAttribute{
+				MarkdownDescription: "The name of the container repository to which we should publish the image.",
+				Required:            true,
+				Validators:          []validator.String{repoValidator{}},
+			},
+			"config": schema.StringAttribute{
+				MarkdownDescription: "The apko configuration file.",
+				Required:            true,
+				// TODO: validate the apko config.
+			},
+			"image_ref": schema.StringAttribute{
+				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
+				Computed:            true,
+			},
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"config": {
-				Description: "The apko configuration file.",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				// TODO: Add validation of the apko config.
-			},
-			"image_ref": {
-				Description: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
-				Type:        schema.TypeString,
-				Computed:    true,
 			},
 		},
 	}
 }
 
-func fromImageData(d *schema.ResourceData, wd string) (*build.Context, error) {
-	opts := []build.Option{}
-
-	var ic types.ImageConfiguration
-	if err := yaml.Unmarshal([]byte(d.Get("config").(string)), &ic); err != nil {
-		return nil, err
+func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data *BuildResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	opts = append(opts,
-		build.WithImageConfiguration(ic),
-		// TODO(mattmoor): SBOMs would be nice
-	)
 
-	bc, err := build.New(wd, opts...)
+	repo, err := name.NewRepository(data.Repo.ValueString())
 	if err != nil {
-		return nil, err
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Error parsing repo: %v", err))
+		return
 	}
 
-	bc.Options.WantSBOM = len(bc.Options.SBOMFormats) > 0
-	if len(bc.ImageConfiguration.Archs) == 0 {
-		bc.ImageConfiguration.Archs = types.AllArchs
+	digest, _, err := doBuild(ctx, *data)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
 	}
-	return bc, nil
+	dig := repo.Digest(digest.String()).String()
+
+	data.Id = types.StringValue(dig)
+	data.ImageRef = types.StringValue(dig)
+
+	tflog.Trace(ctx, "created a resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceApkoBuildCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	wd, err := os.MkdirTemp("", "apko-*")
+func (r *BuildResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *BuildResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	repo, err := name.NewRepository(data.Repo.ValueString())
 	if err != nil {
-		return diag.Errorf("failed to create working directory: %v", err)
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Error parsing repo: %v", err))
+		return
 	}
-	defer os.RemoveAll(wd)
 
-	repo, err := name.NewRepository(d.Get("repo").(string))
+	digest, _, err := doBuild(ctx, *data)
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
 	}
-	h, se, err := doBuild(ctx, d, wd)
-	if err != nil {
-		return diag.Errorf("doBuild: %v", err)
-	}
-	ref := repo.Digest(h.String())
+	dig := repo.Digest(digest.String()).String()
 
-	kc := authn.NewMultiKeychain(
-		authn.DefaultKeychain,
-		// TODO: build in cred helpers.
-	)
-
-	switch i := se.(type) {
-	case oci.SignedImage:
-		if err := remote.Write(ref, i, remote.WithAuthFromKeychain(kc)); err != nil {
-			return diag.FromErr(err)
-		}
-	case oci.SignedImageIndex:
-		if err := remote.WriteIndex(ref, i, remote.WithAuthFromKeychain(kc)); err != nil {
-			return diag.FromErr(err)
-		}
-	default:
-		return diag.Errorf("wanted an image or index, but got %T", se)
+	if dig != data.ImageRef.ValueString() {
+		data.Id = types.StringValue("")
+		data.ImageRef = types.StringValue("")
+	} else {
+		data.Id = types.StringValue(dig)
+		data.ImageRef = types.StringValue(dig)
 	}
 
-	d.Set("image_ref", ref.String())
-	d.SetId(ref.String())
-	return nil
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceApkoBuildRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	wd, err := os.MkdirTemp("", "apko-*")
-	if err != nil {
-		return diag.Errorf("failed to create working directory: %v", err)
-	}
-	defer os.RemoveAll(wd)
-
-	repo, err := name.NewRepository(d.Get("repo").(string))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	h, _, err := doBuild(ctx, d, wd)
-	if err != nil {
-		return diag.Errorf("doBuild: %v", err)
+func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *BuildResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	ref := repo.Digest(h.String()).String()
+	repo, err := name.NewRepository(data.Repo.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Error parsing repo: %v", err))
+		return
+	}
 
-	d.Set("image_ref", ref)
-	d.SetId(ref)
-	return nil
+	digest, _, err := doBuild(ctx, *data)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
+	}
+	dig := repo.Digest(digest.String()).String()
+
+	data.Id = types.StringValue(dig)
+	data.ImageRef = types.StringValue(dig)
+
+	tflog.Trace(ctx, "updated a resource")
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceApkoBuildDelete(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (r *BuildResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *BuildResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// TODO: If we ever want to delete the image from the registry, we can do it here.
-	return nil
+}
+
+func (r *BuildResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
