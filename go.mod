@@ -4,13 +4,13 @@ go 1.19
 
 require (
 	chainguard.dev/apko v0.7.4-0.20230421200506-66070a941bd0
-	github.com/google/go-containerregistry v0.14.0
+	github.com/google/go-containerregistry v0.14.1-0.20230409045903-ed5c185df419
 	github.com/hashicorp/terraform-plugin-docs v0.14.1
 	github.com/hashicorp/terraform-plugin-framework v1.2.0
 	github.com/hashicorp/terraform-plugin-go v0.14.3
 	github.com/hashicorp/terraform-plugin-log v0.8.0
 	github.com/hashicorp/terraform-plugin-testing v1.2.0
-	github.com/sigstore/cosign/v2 v2.0.1
+	github.com/sigstore/cosign/v2 v2.0.2
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -39,19 +39,19 @@ require (
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
-	github.com/aws/aws-sdk-go-v2 v1.17.7 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.18.19 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.18 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.31 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.25 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.32 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.17.8 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.18.21 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.20 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.32 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.26 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.33 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.17.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.13.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.25 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.12.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.9 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20220920003936-cd2dbcbbab49 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
@@ -77,7 +77,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/loads v0.21.2 // indirect
-	github.com/go-openapi/runtime v0.25.0 // indirect
+	github.com/go-openapi/runtime v0.26.0 // indirect
 	github.com/go-openapi/spec v0.20.8 // indirect
 	github.com/go-openapi/strfmt v0.21.7 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
@@ -123,7 +123,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
-	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.1.0 // indirect
@@ -139,7 +139,7 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sigstore/rekor v1.1.0 // indirect
-	github.com/sigstore/sigstore v1.6.1 // indirect
+	github.com/sigstore/sigstore v1.6.3 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -157,16 +157,16 @@ require (
 	go.lsp.dev/uri v0.3.0 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	golang.org/x/build v0.0.0-20220928220451-9294235e16f5 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/oauth2 v0.6.0 // indirect
+	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/term v0.7.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230331144136-dcfb400f0633 // indirect
+	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.54.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
