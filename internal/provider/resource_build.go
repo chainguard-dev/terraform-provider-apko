@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/chainguard-dev/terraform-provider-oci/pkg/validators"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -43,12 +44,18 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"repo": schema.StringAttribute{
 				MarkdownDescription: "The name of the container repository to which we should publish the image.",
 				Required:            true,
-				Validators:          []validator.String{repoValidator{}},
+				Validators:          []validator.String{validators.RepoValidator{}},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"config": schema.StringAttribute{
 				MarkdownDescription: "The apko configuration file.",
 				Required:            true,
 				// TODO: validate the apko config.
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"image_ref": schema.StringAttribute{
 				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
