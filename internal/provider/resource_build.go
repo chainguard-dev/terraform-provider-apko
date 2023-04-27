@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/chainguard-dev/terraform-provider-oci/pkg/validators"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -14,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/sigstore/cosign/v2/pkg/oci"
 )
 
 var _ resource.Resource = &BuildResource{}
@@ -41,6 +44,13 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "This performs an apko build from the provided config file",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"repo": schema.StringAttribute{
 				MarkdownDescription: "The name of the container repository to which we should publish the image.",
 				Required:            true,
@@ -61,13 +71,6 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
 				Computed:            true,
 			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
-				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
 		},
 	}
 }
@@ -85,15 +88,36 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	digest, _, err := doBuild(ctx, *data)
+	digest, se, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
 	}
-	dig := repo.Digest(digest.String()).String()
+	dig := repo.Digest(digest.String())
 
-	data.Id = types.StringValue(dig)
-	data.ImageRef = types.StringValue(dig)
+	kc := authn.NewMultiKeychain(
+		authn.DefaultKeychain,
+		// TODO: build in cred helpers.
+	)
+
+	switch i := se.(type) {
+	case oci.SignedImage:
+		if err := remote.Write(dig, i, remote.WithAuthFromKeychain(kc)); err != nil {
+			resp.Diagnostics.AddError("Error publishing image", err.Error())
+			return
+		}
+	case oci.SignedImageIndex:
+		if err := remote.WriteIndex(dig, i, remote.WithAuthFromKeychain(kc)); err != nil {
+			resp.Diagnostics.AddError("Error publishing index", err.Error())
+			return
+		}
+	default:
+		resp.Diagnostics.AddError("Unexpected type", fmt.Sprintf("%T", se))
+		return
+	}
+
+	data.Id = types.StringValue(dig.String())
+	data.ImageRef = types.StringValue(dig.String())
 
 	tflog.Trace(ctx, "created a resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

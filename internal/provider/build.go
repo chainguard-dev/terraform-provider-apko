@@ -156,6 +156,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	if err != nil {
 		return v1.Hash{}, nil, err
 	}
+
 	return h, idx, nil
 
 }
