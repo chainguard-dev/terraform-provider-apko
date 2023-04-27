@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -34,6 +35,8 @@ type BuildResourceModel struct {
 	Repo     types.String `tfsdk:"repo"`
 	Config   types.String `tfsdk:"config"`
 	ImageRef types.String `tfsdk:"image_ref"`
+
+	SBOMs types.Map `tfsdk:"sboms"`
 }
 
 func (r *BuildResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -71,6 +74,11 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
 				Computed:            true,
 			},
+			"sboms": schema.MapAttribute{
+				MarkdownDescription: "Map of image digests to their SBOM.",
+				Computed:            true,
+				ElementType:         types.StringType,
+			},
 		},
 	}
 }
@@ -88,7 +96,7 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	digest, se, err := doBuild(ctx, *data)
+	digest, se, sboms, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -119,6 +127,17 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 	data.Id = types.StringValue(dig.String())
 	data.ImageRef = types.StringValue(dig.String())
 
+	sbv := make(map[string]attr.Value, len(sboms))
+	for k, v := range sboms {
+		sbv[repo.Digest(k).String()] = types.StringValue(v)
+	}
+	sv, diags := types.MapValue(types.StringType, sbv)
+	if diags != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diags...)
+		return
+	}
+	data.SBOMs = sv
+
 	tflog.Trace(ctx, "created a resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -136,7 +155,7 @@ func (r *BuildResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	digest, _, err := doBuild(ctx, *data)
+	digest, _, _, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -167,7 +186,7 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	digest, _, err := doBuild(ctx, *data)
+	digest, _, _, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

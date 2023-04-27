@@ -10,6 +10,7 @@ import (
 	"chainguard.dev/apko/pkg/build"
 	"chainguard.dev/apko/pkg/build/oci"
 	"chainguard.dev/apko/pkg/build/types"
+	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
@@ -30,7 +31,7 @@ func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
 	}
 	opts = append(opts,
 		build.WithImageConfiguration(ic),
-		// TODO(mattmoor): SBOMs would be nice
+		build.WithSBOMFormats([]string{"spdx"}),
 	)
 
 	bc, err := build.New(wd, opts...)
@@ -38,41 +39,40 @@ func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
 		return nil, err
 	}
 
-	bc.Options.WantSBOM = len(bc.Options.SBOMFormats) > 0
 	if len(bc.ImageConfiguration.Archs) == 0 {
 		bc.ImageConfiguration.Archs = types.AllArchs
 	}
 	return bc, nil
 }
 
-func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, error) {
-	wd, err := os.MkdirTemp("", "apko-*")
+func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, map[string]string, error) {
+	tempDir, err := os.MkdirTemp("", "apko-*")
 	if err != nil {
-		return v1.Hash{}, nil, fmt.Errorf("failed to create temporary directory: %w", err)
+		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create temporary directory: %w", err)
 	}
-	defer os.RemoveAll(wd)
+	workDir := filepath.Join(tempDir, "builds")
+	defer os.RemoveAll(tempDir)
 
 	// Parse things once to determine the architectures to build from
 	// the config.
-	obc, err := fromImageData(data, wd)
+	obc, err := fromImageData(data, workDir)
 	if err != nil {
-		return v1.Hash{}, nil, err
+		return v1.Hash{}, nil, nil, err
 	}
+	obc.Options.SBOMPath = tempDir
 
 	var errg errgroup.Group
 	imgs := make(map[types.Architecture]coci.SignedImage, len(obc.ImageConfiguration.Archs))
 
+	sboms := make(map[string]string, len(obc.ImageConfiguration.Archs)+1)
+
 	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
 
-		bc, err := fromImageData(data, filepath.Join(wd, arch.ToAPK()))
+		bc, err := fromImageData(data, filepath.Join(workDir, arch.ToAPK()))
 		if err != nil {
-			return v1.Hash{}, nil, err
+			return v1.Hash{}, nil, nil, err
 		}
-		// This is a hack to skip the SBOM generation during
-		// image build. Will be removed when global options are a thing.
-		bc.Options.SBOMFormats = []string{}
-		bc.Options.WantSBOM = false
 
 		errg.Go(func() error {
 			bc.Options.Arch = arch
@@ -80,6 +80,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 			if err := bc.Refresh(); err != nil {
 				return fmt.Errorf("failed to update build context for %q: %w", arch, err)
 			}
+			bc.Options.SBOMPath = tempDir
 
 			layerTarGZ, err := bc.BuildLayer()
 			if err != nil {
@@ -90,19 +91,28 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 			_, img, err := oci.PublishImageFromLayer(
 				layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
-				bc.Options.SBOMPath, bc.Options.SBOMFormats, false /* local */, true, /* shouldPushTags */
+				tempDir, bc.Options.SBOMFormats, false /* local */, true, /* shouldPushTags */
 			)
 			if err != nil {
 				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
 			}
+			h, err := img.Digest()
+			if err != nil {
+				return fmt.Errorf("unable to compute digest for %q: %w", arch, err)
+			}
+			content, err := os.ReadFile(filepath.Join(tempDir, fmt.Sprintf("sbom-%s.spdx.json", arch.ToAPK())))
+			if err != nil {
+				return fmt.Errorf("unable to read SBOM %q: %w", arch, err)
+			}
 
 			imgs[arch] = img
+			sboms[h.String()] = string(content)
 			return nil
 		})
 	}
 
 	if err := errg.Wait(); err != nil {
-		return v1.Hash{}, nil, err
+		return v1.Hash{}, nil, nil, err
 	}
 	// If we built a final image, then return that instead of wrapping it in an
 	// image index.
@@ -110,9 +120,9 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		for _, img := range imgs {
 			h, err := img.Digest()
 			if err != nil {
-				return v1.Hash{}, nil, err
+				return v1.Hash{}, nil, nil, err
 			}
-			return h, img, nil
+			return h, img, sboms, nil
 		}
 	}
 
@@ -128,17 +138,17 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		img := imgs[arch]
 		mt, err := img.MediaType()
 		if err != nil {
-			return v1.Hash{}, nil, fmt.Errorf("failed to get mediatype: %w", err)
+			return v1.Hash{}, nil, nil, fmt.Errorf("failed to get mediatype: %w", err)
 		}
 
 		h, err := img.Digest()
 		if err != nil {
-			return v1.Hash{}, nil, fmt.Errorf("failed to compute digest: %w", err)
+			return v1.Hash{}, nil, nil, fmt.Errorf("failed to compute digest: %w", err)
 		}
 
 		size, err := img.Size()
 		if err != nil {
-			return v1.Hash{}, nil, fmt.Errorf("failed to compute size: %w", err)
+			return v1.Hash{}, nil, nil, fmt.Errorf("failed to compute size: %w", err)
 		}
 
 		idx = ocimutate.AppendManifests(idx, ocimutate.IndexAddendum{
@@ -154,9 +164,19 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 	h, err := idx.Digest()
 	if err != nil {
-		return v1.Hash{}, nil, err
+		return v1.Hash{}, nil, nil, err
 	}
 
-	return h, idx, nil
+	// Only the v1.Hash is needed, the rest is discarded by apko...
+	finalDigest, _ := name.NewDigest("ubuntu@" + h.String())
 
+	if err := obc.GenerateIndexSBOM(finalDigest, imgs); err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("generating index SBOM: %w", err)
+	}
+	content, err := os.ReadFile(filepath.Join(tempDir, "sbom-index.spdx.json"))
+	if err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("unable to read index SBOM: %w", err)
+	}
+	sboms[h.String()] = string(content)
+	return h, idx, sboms, nil
 }
