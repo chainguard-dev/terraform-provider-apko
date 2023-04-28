@@ -62,5 +62,6 @@ resource "apko_build" "example" {
 
 - `id` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
 - `image_ref` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
+- `sboms` (Map of String) Map of image digests to their SBOM.
 
 
