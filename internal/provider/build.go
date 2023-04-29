@@ -90,7 +90,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 			// defer os.Remove(layerTarGZ)
 
 			_, img, err := oci.PublishImageFromLayer(
-				layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
+				ctx, layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
 				tempDir, bc.Options.SBOMFormats, false /* local */, true, /* shouldPushTags */
 			)
 			if err != nil {

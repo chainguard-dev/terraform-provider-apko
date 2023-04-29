@@ -1,5 +1,7 @@
 chainguard.dev/apko v0.7.4-0.20230421200506-66070a941bd0 h1:UpFkquDnEIZ1V4+S/UrHGxFp11smFWRGTaWgqLMEGek=
 chainguard.dev/apko v0.7.4-0.20230421200506-66070a941bd0/go.mod h1:+/nr2VHPIDEJqsUpY/WvYDrkzCe7WoL5RBW28NQVKUs=
+chainguard.dev/apko v0.8.0 h1:Ee46H52mn9nvAL2X/nxIIXMsXd4wzTgpgFr+T5bKIp8=
+chainguard.dev/apko v0.8.0/go.mod h1:avKgL6ETv4Gz5HbDSMvShwACob60CSaf82vMsRdOKds=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go/compute v1.19.1 h1:am86mquDUgjGNWxiGn+5PGLbmgiWXlE/yNWpIpNvuXY=
 cloud.google.com/go/compute v1.19.1/go.mod h1:6ylj3a05WF8leseCdIf77NK0g1ey+nj5IKd5/kvShxE=
@@ -274,6 +276,8 @@ github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-containerregistry v0.14.1-0.20230409045903-ed5c185df419 h1:gMlTWagRJgCJ3EnISyF5+p9phYpFyWEI70Z56T+o2MY=
 github.com/google/go-containerregistry v0.14.1-0.20230409045903-ed5c185df419/go.mod h1:ETSJmRH9iO4Q0WQILIMkDUiKk+CaxItZW+gEDjyw8Ug=
+github.com/google/go-containerregistry v0.14.1-0.20230425172351-b7c6e9dc3944 h1:7c5khUnWebZDFMUQ7rf2vynmmnKI1VvBACrTZKKpoD4=
+github.com/google/go-containerregistry v0.14.1-0.20230425172351-b7c6e9dc3944/go.mod h1:0JopT7wiZeP5/ATNgx85oApuNAiNnfn4mr8+WOssYNQ=
 github.com/google/renameio v1.0.1/go.mod h1:t/HQoYBZSsWSNK35C6CO/TpPLDVWvxOHboWUAweKUpk=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
@@ -475,6 +479,8 @@ github.com/shopspring/decimal v1.3.1 h1:2Usl1nmF/WZucqkFZhnfFYxxxu8LG21F6nPQBE5g
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/sigstore/cosign/v2 v2.0.2 h1:Ttaj/OkJAy+ummhnHG2F+JSFeZQj8i0P6o8j2RY9NG4=
 github.com/sigstore/cosign/v2 v2.0.2/go.mod h1:yJXtRmWrumyQA/XPjTTjOufnNckI87mmmVxv9rtEqgE=
+github.com/sigstore/cosign/v2 v2.0.3-0.20230425232139-17cc13812d8a h1:spJ3NgeJEGZpu3FUdJ15YBlKyFDXk+SHiwsxIPGYCGg=
+github.com/sigstore/cosign/v2 v2.0.3-0.20230425232139-17cc13812d8a/go.mod h1:w/EZWhMlRKVxmhERurreLboT4NRjZgH/F+9Yv5I1mIQ=
 github.com/sigstore/rekor v1.1.0 h1:9fjPvW0WERE7VPtSSVSTbDLLOsrNx3RtiIeZ4/1tmDI=
 github.com/sigstore/rekor v1.1.0/go.mod h1:jEOGDGPMURBt9WR50N0rO7X8GZzLE3UQT+ln6BKJ/m0=
 github.com/sigstore/sigstore v1.6.3 h1:lt/w/fZNnrT4PjjqTYsUXn57fvE1YYfIB3SElQZ1oR4=
