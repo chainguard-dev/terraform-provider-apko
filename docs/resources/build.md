@@ -70,6 +70,7 @@ resource "apko_build" "example" {
 Read-Only:
 
 - `digest` (String)
-- `sbom` (String)
+- `predicate` (String)
+- `predicate_type` (String)
 
 

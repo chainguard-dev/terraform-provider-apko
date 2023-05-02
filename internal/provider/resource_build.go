@@ -42,8 +42,9 @@ type BuildResourceModel struct {
 
 var digestSBOMSchema = basetypes.ObjectType{
 	AttrTypes: map[string]attr.Type{
-		"digest": basetypes.StringType{},
-		"sbom":   basetypes.StringType{},
+		"digest":         basetypes.StringType{},
+		"predicate_type": basetypes.StringType{},
+		"predicate":      basetypes.StringType{},
 	},
 }
 
@@ -138,8 +139,9 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 	sbv := make(map[string]attr.Value, len(sboms))
 	for k, v := range sboms {
 		val, diags := types.ObjectValue(digestSBOMSchema.AttrTypes, map[string]attr.Value{
-			"digest": types.StringValue(repo.Digest(v.hash).String()),
-			"sbom":   types.StringValue(v.sbom),
+			"digest":         types.StringValue(repo.Digest(v.imageHash.String()).String()),
+			"predicate_type": types.StringValue(v.predicateType),
+			"predicate":      types.StringValue(string(v.predicate)),
 		})
 		resp.Diagnostics = append(resp.Diagnostics, diags...)
 		if diags.HasError() {

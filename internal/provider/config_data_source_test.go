@@ -14,7 +14,7 @@ func TestAccDataSourceConfig(t *testing.T) {
 		Steps: []resource.TestStep{{
 			Config: `
 data "apko_config" "this" {
-  config = <<EOF
+  config_contents = <<EOF
   archs:
   - amd64
   - aarch64
@@ -22,16 +22,16 @@ data "apko_config" "this" {
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "data.archs.#", regexp.MustCompile("^2$")),
+					"data.apko_config.this", "config.archs.#", regexp.MustCompile("^2$")),
 				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "data.archs.0", regexp.MustCompile("^x86_64$")),
+					"data.apko_config.this", "config.archs.0", regexp.MustCompile("^x86_64$")),
 				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "data.archs.1", regexp.MustCompile("^aarch64$")),
+					"data.apko_config.this", "config.archs.1", regexp.MustCompile("^aarch64$")),
 			),
 		}, {
 			Config: `
 data "apko_config" "this" {
-  config = <<EOF
+  config_contents = <<EOF
   archs:
   - x86_64
   - arm64
@@ -39,11 +39,11 @@ data "apko_config" "this" {
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "data.archs.#", regexp.MustCompile("^2$")),
+					"data.apko_config.this", "config.archs.#", regexp.MustCompile("^2$")),
 				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "data.archs.0", regexp.MustCompile("^x86_64$")),
+					"data.apko_config.this", "config.archs.0", regexp.MustCompile("^x86_64$")),
 				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "data.archs.1", regexp.MustCompile("^aarch64$")),
+					"data.apko_config.this", "config.archs.1", regexp.MustCompile("^aarch64$")),
 			),
 		}},
 	})

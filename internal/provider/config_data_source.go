@@ -28,9 +28,9 @@ type ConfigDataSource struct {
 
 // ConfigDataSourceModel describes the data source data model.
 type ConfigDataSourceModel struct {
-	Id     types.String        `tfsdk:"id"`
-	Config types.String        `tfsdk:"config"`
-	Data   *ImageConfiguration `tfsdk:"data"`
+	Id             types.String        `tfsdk:"id"`
+	ConfigContents types.String        `tfsdk:"config_contents"`
+	Config         *ImageConfiguration `tfsdk:"config"`
 }
 
 type ImageConfiguration struct {
@@ -47,12 +47,12 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "This reads an apko configuration file into a structured form.",
 		Attributes: map[string]schema.Attribute{
-			"config": schema.StringAttribute{
-				MarkdownDescription: "The apko configuration file.",
+			"config_contents": schema.StringAttribute{
+				MarkdownDescription: "The raw contents of the apko configuration.",
 				Required:            true,
 			},
-			"data": schema.ObjectAttribute{
-				MarkdownDescription: "The structure of the apko configuration.",
+			"config": schema.ObjectAttribute{
+				MarkdownDescription: "The parsed structure of the apko configuration.",
 				Computed:            true,
 				AttributeTypes: map[string]attr.Type{
 					"archs": basetypes.ListType{
@@ -81,21 +81,21 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	var ic apkotypes.ImageConfiguration
-	if err := yaml.Unmarshal([]byte(data.Config.ValueString()), &ic); err != nil {
+	if err := yaml.Unmarshal([]byte(data.ConfigContents.ValueString()), &ic); err != nil {
 		resp.Diagnostics.AddError("Unable to parse apko configuration", err.Error())
 		return
 	}
 
-	data.Data = &ImageConfiguration{
+	data.Config = &ImageConfiguration{
 		Archs: make([]basetypes.StringValue, 0, len(ic.Archs)),
 	}
 
 	for _, arch := range ic.Archs {
-		data.Data.Archs = append(data.Data.Archs,
+		data.Config.Archs = append(data.Config.Archs,
 			basetypes.NewStringValue(arch.ToAPK()))
 	}
 
-	hash := sha256.Sum256([]byte(data.Config.ValueString()))
+	hash := sha256.Sum256([]byte(data.ConfigContents.ValueString()))
 	data.Id = types.StringValue(hex.EncodeToString(hash[:]))
 
 	tflog.Trace(ctx, "read a data source")

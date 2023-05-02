@@ -17,15 +17,15 @@ This reads an apko configuration file into a structured form.
 
 ### Required
 
-- `config` (String) The apko configuration file.
+- `config_contents` (String) The raw contents of the apko configuration.
 
 ### Read-Only
 
-- `data` (Object) The structure of the apko configuration. (see [below for nested schema](#nestedatt--data))
+- `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--config))
 - `id` (String) A unique identifier for this apko config.
 
-<a id="nestedatt--data"></a>
-### Nested Schema for `data`
+<a id="nestedatt--config"></a>
+### Nested Schema for `config`
 
 Read-Only:
 

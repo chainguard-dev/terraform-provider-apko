@@ -46,8 +46,9 @@ func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
 }
 
 type imagesbom struct {
-	hash string
-	sbom string
+	imageHash     v1.Hash
+	predicateType string
+	predicate     []byte
 }
 
 func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
@@ -112,8 +113,9 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 			imgs[arch] = img
 			sboms[arch.ToAPK()] = imagesbom{
-				hash: h.String(),
-				sbom: string(content),
+				imageHash:     h,
+				predicateType: "https://spdx.dev/Document",
+				predicate:     content,
 			}
 			return nil
 		})
@@ -186,8 +188,9 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		return v1.Hash{}, nil, nil, fmt.Errorf("unable to read index SBOM: %w", err)
 	}
 	sboms["index"] = imagesbom{
-		hash: h.String(),
-		sbom: string(content),
+		imageHash:     h,
+		predicateType: "https://spdx.dev/Document",
+		predicate:     content,
 	}
 	return h, idx, sboms, nil
 }
