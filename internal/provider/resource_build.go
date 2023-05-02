@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/sigstore/cosign/v2/pkg/oci"
 )
@@ -37,6 +38,13 @@ type BuildResourceModel struct {
 	ImageRef types.String `tfsdk:"image_ref"`
 
 	SBOMs types.Map `tfsdk:"sboms"`
+}
+
+var digestSBOMSchema = basetypes.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"digest": basetypes.StringType{},
+		"sbom":   basetypes.StringType{},
+	},
 }
 
 func (r *BuildResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -75,9 +83,9 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Computed:            true,
 			},
 			"sboms": schema.MapAttribute{
-				MarkdownDescription: "Map of image digests to their SBOM.",
+				MarkdownDescription: "A map from the APK architecture to the digest for that architecture and its SBOM.",
 				Computed:            true,
-				ElementType:         types.StringType,
+				ElementType:         digestSBOMSchema,
 			},
 		},
 	}
@@ -129,9 +137,17 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	sbv := make(map[string]attr.Value, len(sboms))
 	for k, v := range sboms {
-		sbv[repo.Digest(k).String()] = types.StringValue(v)
+		val, diags := types.ObjectValue(digestSBOMSchema.AttrTypes, map[string]attr.Value{
+			"digest": types.StringValue(repo.Digest(v.hash).String()),
+			"sbom":   types.StringValue(v.sbom),
+		})
+		resp.Diagnostics = append(resp.Diagnostics, diags...)
+		if diags.HasError() {
+			return
+		}
+		sbv[k] = val
 	}
-	sv, diags := types.MapValue(types.StringType, sbv)
+	sv, diags := types.MapValue(digestSBOMSchema, sbv)
 	if diags != nil {
 		resp.Diagnostics = append(resp.Diagnostics, diags...)
 		return
