@@ -37,15 +37,13 @@ type BuildResourceModel struct {
 	Config   types.String `tfsdk:"config"`
 	ImageRef types.String `tfsdk:"image_ref"`
 
-	SBOMs types.Map `tfsdk:"sboms"`
+	SBOMs map[string]SBOMModel `tfsdk:"sboms"`
 }
 
-var digestSBOMSchema = basetypes.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"digest":         basetypes.StringType{},
-		"predicate_type": basetypes.StringType{},
-		"predicate":      basetypes.StringType{},
-	},
+type SBOMModel struct {
+	Digest        types.String `tfsdk:"digest"`
+	PredicateType types.String `tfsdk:"predicate_type"`
+	Predicate     types.String `tfsdk:"predictate"`
 }
 
 func (r *BuildResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -86,7 +84,13 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"sboms": schema.MapAttribute{
 				MarkdownDescription: "A map from the APK architecture to the digest for that architecture and its SBOM.",
 				Computed:            true,
-				ElementType:         digestSBOMSchema,
+				ElementType: basetypes.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"digest":         basetypes.StringType{},
+						"predicate_type": basetypes.StringType{},
+						"predicate":      basetypes.StringType{},
+					},
+				},
 			},
 		},
 	}
@@ -135,26 +139,14 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	data.Id = types.StringValue(dig.String())
 	data.ImageRef = types.StringValue(dig.String())
-
-	sbv := make(map[string]attr.Value, len(sboms))
+	data.SBOMs = make(map[string]SBOMModel, len(sboms))
 	for k, v := range sboms {
-		val, diags := types.ObjectValue(digestSBOMSchema.AttrTypes, map[string]attr.Value{
-			"digest":         types.StringValue(repo.Digest(v.imageHash.String()).String()),
-			"predicate_type": types.StringValue(v.predicateType),
-			"predicate":      types.StringValue(string(v.predicate)),
-		})
-		resp.Diagnostics = append(resp.Diagnostics, diags...)
-		if diags.HasError() {
-			return
+		data.SBOMs[k] = SBOMModel{
+			Digest:        types.StringValue(repo.Digest(v.imageHash.String()).String()),
+			PredicateType: types.StringValue(v.predicateType),
+			Predicate:     types.StringValue(string(v.predicate)),
 		}
-		sbv[k] = val
 	}
-	sv, diags := types.MapValue(digestSBOMSchema, sbv)
-	if diags != nil {
-		resp.Diagnostics = append(resp.Diagnostics, diags...)
-		return
-	}
-	data.SBOMs = sv
 
 	tflog.Trace(ctx, "created a resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -204,7 +196,7 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	digest, _, _, err := doBuild(ctx, *data)
+	digest, _, sboms, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -213,6 +205,14 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	data.Id = types.StringValue(dig)
 	data.ImageRef = types.StringValue(dig)
+	data.SBOMs = make(map[string]SBOMModel, len(sboms))
+	for k, v := range sboms {
+		data.SBOMs[k] = SBOMModel{
+			Digest:        types.StringValue(repo.Digest(v.imageHash.String()).String()),
+			PredicateType: types.StringValue(v.predicateType),
+			Predicate:     types.StringValue(string(v.predicate)),
+		}
+	}
 
 	tflog.Trace(ctx, "updated a resource")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
