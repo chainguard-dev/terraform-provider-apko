@@ -62,6 +62,15 @@ resource "apko_build" "example" {
 
 - `id` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
 - `image_ref` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
-- `sboms` (Map of String) Map of image digests to their SBOM.
+- `sboms` (Map of Object) A map from the APK architecture to the digest for that architecture and its SBOM. (see [below for nested schema](#nestedatt--sboms))
+
+<a id="nestedatt--sboms"></a>
+### Nested Schema for `sboms`
+
+Read-Only:
+
+- `digest` (String)
+- `predicate` (String)
+- `predicate_type` (String)
 
 

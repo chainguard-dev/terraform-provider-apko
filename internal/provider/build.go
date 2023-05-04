@@ -45,7 +45,13 @@ func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
 	return bc, nil
 }
 
-func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, map[string]string, error) {
+type imagesbom struct {
+	imageHash     v1.Hash
+	predicateType string
+	predicate     []byte
+}
+
+func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
 	tempDir, err := os.MkdirTemp("", "apko-*")
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create temporary directory: %w", err)
@@ -64,7 +70,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	var errg errgroup.Group
 	imgs := make(map[types.Architecture]coci.SignedImage, len(obc.ImageConfiguration.Archs))
 
-	sboms := make(map[string]string, len(obc.ImageConfiguration.Archs)+1)
+	sboms := make(map[string]imagesbom, len(obc.ImageConfiguration.Archs)+1)
 
 	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
@@ -106,7 +112,11 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 			}
 
 			imgs[arch] = img
-			sboms[h.String()] = string(content)
+			sboms[arch.ToAPK()] = imagesbom{
+				imageHash:     h,
+				predicateType: "https://spdx.dev/Document",
+				predicate:     content,
+			}
 			return nil
 		})
 	}
@@ -177,6 +187,10 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("unable to read index SBOM: %w", err)
 	}
-	sboms[h.String()] = string(content)
+	sboms["index"] = imagesbom{
+		imageHash:     h,
+		predicateType: "https://spdx.dev/Document",
+		predicate:     content,
+	}
 	return h, idx, sboms, nil
 }

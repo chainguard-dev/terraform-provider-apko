@@ -44,7 +44,9 @@ func (p *Provider) Resources(ctx context.Context) []func() resource.Resource {
 }
 
 func (p *Provider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewConfigDataSource,
+	}
 }
 
 func New(version string) func() provider.Provider {
