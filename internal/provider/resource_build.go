@@ -29,6 +29,7 @@ func NewBuildResource() resource.Resource {
 }
 
 type BuildResource struct {
+	popts ProviderOpts
 }
 
 type BuildResourceModel struct {
@@ -38,6 +39,8 @@ type BuildResourceModel struct {
 	ImageRef types.String `tfsdk:"image_ref"`
 
 	SBOMs types.Map `tfsdk:"sboms"`
+
+	popts ProviderOpts // Data passed from the provider.
 }
 
 var digestSBOMSchema = basetypes.ObjectType{
@@ -50,6 +53,20 @@ var digestSBOMSchema = basetypes.ObjectType{
 
 func (r *BuildResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_build"
+}
+
+func (r *BuildResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	popts, ok := req.ProviderData.(*ProviderOpts)
+	if !ok || popts == nil {
+		resp.Diagnostics.AddError("Client Error", "invalid provider data")
+		return
+	}
+	r.popts = *popts
 }
 
 func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -98,6 +115,7 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	data.popts = r.popts
 
 	repo, err := name.NewRepository(data.Repo.ValueString())
 	if err != nil {
@@ -166,6 +184,7 @@ func (r *BuildResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	data.popts = r.popts
 
 	repo, err := name.NewRepository(data.Repo.ValueString())
 	if err != nil {
@@ -197,6 +216,7 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	data.popts = r.popts
 
 	repo, err := name.NewRepository(data.Repo.ValueString())
 	if err != nil {
