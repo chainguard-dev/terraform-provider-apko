@@ -52,7 +52,7 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 		Attributes: map[string]schema.Attribute{
 			"config_contents": schema.StringAttribute{
 				MarkdownDescription: "The raw contents of the apko configuration.",
-				Required:            true,
+				Optional:            true,
 			},
 			"config": schema.ObjectAttribute{
 				MarkdownDescription: "The parsed structure of the apko configuration.",
