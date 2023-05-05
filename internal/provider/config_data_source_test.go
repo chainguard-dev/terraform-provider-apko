@@ -1,9 +1,10 @@
 package provider
 
 import (
-	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -21,12 +22,9 @@ data "apko_config" "this" {
   EOF
 }`,
 			Check: resource.ComposeTestCheckFunc(
-				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "config.archs.#", regexp.MustCompile("^2$")),
-				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "config.archs.0", regexp.MustCompile("^x86_64$")),
-				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "config.archs.1", regexp.MustCompile("^aarch64$")),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
 			),
 		}, {
 			Config: `
@@ -38,12 +36,39 @@ data "apko_config" "this" {
   EOF
 }`,
 			Check: resource.ComposeTestCheckFunc(
-				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "config.archs.#", regexp.MustCompile("^2$")),
-				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "config.archs.0", regexp.MustCompile("^x86_64$")),
-				resource.TestMatchResourceAttr(
-					"data.apko_config.this", "config.archs.1", regexp.MustCompile("^aarch64$")),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
+			),
+		}},
+	})
+}
+
+func TestAccDataSourceConfig_ProviderOpts(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://packages.wolfi.dev/os"},
+				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:        []string{"x86_64", "aarch64"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: `
+data "apko_config" "this" {
+  config_contents = <<EOF
+contents:
+  packages:
+    - wolfi-baselayout
+    - ca-certificates-bundle
+    - tzdata
+  EOF
+}`,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
 			),
 		}},
 	})

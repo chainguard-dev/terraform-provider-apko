@@ -24,6 +24,7 @@ func NewConfigDataSource() datasource.DataSource {
 
 // ConfigDataSource defines the data source implementation.
 type ConfigDataSource struct {
+	popts ProviderOpts
 }
 
 // ConfigDataSourceModel describes the data source data model.
@@ -31,6 +32,8 @@ type ConfigDataSourceModel struct {
 	Id             types.String        `tfsdk:"id"`
 	ConfigContents types.String        `tfsdk:"config_contents"`
 	Config         *ImageConfiguration `tfsdk:"config"`
+
+	popts ProviderOpts // Data passed from the provider.
 }
 
 type ImageConfiguration struct {
@@ -70,7 +73,18 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 	}
 }
 
-func (d *ConfigDataSource) Configure(context.Context, datasource.ConfigureRequest, *datasource.ConfigureResponse) {
+func (d *ConfigDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	popts, ok := req.ProviderData.(*ProviderOpts)
+	if !ok || popts == nil {
+		resp.Diagnostics.AddError("Client Error", "invalid provider data")
+		return
+	}
+	d.popts = *popts
 }
 
 func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -84,6 +98,15 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if err := yaml.Unmarshal([]byte(data.ConfigContents.ValueString()), &ic); err != nil {
 		resp.Diagnostics.AddError("Unable to parse apko configuration", err.Error())
 		return
+	}
+
+	// Append any provider-specified repositories and keys, if specified.
+	ic.Contents.Repositories = append(ic.Contents.Repositories, data.popts.repositories...)
+	ic.Contents.Keyring = append(ic.Contents.Keyring, data.popts.keyring...)
+
+	// Override config archs with provider archs, if specified.
+	if len(d.popts.archs) != 0 {
+		ic.Archs = apkotypes.ParseArchitectures(d.popts.archs)
 	}
 
 	data.Config = &ImageConfiguration{

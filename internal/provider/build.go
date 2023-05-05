@@ -23,23 +23,25 @@ import (
 )
 
 func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
-	opts := []build.Option{}
-
 	var ic types.ImageConfiguration
 	if err := yaml.Unmarshal([]byte(data.Config.ValueString()), &ic); err != nil {
 		return nil, err
 	}
-	opts = append(opts,
+
+	bc, err := build.New(wd,
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithExtraKeys(data.popts.keyring),
+		build.WithExtraRepos(data.popts.repositories),
 	)
 
-	bc, err := build.New(wd, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(bc.ImageConfiguration.Archs) == 0 {
+	if len(data.popts.archs) != 0 {
+		bc.ImageConfiguration.Archs = types.ParseArchitectures(data.popts.archs)
+	} else if len(bc.ImageConfiguration.Archs) == 0 {
 		bc.ImageConfiguration.Archs = types.AllArchs
 	}
 	return bc, nil
