@@ -135,6 +135,7 @@ func TestAccResourceApkoBuild_ProviderOpts(t *testing.T) {
 				repositories: []string{"https://packages.wolfi.dev/os"},
 				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:        []string{"x86_64", "aarch64"},
+				packages:     []string{"wolfi-baselayout"},
 			}),
 		}, Steps: []resource.TestStep{
 			{
@@ -144,7 +145,6 @@ resource "apko_build" "foo" {
   config = <<EOF
 contents:
   packages:
-    - wolfi-baselayout
     - ca-certificates-bundle
     - tzdata
 EOF
@@ -165,10 +165,9 @@ resource "apko_build" "foo" {
   config = <<EOF
 contents:
   packages:
-    - wolfi-baselayout
     - ca-certificates-bundle
     - tzdata
-    - git # <-- add git
+    - busybox # <-- add busybox
 EOF
 }`, repostr),
 				Check: resource.ComposeTestCheckFunc(

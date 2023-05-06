@@ -52,6 +52,7 @@ func TestAccDataSourceConfig_ProviderOpts(t *testing.T) {
 				repositories: []string{"https://packages.wolfi.dev/os"},
 				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:        []string{"x86_64", "aarch64"},
+				packages:     []string{"wolfi-baselayout"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -60,7 +61,6 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-    - wolfi-baselayout
     - ca-certificates-bundle
     - tzdata
   EOF
@@ -70,9 +70,9 @@ contents:
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "3"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "wolfi-baselayout"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "ca-certificates-bundle"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "tzdata"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "wolfi-baselayout"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.#", "1"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://packages.wolfi.dev/os"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.#", "1"),
