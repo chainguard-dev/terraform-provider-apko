@@ -15,18 +15,20 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	ggcrtypes "github.com/google/go-containerregistry/pkg/v1/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	coci "github.com/sigstore/cosign/v2/pkg/oci"
 	ocimutate "github.com/sigstore/cosign/v2/pkg/oci/mutate"
 	"github.com/sigstore/cosign/v2/pkg/oci/signed"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v2"
 )
 
-func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
+func fromImageData(ctx context.Context, data BuildResourceModel, wd string) (*build.Context, error) {
 	var ic types.ImageConfiguration
-	if err := yaml.Unmarshal([]byte(data.Config.ValueString()), &ic); err != nil {
-		return nil, err
+	if diags := assignValue(data.Config, &ic); diags.HasError() {
+		return nil, fmt.Errorf("assigning value: %v", diags.Errors())
 	}
+
+	tflog.Trace(ctx, fmt.Sprintf("Got image configuration: %#v", ic))
 
 	ic.Contents.Packages = append(ic.Contents.Packages, data.popts.packages...)
 
@@ -65,7 +67,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 	// Parse things once to determine the architectures to build from
 	// the config.
-	obc, err := fromImageData(data, workDir)
+	obc, err := fromImageData(ctx, data, workDir)
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
@@ -79,7 +81,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
 
-		bc, err := fromImageData(data, filepath.Join(workDir, arch.ToAPK()))
+		bc, err := fromImageData(ctx, data, filepath.Join(workDir, arch.ToAPK()))
 		if err != nil {
 			return v1.Hash{}, nil, nil, err
 		}

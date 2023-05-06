@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccResourceApkoBuild(t *testing.T) {
@@ -24,9 +23,8 @@ func TestAccResourceApkoBuild(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-resource "apko_build" "foo" {
-  repo   = %q
-  config = <<EOF
+data "apko_config" "foo" {
+  config_contents = <<EOF
 contents:
   repositories:
     - https://packages.wolfi.dev/os
@@ -53,8 +51,9 @@ archs:
 EOF
 }
 
-output "bar" {
-  value = apko_build.foo.sboms
+resource "apko_build" "foo" {
+  repo   = %q
+  config = data.apko_config.foo.config
 }
 `, repostr),
 				Check: resource.ComposeTestCheckFunc(
@@ -62,29 +61,14 @@ output "bar" {
 						"apko_build.foo", "repo", regexp.MustCompile("^"+repostr)),
 					resource.TestMatchResourceAttr(
 						"apko_build.foo", "image_ref", regexp.MustCompile("^"+repostr+"@sha256:")),
-					func(s *terraform.State) error {
-						ms := s.RootModule()
-						rs, ok := ms.Outputs["bar"]
-						if !ok {
-							return fmt.Errorf("Not found: %s", "bar")
-						}
-						sboms, ok := rs.Value.(map[string]interface{})
-						if !ok {
-							return fmt.Errorf("Incorrect type %T", rs.Value)
-						}
-						if len(sboms) != 3 {
-							return fmt.Errorf("wanted 3 SBOMs, got %d", len(sboms))
-						}
-						return nil
-					},
+					resource.TestCheckResourceAttr("apko_build.foo", "sboms.%", "3"),
 				),
 			},
 			// Update the config and make sure the image gets rebuilt.
 			{
 				Config: fmt.Sprintf(`
-resource "apko_build" "foo" {
-  repo   = %q
-  config = <<EOF
+data "apko_config" "foo" {
+  config_contents = <<EOF
 contents:
   repositories:
     - https://packages.wolfi.dev/os
@@ -110,6 +94,11 @@ archs:
   - x86_64
   - aarch64
 EOF
+}
+
+resource "apko_build" "foo" {
+	repo   = %q
+	config = data.apko_config.foo.config
 }`, repostr),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
@@ -140,14 +129,18 @@ func TestAccResourceApkoBuild_ProviderOpts(t *testing.T) {
 		}, Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-resource "apko_build" "foo" {
-  repo   = %q
-  config = <<EOF
+data "apko_config" "foo" {
+  config_contents = <<EOF
 contents:
   packages:
     - ca-certificates-bundle
     - tzdata
 EOF
+}
+
+resource "apko_build" "foo" {
+	repo   = %q
+	config = data.apko_config.foo.config
 }
 `, repostr),
 				Check: resource.ComposeTestCheckFunc(
@@ -160,16 +153,21 @@ EOF
 			// Update the config and make sure the image gets rebuilt.
 			{
 				Config: fmt.Sprintf(`
-resource "apko_build" "foo" {
-  repo   = %q
-  config = <<EOF
+data "apko_config" "foo" {
+  config_contents = <<EOF
 contents:
   packages:
     - ca-certificates-bundle
     - tzdata
     - busybox # <-- add busybox
 EOF
-}`, repostr),
+}
+
+resource "apko_build" "foo" {
+	repo   = %q
+	config = data.apko_config.foo.config
+}
+`, repostr),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
 						"apko_build.foo", "repo", regexp.MustCompile("^"+repostr)),
