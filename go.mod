@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.19
 
 require (
-	chainguard.dev/apko v0.8.0
+	chainguard.dev/apko v0.8.1-0.20230505234243-87f7f0ff54fa
 	github.com/chainguard-dev/terraform-provider-oci v0.0.0-20230426201150-f82273dff08e
 	github.com/google/go-containerregistry v0.14.1-0.20230425172351-b7c6e9dc3944
 	github.com/hashicorp/terraform-plugin-docs v0.14.1
@@ -56,6 +56,7 @@ require (
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20230426145859-95835ebd40f8 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
+	github.com/chainguard-dev/go-apk v0.0.0-20230504163953-8710d2cb7f41 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589 // indirect
 	github.com/cloudflare/circl v1.3.2 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
@@ -155,7 +156,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/zclconf/go-cty v1.13.1 // indirect
-	gitlab.alpinelinux.org/alpine/go v0.6.0 // indirect
+	gitlab.alpinelinux.org/alpine/go v0.7.0 // indirect
 	go.lsp.dev/uri v0.3.0 // indirect
 	go.mongodb.org/mongo-driver v1.11.4 // indirect
 	golang.org/x/build v0.0.0-20230426163615-85f749bdfab4 // indirect

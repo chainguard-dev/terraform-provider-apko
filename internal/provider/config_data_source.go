@@ -4,9 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"reflect"
 
 	apkotypes "chainguard.dev/apko/pkg/build/types"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -29,17 +30,21 @@ type ConfigDataSource struct {
 
 // ConfigDataSourceModel describes the data source data model.
 type ConfigDataSourceModel struct {
-	Id             types.String        `tfsdk:"id"`
-	ConfigContents types.String        `tfsdk:"config_contents"`
-	Config         *ImageConfiguration `tfsdk:"config"`
+	Id             types.String `tfsdk:"id"`
+	ConfigContents types.String `tfsdk:"config_contents"`
+	Config         types.Object `tfsdk:"config"`
 
 	popts ProviderOpts // Data passed from the provider.
 }
 
-type ImageConfiguration struct {
-	// TODO(mattmoor): Add the rest of the fields
-	// from types.ImageConfiguration
-	Archs []types.String `tfsdk:"archs"`
+var imageConfigurationSchema basetypes.ObjectType
+
+func init() {
+	sch, err := generateType(reflect.TypeOf(apkotypes.ImageConfiguration{}))
+	if err != nil {
+		panic(err)
+	}
+	imageConfigurationSchema = sch.(basetypes.ObjectType)
 }
 
 func (d *ConfigDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -47,6 +52,7 @@ func (d *ConfigDataSource) Metadata(ctx context.Context, req datasource.Metadata
 }
 
 func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "This reads an apko configuration file into a structured form.",
 		Attributes: map[string]schema.Attribute{
@@ -57,13 +63,7 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"config": schema.ObjectAttribute{
 				MarkdownDescription: "The parsed structure of the apko configuration.",
 				Computed:            true,
-				AttributeTypes: map[string]attr.Type{
-					"archs": basetypes.ListType{
-						ElemType: types.StringType,
-					},
-					// TODO(mattmoor): Add the rest of the fields
-					// from types.ImageConfiguration
-				},
+				AttributeTypes:      imageConfigurationSchema.AttrTypes,
 			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "A unique identifier for this apko config.",
@@ -100,23 +100,29 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
+	tflog.Trace(ctx, fmt.Sprintf("got repos: %v", d.popts.repositories))
+	tflog.Trace(ctx, fmt.Sprintf("got keyring: %v", d.popts.keyring))
+
 	// Append any provider-specified repositories and keys, if specified.
-	ic.Contents.Repositories = append(ic.Contents.Repositories, data.popts.repositories...)
-	ic.Contents.Keyring = append(ic.Contents.Keyring, data.popts.keyring...)
+	ic.Contents.Repositories = append(ic.Contents.Repositories, d.popts.repositories...)
+	ic.Contents.Keyring = append(ic.Contents.Keyring, d.popts.keyring...)
 
 	// Override config archs with provider archs, if specified.
 	if len(d.popts.archs) != 0 {
 		ic.Archs = apkotypes.ParseArchitectures(d.popts.archs)
 	}
 
-	data.Config = &ImageConfiguration{
-		Archs: make([]basetypes.StringValue, 0, len(ic.Archs)),
+	// Normalize the architectures we surface
+	for i, a := range ic.Archs {
+		ic.Archs[i] = apkotypes.Architecture(a.ToAPK())
 	}
 
-	for _, arch := range ic.Archs {
-		data.Config.Archs = append(data.Config.Archs,
-			basetypes.NewStringValue(arch.ToAPK()))
+	ov, diags := generateValue(reflect.ValueOf(ic))
+	resp.Diagnostics = append(resp.Diagnostics, diags...)
+	if diags.HasError() {
+		return
 	}
+	data.Config = ov.(basetypes.ObjectValue)
 
 	hash := sha256.Sum256([]byte(data.ConfigContents.ValueString()))
 	data.Id = types.StringValue(hex.EncodeToString(hash[:]))
