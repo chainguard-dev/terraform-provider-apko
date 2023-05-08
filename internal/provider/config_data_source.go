@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"reflect"
 
 	apkotypes "chainguard.dev/apko/pkg/build/types"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -38,7 +37,7 @@ type ConfigDataSourceModel struct {
 var imageConfigurationSchema basetypes.ObjectType
 
 func init() {
-	sch, err := generateType(reflect.TypeOf(apkotypes.ImageConfiguration{}))
+	sch, err := generateType(apkotypes.ImageConfiguration{})
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +115,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		ic.Archs[i] = apkotypes.Architecture(a.ToAPK())
 	}
 
-	ov, diags := generateValue(reflect.ValueOf(ic))
+	ov, diags := generateValue(ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
 		return

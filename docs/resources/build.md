@@ -55,7 +55,7 @@ resource "apko_build" "example" {
 
 ### Required
 
-- `config` (String) The apko configuration file.
+- `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--config))
 - `repo` (String) The name of the container repository to which we should publish the image.
 
 ### Read-Only
@@ -63,6 +63,152 @@ resource "apko_build" "example" {
 - `id` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
 - `image_ref` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
 - `sboms` (Map of Object) A map from the APK architecture to the digest for that architecture and its SBOM. (see [below for nested schema](#nestedatt--sboms))
+
+<a id="nestedatt--config"></a>
+### Nested Schema for `config`
+
+Required:
+
+- `accounts` (Object) (see [below for nested schema](#nestedobjatt--config--accounts))
+- `annotations` (Map of String)
+- `archs` (List of String)
+- `cmd` (String)
+- `contents` (Object) (see [below for nested schema](#nestedobjatt--config--contents))
+- `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--config--entrypoint))
+- `environment` (Map of String)
+- `include` (String)
+- `options` (Map of Object) (see [below for nested schema](#nestedobjatt--config--options))
+- `os-release` (Object) (see [below for nested schema](#nestedobjatt--config--os-release))
+- `paths` (List of Object) (see [below for nested schema](#nestedobjatt--config--paths))
+- `stop-signal` (String)
+- `vcs-url` (String)
+- `work-dir` (String)
+
+<a id="nestedobjatt--config--accounts"></a>
+### Nested Schema for `config.accounts`
+
+Required:
+
+- `groups` (List of Object) (see [below for nested schema](#nestedobjatt--config--accounts--groups))
+- `run-as` (String)
+- `users` (List of Object) (see [below for nested schema](#nestedobjatt--config--accounts--users))
+
+<a id="nestedobjatt--config--accounts--groups"></a>
+### Nested Schema for `config.accounts.groups`
+
+Required:
+
+- `gid` (Number)
+- `groupname` (String)
+- `members` (List of String)
+
+
+<a id="nestedobjatt--config--accounts--users"></a>
+### Nested Schema for `config.accounts.users`
+
+Required:
+
+- `gid` (Number)
+- `uid` (Number)
+- `username` (String)
+
+
+
+<a id="nestedobjatt--config--contents"></a>
+### Nested Schema for `config.contents`
+
+Required:
+
+- `keyring` (List of String)
+- `packages` (List of String)
+- `repositories` (List of String)
+
+
+<a id="nestedobjatt--config--entrypoint"></a>
+### Nested Schema for `config.entrypoint`
+
+Required:
+
+- `command` (String)
+- `services` (Map of String)
+- `shell-fragment` (String)
+- `type` (String)
+
+
+<a id="nestedobjatt--config--options"></a>
+### Nested Schema for `config.options`
+
+Required:
+
+- `accounts` (Object) (see [below for nested schema](#nestedobjatt--config--options--accounts))
+- `contents` (Object) (see [below for nested schema](#nestedobjatt--config--options--contents))
+- `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--config--options--entrypoint))
+- `environment` (Map of String)
+
+<a id="nestedobjatt--config--options--accounts"></a>
+### Nested Schema for `config.options.accounts`
+
+Required:
+
+- `run-as` (String)
+
+
+<a id="nestedobjatt--config--options--contents"></a>
+### Nested Schema for `config.options.contents`
+
+Required:
+
+- `packages` (Object) (see [below for nested schema](#nestedobjatt--config--options--contents--packages))
+
+<a id="nestedobjatt--config--options--contents--packages"></a>
+### Nested Schema for `config.options.contents.packages`
+
+Required:
+
+- `add` (List of String)
+- `remove` (List of String)
+
+
+
+<a id="nestedobjatt--config--options--entrypoint"></a>
+### Nested Schema for `config.options.entrypoint`
+
+Required:
+
+- `command` (String)
+- `services` (Map of String)
+- `shell-fragment` (String)
+- `type` (String)
+
+
+
+<a id="nestedobjatt--config--os-release"></a>
+### Nested Schema for `config.os-release`
+
+Required:
+
+- `bug-report-url` (String)
+- `home-url` (String)
+- `id` (String)
+- `name` (String)
+- `pretty-name` (String)
+- `version-id` (String)
+
+
+<a id="nestedobjatt--config--paths"></a>
+### Nested Schema for `config.paths`
+
+Required:
+
+- `gid` (Number)
+- `path` (String)
+- `permissions` (Number)
+- `recursive` (Boolean)
+- `source` (String)
+- `type` (String)
+- `uid` (Number)
+
+
 
 <a id="nestedatt--sboms"></a>
 ### Nested Schema for `sboms`

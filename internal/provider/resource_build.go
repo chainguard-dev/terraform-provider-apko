@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -35,7 +36,7 @@ type BuildResource struct {
 type BuildResourceModel struct {
 	Id       types.String `tfsdk:"id"`
 	Repo     types.String `tfsdk:"repo"`
-	Config   types.String `tfsdk:"config"`
+	Config   types.Object `tfsdk:"config"`
 	ImageRef types.String `tfsdk:"image_ref"`
 
 	SBOMs types.Map `tfsdk:"sboms"`
@@ -88,12 +89,12 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"config": schema.StringAttribute{
-				MarkdownDescription: "The apko configuration file.",
+			"config": schema.ObjectAttribute{
+				MarkdownDescription: "The parsed structure of the apko configuration.",
 				Required:            true,
-				// TODO: validate the apko config.
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+				AttributeTypes:      imageConfigurationSchema.AttrTypes,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
 				},
 			},
 			"image_ref": schema.StringAttribute{
@@ -201,7 +202,6 @@ func (r *BuildResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	if dig != data.ImageRef.ValueString() {
 		data.Id = types.StringValue("")
-		data.ImageRef = types.StringValue("")
 	} else {
 		data.Id = types.StringValue(dig)
 		data.ImageRef = types.StringValue(dig)

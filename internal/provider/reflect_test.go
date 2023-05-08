@@ -1,11 +1,13 @@
 package provider
 
 import (
-	"reflect"
 	"testing"
 
+	"chainguard.dev/apko/pkg/build/types"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"gopkg.in/yaml.v2"
 )
 
 func TestGenerateType(t *testing.T) {
@@ -82,12 +84,94 @@ func TestGenerateType(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := generateType(reflect.TypeOf(test.obj))
+			got, err := generateType(test.obj)
 			if err != nil {
 				t.Fatalf("generateType() = %v", err)
 			}
 			if !test.want.Equal(got) {
 				t.Errorf("got = %+v, wanted %v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestRoundtripValue(t *testing.T) {
+	content := `
+contents:
+  repositories:
+  - https://packages.wolfi.dev/os
+  keyring:
+  - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+  packages:
+  - wolfi-baselayout
+  - ca-certificates-bundle
+  - tzdata
+
+accounts:
+  groups:
+  - groupname: nonroot
+    gid: 65532
+  users:
+  - username: nonroot
+    uid: 65532
+    gid: 65532
+  run-as: 65532
+
+
+environment:
+  HOME: /tmp
+
+archs:
+- x86_64
+- aarch64
+`
+	var want types.ImageConfiguration
+	if err := yaml.Unmarshal([]byte(content), &want); err != nil {
+		t.Fatalf("Unmarshal() = %v", err)
+	}
+
+	tests := []struct {
+		name  string
+		want  interface{}
+		blank interface{}
+	}{{
+		name:  "string list",
+		want:  []string{"a", "b", "c"},
+		blank: &[]string{},
+	}, {
+		name: "map string -> string",
+		want: map[string]string{
+			"a": "b",
+			"c": "d",
+		},
+		blank: &map[string]string{},
+	}, {
+		name:  "image configuration",
+		want:  want,
+		blank: &types.ImageConfiguration{},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			want, diags := generateValue(test.want)
+			if diags.HasError() {
+				t.Fatalf("generateValue() = %v", diags.Errors())
+			}
+
+			t.Logf("generateValue() = %#v", want)
+
+			diags = assignValue(want, test.blank)
+			if diags.HasError() {
+				t.Fatalf("assignValue() = %v", diags.Errors())
+			}
+
+			got, diags := generateValue(test.blank)
+			if diags.HasError() {
+				t.Fatalf("generateValue() = %v", diags.Errors())
+			}
+
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Fatalf(diff)
 			}
 		})
 	}
