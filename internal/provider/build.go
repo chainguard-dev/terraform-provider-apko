@@ -28,6 +28,8 @@ func fromImageData(data BuildResourceModel, wd string) (*build.Context, error) {
 		return nil, err
 	}
 
+	ic.Contents.Packages = append(ic.Contents.Packages, data.popts.packages...)
+
 	bc, err := build.New(wd,
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),

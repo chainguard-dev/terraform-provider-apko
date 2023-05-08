@@ -33,8 +33,6 @@ type ConfigDataSourceModel struct {
 	Id             types.String `tfsdk:"id"`
 	ConfigContents types.String `tfsdk:"config_contents"`
 	Config         types.Object `tfsdk:"config"`
-
-	popts ProviderOpts // Data passed from the provider.
 }
 
 var imageConfigurationSchema basetypes.ObjectType
@@ -103,8 +101,9 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	tflog.Trace(ctx, fmt.Sprintf("got repos: %v", d.popts.repositories))
 	tflog.Trace(ctx, fmt.Sprintf("got keyring: %v", d.popts.keyring))
 
-	// Append any provider-specified repositories and keys, if specified.
+	// Append any provider-specified repositories, packages, and keys, if specified.
 	ic.Contents.Repositories = append(ic.Contents.Repositories, d.popts.repositories...)
+	ic.Contents.Packages = append(ic.Contents.Packages, d.popts.packages...)
 	ic.Contents.Keyring = append(ic.Contents.Keyring, d.popts.keyring...)
 
 	// Override config archs with provider archs, if specified.

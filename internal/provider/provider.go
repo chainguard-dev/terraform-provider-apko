@@ -15,17 +15,18 @@ var _ provider.Provider = &Provider{}
 type Provider struct {
 	version string
 
-	repositories, keyring, archs []string
+	repositories, packages, keyring, archs []string
 }
 
 type ProviderModel struct {
 	Repositories []string `tfsdk:"repositories"`
+	Packages     []string `tfsdk:"packages"`
 	Keyring      []string `tfsdk:"keyring"`
 	Archs        []string `tfsdk:"archs"`
 }
 
 type ProviderOpts struct {
-	repositories, keyring, archs []string
+	repositories, packages, keyring, archs []string
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -38,6 +39,11 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 		Attributes: map[string]schema.Attribute{
 			"repositories": schema.ListAttribute{
 				Description: "Additional repositories to search for packages",
+				Optional:    true,
+				ElementType: basetypes.StringType{},
+			},
+			"packages": schema.ListAttribute{
+				Description: "Additional packages to install",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
 			},
@@ -64,18 +70,10 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	opts := &ProviderOpts{
 		// This is only for testing, so we can inject provider config
-		repositories: p.repositories,
-		keyring:      p.keyring,
-		archs:        p.archs,
-	}
-	if len(data.Repositories) > 0 {
-		opts.repositories = data.Repositories
-	}
-	if len(data.Keyring) > 0 {
-		opts.keyring = data.Keyring
-	}
-	if len(data.Archs) > 0 {
-		opts.archs = data.Archs
+		repositories: append(p.repositories, data.Repositories...),
+		packages:     append(p.packages, data.Packages...),
+		keyring:      append(p.keyring, data.Keyring...),
+		archs:        append(p.archs, data.Archs...),
 	}
 
 	// Make provider opts available to resources and data sources.
