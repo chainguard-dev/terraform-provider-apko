@@ -9,21 +9,28 @@ https://registry.terraform.io/providers/chainguard-dev/apko
 This provides an `apko_build` resource that will build the provided `apko` configuration, push an image to the configured container repository, and make the image's reference available to other Terraform resources.
 
 ```hcl
-provider "apko" {}
 
-resource "apko_build" "example" {
-  # Where to publish the resulting image, e.g. docker.io/user/repo
-  repo   = "..."
+# Define provider-wide defaults to reduce boilerplate or augment built images
+# with additional packages.
+provider "apko" {
+  # Default to building for these architectures.
+  archs = ["x86_64", "aarch64"]
 
+  # Include these repositories by default
+  repositories = ["https://packages.wolfi.dev/os"]
+  keyring      = ["https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"]
+
+  # All of the images should show up as Wolfi!
+  packages     = ["wolfi-baselayout"]
+}
+
+data "apko_config" "this" {
   # Pass in the apko configuration here.  If you'd like to define this in a file
   # so it can be used with apko as well, you can make this something like this
   # instead:  config = file("${path.module}/apko.yaml")
-  config = jsonencode({
+  config_contents = jsonencode({
     contents = {
-      repositories = ["https://packages.wolfi.dev/os"]
-      keyring = ["https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"]
       packages = [
-        "wolfi-baselayout",
         "ca-certificates-bundle",
         "tzdata"
       ]
@@ -40,11 +47,13 @@ resource "apko_build" "example" {
       }],
       run-as = 65532
     },
-    archs = [
-      "x86_64",
-      "aarch64"
-    ]
   })
+}
+
+resource "apko_build" "this" {
+  # Where to publish the resulting image, e.g. docker.io/user/repo
+  repo   = "..."
+  config = data.apko_config.this.config
 }
 ```
 
