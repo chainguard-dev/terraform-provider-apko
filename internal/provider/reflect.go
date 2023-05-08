@@ -163,8 +163,6 @@ func assignValue(in attr.Value, out any) diag.Diagnostics {
 
 func assignValueReflect(in attr.Value, out reflect.Value) diag.Diagnostics {
 	t := out.Type()
-	// fmt.Printf("TYPE: %v %t\n", t, out.CanSet())
-
 	switch t.Kind() {
 	case reflect.Pointer:
 		return assignValueReflect(in, out.Elem())
@@ -218,7 +216,6 @@ func assignValueReflect(in attr.Value, out reflect.Value) diag.Diagnostics {
 
 		out = indirect(out)
 		t = out.Type()
-		// fmt.Printf("SLICE TYPE: %v %t\n", t, out.CanSet())
 
 		// Set the slice capacity appropriately (based on encoding/json)
 		l := len(elts)
@@ -248,7 +245,6 @@ func assignValueReflect(in attr.Value, out reflect.Value) diag.Diagnostics {
 
 		out = indirect(out)
 		t = out.Type()
-		// fmt.Printf("MAP TYPE: %v %t\n", t, out.CanSet())
 
 		if out.IsNil() {
 			out.Set(reflect.MakeMap(t))
@@ -274,7 +270,6 @@ func assignValueReflect(in attr.Value, out reflect.Value) diag.Diagnostics {
 
 		out = indirect(out)
 		t = out.Type()
-		// fmt.Printf("STRUCT TYPE: %v %t\n", t, out.CanSet())
 
 		for i := 0; i < t.NumField(); i++ {
 			sf := t.Field(i)
