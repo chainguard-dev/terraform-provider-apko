@@ -70,22 +70,10 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	opts := &ProviderOpts{
 		// This is only for testing, so we can inject provider config
-		repositories: p.repositories,
-		packages:     p.packages,
-		keyring:      p.keyring,
-		archs:        p.archs,
-	}
-	if len(data.Repositories) > 0 {
-		opts.repositories = data.Repositories
-	}
-	if len(data.Packages) > 0 {
-		opts.packages = data.Packages
-	}
-	if len(data.Keyring) > 0 {
-		opts.keyring = data.Keyring
-	}
-	if len(data.Archs) > 0 {
-		opts.archs = data.Archs
+		repositories: append(p.repositories, data.Repositories...),
+		packages:     append(p.packages, data.Packages...),
+		keyring:      append(p.keyring, data.Keyring...),
+		archs:        append(p.archs, data.Archs...),
 	}
 
 	// Make provider opts available to resources and data sources.
