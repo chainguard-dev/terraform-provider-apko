@@ -5,14 +5,22 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
 
 	apkotypes "chainguard.dev/apko/pkg/build/types"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"knative.dev/pkg/kmap"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -115,6 +123,15 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		ic.Archs[i] = apkotypes.Architecture(a.ToAPK())
 	}
 
+	// Resolve the package list to specific versions (as much as we can with
+	// multi-arch), and overwrite the package list in the ImageConfiguration.
+	pl, diags := d.resolvePackageList(ic)
+	resp.Diagnostics = append(resp.Diagnostics, diags...)
+	if diags.HasError() {
+		return
+	}
+	ic.Contents.Packages = pl
+
 	ov, diags := generateValue(ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
@@ -129,4 +146,156 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
+	workDir, err := os.MkdirTemp("", "apko-*")
+	if err != nil {
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to create temp directory", err.Error())}
+	}
+	defer os.RemoveAll(workDir)
+
+	eg := errgroup.Group{}
+	archs := make([]resolved, len(ic.Archs))
+	for i, arch := range ic.Archs {
+		i, arch := i, arch
+		eg.Go(func() error {
+			bc, err := fromImageData(ic, d.popts, filepath.Join(workDir, arch.ToAPK()))
+			if err != nil {
+				return err
+			}
+			bc.Options.Arch = arch
+
+			// Determine the exact versions of our transitive packages and lock them
+			// down in the "resolved" configuration, so that this build may be
+			// reproduced exactly.
+			pkgs, _, err := bc.BuildPackageList()
+			if err != nil {
+				return err
+			}
+			r := resolved{
+				arch:     arch.ToAPK(),
+				packages: make(sets.Set[string], len(pkgs)),
+				versions: make(map[string]string, len(pkgs)),
+			}
+			for _, pkg := range pkgs {
+				r.packages.Insert(pkg.Name)
+				r.versions[pkg.Name] = pkg.Version
+			}
+			archs[i] = r
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("error computing package locks", err.Error())}
+	}
+
+	return unify(ic.Contents.Packages, archs)
+}
+
+type resolved struct {
+	arch     string
+	packages sets.Set[string]
+	versions map[string]string
+}
+
+func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
+	if len(originals) == 0 {
+		return nil, nil
+	}
+	originalPackages := resolved{
+		packages: make(sets.Set[string], len(originals)),
+		versions: make(map[string]string, len(originals)),
+	}
+	for _, orig := range originals {
+		name := orig
+		// The function we want from go-apk is private, but these are all the
+		// special characters that delimit the package name from the cosntraint
+		// so lop off the package name and stick the rest of the constraint into
+		// the versions map.
+		if idx := strings.IndexAny(orig, "=<>~"); idx >= 0 {
+			name = orig[:idx]
+		}
+		originalPackages.packages.Insert(name)
+		originalPackages.versions[name] = strings.TrimPrefix(orig, name)
+	}
+
+	// Start accumulating using the first entry, and unify it with the other
+	// architectures.
+	acc := resolved{
+		packages: inputs[0].packages.Clone(),
+		versions: kmap.Copy(inputs[0].versions),
+	}
+	for _, next := range inputs[1:] {
+		if reflect.DeepEqual(acc.versions, next.versions) {
+			// If the package set matches at the same versions, then we're done.
+			continue
+		}
+
+		// Remove any packages from our unification that do not appear in this
+		// architecture's locked set.
+		if diff := acc.packages.Difference(next.packages); diff.Len() > 0 {
+			acc.packages.Delete(diff.UnsortedList()...)
+		}
+		// Walk through each of the packages remaining in our unification, and
+		// remove any where this architecture disagrees with the unification.
+		for _, pkg := range acc.packages.UnsortedList() {
+			// When we find a package that has resolved differently, remove
+			// it from our unified locked set.
+			if acc.versions[pkg] != next.versions[pkg] {
+				acc.packages.Delete(pkg)
+				delete(acc.versions, pkg)
+			}
+		}
+	}
+
+	var warn diag.Diagnostics
+
+	// Compute the set of original packages that are missing from our locked
+	// configuration.
+	missing := originalPackages.packages.Difference(acc.packages)
+	if missing.Len() > 0 {
+		// Append a warning diagnostic with the packages we were unable to lock.
+		warn = append(warn, diag.NewWarningDiagnostic(
+			"unable to lock certain packages",
+			fmt.Sprint(sets.List(missing)),
+		))
+	}
+
+	// Allocate a list sufficient for holding all of our locked package versions
+	// as well as the packages we were unable to lock.
+	pl := make([]string, 0, len(acc.versions)+missing.Len())
+
+	// Append any missing packages with their original constraints coming in.
+	// NOTE: the originalPackages "versions" includes the remainder of the
+	// package constraint including the operator.
+	for _, pkg := range sets.List(missing) {
+		if ver := originalPackages.versions[pkg]; ver != "" {
+			pl = append(pl, fmt.Sprintf("%s%s", pkg, ver))
+		} else {
+
+			pl = append(pl, pkg)
+		}
+	}
+
+	// Append all of the resolved and unified packages with an exact match
+	// based on the resolved version we found.
+	for _, pkg := range sets.List(acc.packages) {
+		pl = append(pl, fmt.Sprintf("%s=%s", pkg, acc.versions[pkg]))
+	}
+
+	// If a particular architecture is missing additional packages from the
+	// locked set that it produced, than warn about those as well.
+	for _, input := range inputs {
+		missingHere := input.packages.Difference(acc.packages).Difference(missing)
+		if missingHere.Len() > 0 {
+			warn = append(warn, diag.NewWarningDiagnostic(
+				fmt.Sprintf("unable to lock certain packages for %s", input.arch),
+				fmt.Sprint(sets.List(missingHere)),
+			))
+		}
+	}
+
+	return pl, warn
 }

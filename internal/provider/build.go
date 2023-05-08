@@ -22,29 +22,22 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func fromImageData(ctx context.Context, data BuildResourceModel, wd string) (*build.Context, error) {
-	var ic types.ImageConfiguration
-	if diags := assignValue(data.Config, &ic); diags.HasError() {
-		return nil, fmt.Errorf("assigning value: %v", diags.Errors())
-	}
-
-	tflog.Trace(ctx, fmt.Sprintf("Got image configuration: %#v", ic))
-
-	ic.Contents.Packages = append(ic.Contents.Packages, data.popts.packages...)
+func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
+	ic.Contents.Packages = append(ic.Contents.Packages, popts.packages...)
 
 	bc, err := build.New(wd,
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
-		build.WithExtraKeys(data.popts.keyring),
-		build.WithExtraRepos(data.popts.repositories),
+		build.WithExtraKeys(popts.keyring),
+		build.WithExtraRepos(popts.repositories),
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if len(data.popts.archs) != 0 {
-		bc.ImageConfiguration.Archs = types.ParseArchitectures(data.popts.archs)
+	if len(popts.archs) != 0 {
+		bc.ImageConfiguration.Archs = types.ParseArchitectures(popts.archs)
 	} else if len(bc.ImageConfiguration.Archs) == 0 {
 		bc.ImageConfiguration.Archs = types.AllArchs
 	}
@@ -65,9 +58,16 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	workDir := filepath.Join(tempDir, "builds")
 	defer os.RemoveAll(tempDir)
 
+	var ic types.ImageConfiguration
+	if diags := assignValue(data.Config, &ic); diags.HasError() {
+		return v1.Hash{}, nil, nil, fmt.Errorf("assigning value: %v", diags.Errors())
+	}
+
+	tflog.Trace(ctx, fmt.Sprintf("Got image configuration: %#v", ic))
+
 	// Parse things once to determine the architectures to build from
 	// the config.
-	obc, err := fromImageData(ctx, data, workDir)
+	obc, err := fromImageData(ic, data.popts, workDir)
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
@@ -81,7 +81,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
 
-		bc, err := fromImageData(ctx, data, filepath.Join(workDir, arch.ToAPK()))
+		bc, err := fromImageData(ic, data.popts, filepath.Join(workDir, arch.ToAPK()))
 		if err != nil {
 			return v1.Hash{}, nil, nil, err
 		}
