@@ -21,7 +21,7 @@ provider "apko" {}
 
 ### Optional
 
-- `archs` (List of String) Default architectures to build for
-- `keyring` (List of String) Additional keys to use for package verification
-- `packages` (List of String) Additional packages to install
-- `repositories` (List of String) Additional repositories to search for packages
+- `default_archs` (List of String) Default architectures to build for
+- `extra_keyring` (List of String) Additional keys to use for package verification
+- `extra_packages` (List of String) Additional packages to install
+- `extra_repositories` (List of String) Additional repositories to search for packages

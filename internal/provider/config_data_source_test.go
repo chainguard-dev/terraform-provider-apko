@@ -128,6 +128,47 @@ contents:
 	})
 }
 
+func TestAccDataSourceConfig_ProviderOpts_OverrideArchitecture(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://packages.wolfi.dev/os"},
+				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:        []string{"x86_64", "aarch64"},
+				packages:     []string{"wolfi-baselayout"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: `
+data "apko_config" "this" {
+  config_contents = <<EOF
+archs:
+  - aarch64
+contents:
+  packages:
+    - ca-certificates-bundle
+    - tzdata
+  EOF
+}`,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "aarch64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.0", regexp.MustCompile("^ca-certificates-bundle=.*")),
+				// This is pulled in as a transitive dependency.
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.1", regexp.MustCompile("^glibc-locale-posix=.*")),
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.2", regexp.MustCompile("^tzdata=.*")),
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.3", regexp.MustCompile("^wolfi-baselayout=.*")),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.#", "1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://packages.wolfi.dev/os"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.#", "1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.0", "https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"),
+			),
+		}},
+	})
+}
+
 func TestUnify(t *testing.T) {
 	tests := []struct {
 		name      string

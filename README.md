@@ -14,14 +14,14 @@ This provides an `apko_build` resource that will build the provided `apko` confi
 # with additional packages.
 provider "apko" {
   # Default to building for these architectures.
-  archs = ["x86_64", "aarch64"]
+  default_archs = ["x86_64", "aarch64"]
 
   # Include these repositories by default
-  repositories = ["https://packages.wolfi.dev/os"]
-  keyring      = ["https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"]
+  extra_repositories = ["https://packages.wolfi.dev/os"]
+  extra_keyring      = ["https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"]
 
   # All of the images should show up as Wolfi!
-  packages     = ["wolfi-baselayout"]
+  extra_packages     = ["wolfi-baselayout"]
 }
 
 data "apko_config" "this" {

@@ -113,9 +113,12 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	ic.Contents.Packages = append(ic.Contents.Packages, d.popts.packages...)
 	ic.Contents.Keyring = append(ic.Contents.Keyring, d.popts.keyring...)
 
-	// Override config archs with provider archs, if specified.
-	if len(d.popts.archs) != 0 {
-		ic.Archs = apkotypes.ParseArchitectures(d.popts.archs)
+	// Default to the provider architectures when the image configuration
+	// doesn't specify any.
+	if len(ic.Archs) == 0 {
+		if len(d.popts.archs) != 0 {
+			ic.Archs = apkotypes.ParseArchitectures(d.popts.archs)
+		}
 	}
 
 	// Normalize the architectures we surface
