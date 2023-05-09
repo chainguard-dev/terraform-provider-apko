@@ -19,10 +19,10 @@ type Provider struct {
 }
 
 type ProviderModel struct {
-	Repositories []string `tfsdk:"repositories"`
-	Packages     []string `tfsdk:"packages"`
-	Keyring      []string `tfsdk:"keyring"`
-	Archs        []string `tfsdk:"archs"`
+	ExtraRepositories []string `tfsdk:"extra_repositories"`
+	ExtraPackages     []string `tfsdk:"extra_packages"`
+	ExtraKeyring      []string `tfsdk:"extra_keyring"`
+	DefaultArchs      []string `tfsdk:"default_archs"`
 }
 
 type ProviderOpts struct {
@@ -37,22 +37,22 @@ func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, r
 func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"repositories": schema.ListAttribute{
+			"extra_repositories": schema.ListAttribute{
 				Description: "Additional repositories to search for packages",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
 			},
-			"packages": schema.ListAttribute{
+			"extra_packages": schema.ListAttribute{
 				Description: "Additional packages to install",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
 			},
-			"keyring": schema.ListAttribute{
+			"extra_keyring": schema.ListAttribute{
 				Description: "Additional keys to use for package verification",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
 			},
-			"archs": schema.ListAttribute{
+			"default_archs": schema.ListAttribute{
 				Description: "Default architectures to build for",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
@@ -70,10 +70,10 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	opts := &ProviderOpts{
 		// This is only for testing, so we can inject provider config
-		repositories: append(p.repositories, data.Repositories...),
-		packages:     append(p.packages, data.Packages...),
-		keyring:      append(p.keyring, data.Keyring...),
-		archs:        append(p.archs, data.Archs...),
+		repositories: append(p.repositories, data.ExtraRepositories...),
+		packages:     append(p.packages, data.ExtraPackages...),
+		keyring:      append(p.keyring, data.ExtraKeyring...),
+		archs:        append(p.archs, data.DefaultArchs...),
 	}
 
 	// Make provider opts available to resources and data sources.

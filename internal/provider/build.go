@@ -36,9 +36,13 @@ func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (
 		return nil, err
 	}
 
-	if len(popts.archs) != 0 {
+	if len(bc.ImageConfiguration.Archs) != 0 {
+		// If the configuration has architectures, use them.
+	} else if len(popts.archs) != 0 {
+		// Otherwise, fallback on the provider architectures.
 		bc.ImageConfiguration.Archs = types.ParseArchitectures(popts.archs)
-	} else if len(bc.ImageConfiguration.Archs) == 0 {
+	} else {
+		// If neither is specified, build for all architectures!
 		bc.ImageConfiguration.Archs = types.AllArchs
 	}
 	return bc, nil
