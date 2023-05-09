@@ -5,6 +5,7 @@ go 1.19
 require (
 	chainguard.dev/apko v0.8.1-0.20230505234243-87f7f0ff54fa
 	github.com/chainguard-dev/terraform-provider-oci v0.0.0-20230426201150-f82273dff08e
+	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.14.1-0.20230425172351-b7c6e9dc3944
 	github.com/hashicorp/terraform-plugin-docs v0.14.1
 	github.com/hashicorp/terraform-plugin-framework v1.2.0
@@ -14,6 +15,8 @@ require (
 	github.com/sigstore/cosign/v2 v2.0.3-0.20230425232139-17cc13812d8a
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.4.0
+	k8s.io/apimachinery v0.26.1
+	knative.dev/pkg v0.0.0-20230502134655-db8a35330281
 )
 
 require (
@@ -87,7 +90,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
