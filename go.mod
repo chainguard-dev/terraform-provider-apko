@@ -6,7 +6,7 @@ require (
 	chainguard.dev/apko v0.8.1-0.20230505234243-87f7f0ff54fa
 	github.com/chainguard-dev/terraform-provider-oci v0.0.0-20230426201150-f82273dff08e
 	github.com/google/go-cmp v0.5.9
-	github.com/google/go-containerregistry v0.14.1-0.20230425172351-b7c6e9dc3944
+	github.com/google/go-containerregistry v0.15.1
 	github.com/hashicorp/terraform-plugin-docs v0.14.1
 	github.com/hashicorp/terraform-plugin-framework v1.2.0
 	github.com/hashicorp/terraform-plugin-go v0.15.0
@@ -134,7 +134,7 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
 	github.com/package-url/packageurl-go v0.1.1-0.20220203205134-d70459300c8a // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
