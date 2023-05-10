@@ -83,6 +83,8 @@ contents:
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://packages.wolfi.dev/os"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.#", "1"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.0", "https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"),
+				// Older Wolfi APKs don't specify build date.
+				resource.TestCheckResourceAttr("data.apko_config.this", "apk_date_epoch", "1970-01-01T00:00:00Z"),
 			),
 		}},
 	})
@@ -164,6 +166,41 @@ contents:
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://packages.wolfi.dev/os"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.#", "1"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.0", "https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"),
+			),
+		}},
+	})
+}
+
+func TestAccDataSourceConfig_Alpine_Locked(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://dl-cdn.alpinelinux.org/alpine/edge/main"},
+				archs:        []string{"x86_64", "aarch64"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: `
+data "apko_config" "this" {
+  config_contents = <<EOF
+contents:
+  packages:
+    - ca-certificates-bundle=20230506-r0
+    - tzdata=2023c-r1
+  EOF
+}`,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "2"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20230506-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "tzdata=2023c-r1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.#", "1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://dl-cdn.alpinelinux.org/alpine/edge/main"),
+				// We have locked a set of alpine packages, and this is the max build date.
+				resource.TestCheckResourceAttr("data.apko_config.this", "apk_date_epoch", "2023-05-06T12:08:21Z"),
 			),
 		}},
 	})
@@ -384,7 +421,7 @@ func TestUnify(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, gotDiag := unify(test.originals, test.inputs)
+			got, _, gotDiag := unify(test.originals, test.inputs)
 			if diff := cmp.Diff(test.want, got); diff != "" {
 				t.Errorf("(-want, +got) = %s", diff)
 			}

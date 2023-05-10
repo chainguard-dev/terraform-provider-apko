@@ -34,12 +34,13 @@ type BuildResource struct {
 }
 
 type BuildResourceModel struct {
-	Id       types.String `tfsdk:"id"`
-	Repo     types.String `tfsdk:"repo"`
-	Config   types.Object `tfsdk:"config"`
-	ImageRef types.String `tfsdk:"image_ref"`
+	Id        types.String `tfsdk:"id"`
+	Repo      types.String `tfsdk:"repo"`
+	Config    types.Object `tfsdk:"config"`
+	Timestamp types.String `tfsdk:"timestamp"`
 
-	SBOMs types.Map `tfsdk:"sboms"`
+	ImageRef types.String `tfsdk:"image_ref"`
+	SBOMs    types.Map    `tfsdk:"sboms"`
 
 	popts ProviderOpts // Data passed from the provider.
 }
@@ -95,6 +96,14 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				AttributeTypes:      imageConfigurationSchema.AttrTypes,
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
+				},
+			},
+			"timestamp": schema.StringAttribute{
+				MarkdownDescription: "The RFC3339-encoded timestamp to give the resulting image (defaults to Unix epoch).",
+				Optional:            true,
+				Validators:          []validator.String{RFC3339Validator{}},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"image_ref": schema.StringAttribute{

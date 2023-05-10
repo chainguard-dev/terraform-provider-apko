@@ -22,16 +22,16 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
+func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string, opts ...build.Option) (*build.Context, error) {
 	ic.Contents.Packages = append(ic.Contents.Packages, popts.packages...)
 
-	bc, err := build.New(wd,
+	opts = append(opts,
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(popts.keyring),
 		build.WithExtraRepos(popts.repositories),
 	)
-
+	bc, err := build.New(wd, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 	// Parse things once to determine the architectures to build from
 	// the config.
-	obc, err := fromImageData(ic, data.popts, workDir)
+	obc, err := fromImageData(ic, data.popts, workDir,
+		build.WithBuildDate(data.Timestamp.ValueString()))
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}

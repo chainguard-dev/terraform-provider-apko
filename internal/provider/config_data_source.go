@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	apkotypes "chainguard.dev/apko/pkg/build/types"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -40,6 +41,7 @@ type ConfigDataSourceModel struct {
 	Id             types.String `tfsdk:"id"`
 	ConfigContents types.String `tfsdk:"config_contents"`
 	Config         types.Object `tfsdk:"config"`
+	APKDateEpoch   types.String `tfsdk:"apk_date_epoch"`
 }
 
 var imageConfigurationSchema basetypes.ObjectType
@@ -69,6 +71,10 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				MarkdownDescription: "The parsed structure of the apko configuration.",
 				Computed:            true,
 				AttributeTypes:      imageConfigurationSchema.AttrTypes,
+			},
+			"apk_date_epoch": schema.StringAttribute{
+				MarkdownDescription: "The most recent RFC3339-encoded build time of the resolved APKs.",
+				Computed:            true,
 			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "A unique identifier for this apko config.",
@@ -128,7 +134,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Resolve the package list to specific versions (as much as we can with
 	// multi-arch), and overwrite the package list in the ImageConfiguration.
-	pl, diags := d.resolvePackageList(ic)
+	pl, ade, diags := d.resolvePackageList(ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
 		return
@@ -141,6 +147,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 	data.Config = ov.(basetypes.ObjectValue)
+	data.APKDateEpoch = types.StringValue(ade.Format(time.RFC3339))
 
 	hash := sha256.Sum256([]byte(data.ConfigContents.ValueString()))
 	data.Id = types.StringValue(hex.EncodeToString(hash[:]))
@@ -151,10 +158,10 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
+func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) ([]string, time.Time, diag.Diagnostics) {
 	workDir, err := os.MkdirTemp("", "apko-*")
 	if err != nil {
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to create temp directory", err.Error())}
+		return nil, time.Time{}, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to create temp directory", err.Error())}
 	}
 	defer os.RemoveAll(workDir)
 
@@ -177,13 +184,17 @@ func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) (
 				return err
 			}
 			r := resolved{
-				arch:     arch.ToAPK(),
-				packages: make(sets.Set[string], len(pkgs)),
-				versions: make(map[string]string, len(pkgs)),
+				arch:         arch.ToAPK(),
+				packages:     make(sets.Set[string], len(pkgs)),
+				versions:     make(map[string]string, len(pkgs)),
+				apkDateEpoch: time.Unix(0, 0),
 			}
 			for _, pkg := range pkgs {
 				r.packages.Insert(pkg.Name)
 				r.versions[pkg.Name] = pkg.Version
+				if pkg.BuildTime.UTC().After(r.apkDateEpoch) {
+					r.apkDateEpoch = pkg.BuildTime.UTC()
+				}
 			}
 			archs[i] = r
 			return nil
@@ -191,21 +202,22 @@ func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) (
 	}
 
 	if err := eg.Wait(); err != nil {
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("error computing package locks", err.Error())}
+		return nil, time.Time{}, diag.Diagnostics{diag.NewErrorDiagnostic("error computing package locks", err.Error())}
 	}
 
 	return unify(ic.Contents.Packages, archs)
 }
 
 type resolved struct {
-	arch     string
-	packages sets.Set[string]
-	versions map[string]string
+	arch         string
+	packages     sets.Set[string]
+	versions     map[string]string
+	apkDateEpoch time.Time
 }
 
-func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
+func unify(originals []string, inputs []resolved) ([]string, time.Time, diag.Diagnostics) {
 	if len(originals) == 0 {
-		return nil, nil
+		return nil, time.Time{}, nil
 	}
 	originalPackages := resolved{
 		packages: make(sets.Set[string], len(originals)),
@@ -227,10 +239,14 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 	// Start accumulating using the first entry, and unify it with the other
 	// architectures.
 	acc := resolved{
-		packages: inputs[0].packages.Clone(),
-		versions: kmap.Copy(inputs[0].versions),
+		packages:     inputs[0].packages.Clone(),
+		versions:     kmap.Copy(inputs[0].versions),
+		apkDateEpoch: time.Unix(0, 0).UTC(),
 	}
 	for _, next := range inputs[1:] {
+		if next.apkDateEpoch.After(acc.apkDateEpoch) {
+			acc.apkDateEpoch = next.apkDateEpoch
+		}
 		if reflect.DeepEqual(acc.versions, next.versions) {
 			// If the package set matches at the same versions, then we're done.
 			continue
@@ -300,5 +316,5 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 		}
 	}
 
-	return pl, warn
+	return pl, acc.apkDateEpoch, warn
 }

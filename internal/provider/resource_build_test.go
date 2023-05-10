@@ -17,7 +17,7 @@ func TestAccResourceApkoBuild(t *testing.T) {
 
 	repostr := repo.String()
 
-	resource.Test(t, resource.TestCase{
+	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -52,8 +52,9 @@ EOF
 }
 
 resource "apko_build" "foo" {
-  repo   = %q
-  config = data.apko_config.foo.config
+  repo      = %q
+  config    = data.apko_config.foo.config
+  timestamp = data.apko_config.foo.apk_date_epoch
 }
 `, repostr),
 				Check: resource.ComposeTestCheckFunc(
@@ -97,8 +98,9 @@ EOF
 }
 
 resource "apko_build" "foo" {
-	repo   = %q
-	config = data.apko_config.foo.config
+  repo      = %q
+  config    = data.apko_config.foo.config
+  timestamp = data.apko_config.foo.apk_date_epoch
 }`, repostr),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
@@ -117,7 +119,7 @@ func TestAccResourceApkoBuild_ProviderOpts(t *testing.T) {
 
 	repostr := repo.String()
 
-	resource.Test(t, resource.TestCase{
+	resource.UnitTest(t, resource.TestCase{
 		PreCheck: func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"apko": providerserver.NewProtocol6WithError(&Provider{
@@ -139,8 +141,9 @@ EOF
 }
 
 resource "apko_build" "foo" {
-	repo   = %q
-	config = data.apko_config.foo.config
+  repo      = %q
+  config    = data.apko_config.foo.config
+  timestamp = data.apko_config.foo.apk_date_epoch
 }
 `, repostr),
 				Check: resource.ComposeTestCheckFunc(
@@ -164,8 +167,9 @@ EOF
 }
 
 resource "apko_build" "foo" {
-	repo   = %q
-	config = data.apko_config.foo.config
+  repo      = %q
+  config    = data.apko_config.foo.config
+  timestamp = data.apko_config.foo.apk_date_epoch
 }
 `, repostr),
 				Check: resource.ComposeTestCheckFunc(

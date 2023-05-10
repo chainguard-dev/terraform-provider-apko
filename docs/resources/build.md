@@ -58,6 +58,10 @@ resource "apko_build" "example" {
 - `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--config))
 - `repo` (String) The name of the container repository to which we should publish the image.
 
+### Optional
+
+- `timestamp` (String) The RFC3339-encoded timestamp to give the resulting image (defaults to Unix epoch).
+
 ### Read-Only
 
 - `id` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).

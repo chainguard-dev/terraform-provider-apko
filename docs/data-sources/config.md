@@ -21,6 +21,7 @@ This reads an apko configuration file into a structured form.
 
 ### Read-Only
 
+- `apk_date_epoch` (String) The most recent RFC3339-encoded build time of the resolved APKs.
 - `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--config))
 - `id` (String) A unique identifier for this apko config.
 
