@@ -37,6 +37,7 @@ func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(popts.keyring),
 		build.WithExtraRepos(popts.repositories),
+		build.WithBuildOptions(popts.buildopts),
 	)
 
 	if err != nil {

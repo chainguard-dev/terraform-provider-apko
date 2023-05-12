@@ -21,6 +21,7 @@ provider "apko" {}
 
 ### Optional
 
+- `build_options` (List of String) Build options to enable
 - `default_archs` (List of String) Default architectures to build for
 - `extra_keyring` (List of String) Additional keys to use for package verification
 - `extra_packages` (List of String) Additional packages to install

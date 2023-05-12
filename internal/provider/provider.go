@@ -23,10 +23,11 @@ type ProviderModel struct {
 	ExtraPackages     []string `tfsdk:"extra_packages"`
 	ExtraKeyring      []string `tfsdk:"extra_keyring"`
 	DefaultArchs      []string `tfsdk:"default_archs"`
+	BuildOptions      []string `tfsdk:"build_options"`
 }
 
 type ProviderOpts struct {
-	repositories, packages, keyring, archs []string
+	repositories, packages, keyring, archs, buildopts []string
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -57,6 +58,11 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 				Optional:    true,
 				ElementType: basetypes.StringType{},
 			},
+			"build_options": schema.ListAttribute{
+				Description: "Build options to enable",
+				Optional:    true,
+				ElementType: basetypes.StringType{},
+			},
 		},
 	}
 }
@@ -74,6 +80,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		packages:     append(p.packages, data.ExtraPackages...),
 		keyring:      append(p.keyring, data.ExtraKeyring...),
 		archs:        append(p.archs, data.DefaultArchs...),
+		buildopts:    append(p.archs, data.BuildOptions...),
 	}
 
 	// Make provider opts available to resources and data sources.
