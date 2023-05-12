@@ -177,8 +177,8 @@ func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) (
 				return err
 			}
 			r := resolved{
-				// ParseArchitecture normalizes the architecture into a
-				// canonical form.
+				// ParseArchitecture normalizes the architecture into the
+				// canonical OCI form (amd64, not x86_64)
 				arch:     apkotypes.ParseArchitecture(arch.ToAPK()).String(),
 				packages: make(sets.Set[string], len(pkgs)),
 				versions: make(map[string]string, len(pkgs)),
