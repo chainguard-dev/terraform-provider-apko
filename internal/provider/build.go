@@ -25,6 +25,13 @@ import (
 func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
 	ic.Contents.Packages = append(ic.Contents.Packages, popts.packages...)
 
+	// Normalize the architecture by calling ParseArchitecture.  This is
+	// something sublte that `apko` gets for free because it only accepts yaml
+	// and the yaml parsing normalizes things.
+	for i, arch := range ic.Archs {
+		ic.Archs[i] = types.ParseArchitecture(arch.String())
+	}
+
 	bc, err := build.New(wd,
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
@@ -122,7 +129,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 			}
 
 			imgs[arch] = img
-			sboms[arch.ToAPK()] = imagesbom{
+			sboms[arch.String()] = imagesbom{
 				imageHash:     h,
 				predicateType: "https://spdx.dev/Document",
 				predicate:     content,

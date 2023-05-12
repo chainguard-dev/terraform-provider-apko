@@ -123,7 +123,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Normalize the architectures we surface
 	for i, a := range ic.Archs {
-		ic.Archs[i] = apkotypes.Architecture(a.ToAPK())
+		ic.Archs[i] = apkotypes.ParseArchitecture(a.ToAPK())
 	}
 
 	// Resolve the package list to specific versions (as much as we can with
@@ -177,7 +177,9 @@ func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) (
 				return err
 			}
 			r := resolved{
-				arch:     arch.ToAPK(),
+				// ParseArchitecture normalizes the architecture into the
+				// canonical OCI form (amd64, not x86_64)
+				arch:     apkotypes.ParseArchitecture(arch.ToAPK()).String(),
 				packages: make(sets.Set[string], len(pkgs)),
 				versions: make(map[string]string, len(pkgs)),
 			}

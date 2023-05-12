@@ -27,8 +27,8 @@ data "apko_config" "this" {
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "amd64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "arm64"),
 			),
 		}, {
 			Config: `
@@ -41,8 +41,8 @@ data "apko_config" "this" {
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "amd64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "arm64"),
 			),
 		}},
 	})
@@ -72,8 +72,8 @@ contents:
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "amd64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "arm64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20230506-r0"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.37-r6"),
@@ -111,8 +111,8 @@ contents:
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "x86_64"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "aarch64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "amd64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "arm64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
 				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.0", regexp.MustCompile("^ca-certificates-bundle=.*")),
 				// This is pulled in as a transitive dependency.
@@ -153,7 +153,7 @@ contents:
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "1"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "aarch64"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "arm64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
 				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.0", regexp.MustCompile("^ca-certificates-bundle=.*")),
 				// This is pulled in as a transitive dependency.
@@ -232,7 +232,7 @@ func TestUnify(t *testing.T) {
 		name:      "multiple matching architectures",
 		originals: []string{"foo", "bar", "baz"},
 		inputs: []resolved{{
-			arch:     "x86_64",
+			arch:     "amd64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -241,7 +241,7 @@ func TestUnify(t *testing.T) {
 				"bonus": "5.4.3",
 			},
 		}, {
-			arch:     "aarch64",
+			arch:     "arm64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -260,7 +260,7 @@ func TestUnify(t *testing.T) {
 		name:      "mismatched transitive dependency",
 		originals: []string{"foo", "bar", "baz"},
 		inputs: []resolved{{
-			arch:     "x86_64",
+			arch:     "amd64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -269,7 +269,7 @@ func TestUnify(t *testing.T) {
 				"bonus": "5.4.3-r0",
 			},
 		}, {
-			arch:     "aarch64",
+			arch:     "arm64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -284,14 +284,14 @@ func TestUnify(t *testing.T) {
 			"foo=1.2.3",
 		},
 		wantDiag: []diag.Diagnostic{
-			diag.NewWarningDiagnostic("unable to lock certain packages for x86_64", "[bonus]"),
-			diag.NewWarningDiagnostic("unable to lock certain packages for aarch64", "[bonus]"),
+			diag.NewWarningDiagnostic("unable to lock certain packages for amd64", "[bonus]"),
+			diag.NewWarningDiagnostic("unable to lock certain packages for arm64", "[bonus]"),
 		},
 	}, {
 		name:      "mismatched direct dependency",
 		originals: []string{"foo", "bar", "baz"},
 		inputs: []resolved{{
-			arch:     "x86_64",
+			arch:     "amd64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -300,7 +300,7 @@ func TestUnify(t *testing.T) {
 				"bonus": "5.4.3",
 			},
 		}, {
-			arch:     "aarch64",
+			arch:     "arm64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -322,7 +322,7 @@ func TestUnify(t *testing.T) {
 		name:      "mismatched direct dependency (with constraint)",
 		originals: []string{"foo", "bar>2.4.6", "baz"},
 		inputs: []resolved{{
-			arch:     "x86_64",
+			arch:     "amd64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -331,7 +331,7 @@ func TestUnify(t *testing.T) {
 				"bonus": "5.4.3",
 			},
 		}, {
-			arch:     "aarch64",
+			arch:     "arm64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
 			versions: map[string]string{
 				"foo":   "1.2.3",
@@ -353,7 +353,7 @@ func TestUnify(t *testing.T) {
 		name:      "single-architecture resolved dependency",
 		originals: []string{"foo", "bar", "baz"},
 		inputs: []resolved{{
-			arch:     "x86_64",
+			arch:     "amd64",
 			packages: sets.New("foo", "bar", "baz", "intel-fast-as-f-math"),
 			versions: map[string]string{
 				"foo":                  "1.2.3",
@@ -362,7 +362,7 @@ func TestUnify(t *testing.T) {
 				"intel-fast-as-f-math": "5.4.3",
 			},
 		}, {
-			arch:     "aarch64",
+			arch:     "arm64",
 			packages: sets.New("foo", "bar", "baz", "arm-energy-efficient-as-f-arithmetic"),
 			versions: map[string]string{
 				"foo":                                  "1.2.3",
@@ -377,8 +377,8 @@ func TestUnify(t *testing.T) {
 			"foo=1.2.3",
 		},
 		wantDiag: []diag.Diagnostic{
-			diag.NewWarningDiagnostic("unable to lock certain packages for x86_64", "[intel-fast-as-f-math]"),
-			diag.NewWarningDiagnostic("unable to lock certain packages for aarch64", "[arm-energy-efficient-as-f-arithmetic]"),
+			diag.NewWarningDiagnostic("unable to lock certain packages for amd64", "[intel-fast-as-f-math]"),
+			diag.NewWarningDiagnostic("unable to lock certain packages for arm64", "[arm-energy-efficient-as-f-arithmetic]"),
 		},
 	}}
 
