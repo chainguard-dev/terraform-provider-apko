@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	ocitesting "github.com/chainguard-dev/terraform-provider-oci/testing"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -176,5 +177,96 @@ resource "apko_build" "foo" {
 				),
 			},
 		},
+	})
+}
+
+func TestAccResourceApkoBuild_BuildDateEpoch(t *testing.T) {
+	repo, cleanup := ocitesting.SetupRepository(t, "test")
+	defer cleanup()
+
+	repostr := repo.String()
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://packages.wolfi.dev/os"},
+				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:        []string{"x86_64"},
+				packages:     []string{"wolfi-baselayout=20230201-r0"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = <<EOF
+contents:
+  packages:
+  - ca-certificates-bundle=20230506-r0
+  - glibc-locale-posix=2.37-r6
+  - tzdata=2023c-r0
+EOF
+}
+
+resource "apko_build" "foo" {
+  repo   = %q
+  config = data.apko_config.foo.config
+}
+`, repostr),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
+				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
+					// With pinned packages we should always get this digest.
+					repo.Digest("sha256:c7ad87840041b6f27de750809ad1e211625fce06b9284f32be5e728fb25d8b50").String()),
+				resource.TestMatchResourceAttr("apko_build.foo", `sboms.amd64.predicate`,
+					// With (these) pinned packages we should see the Unix
+					// epoch because these packages weren't embedding
+					// build date.
+					regexp.MustCompile(regexp.QuoteMeta(fmt.Sprintf(`"created": %q`, time.Unix(0, 0).UTC().Format(time.RFC3339))))),
+			),
+		}},
+	})
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://dl-cdn.alpinelinux.org/alpine/edge/main"},
+				keyring:      []string{},
+				archs:        []string{"x86_64"},
+				packages: []string{
+					"alpine-baselayout-data=3.4.3-r1",
+					"alpine-keys=2.4-r1",
+					"alpine-release=3.18.0-r0",
+				},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = <<EOF
+contents:
+  packages:
+  - ca-certificates-bundle=20230506-r0
+  - tzdata=2023c-r1
+EOF
+}
+
+resource "apko_build" "foo" {
+	repo   = %q
+	config = data.apko_config.foo.config
+}
+`, repostr),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
+				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
+					// With pinned packages we should always get this digest.
+					repo.Digest("sha256:e526b9140cf70c08626d2fbf58168ce2a90521996ac3c7a95dbc2f157ed676eb").String()),
+				resource.TestMatchResourceAttr("apko_build.foo", `sboms.amd64.predicate`,
+					// With (these) pinned packages we should see this fixed
+					// date because it is the oldest date embedded in these APKs
+					regexp.MustCompile(regexp.QuoteMeta(`"created": "2023-05-09T18:38:35Z"`))),
+			),
+		}},
 	})
 }

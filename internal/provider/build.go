@@ -104,6 +104,9 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 				return fmt.Errorf("failed to update build context for %q: %w", arch, err)
 			}
 			bc.Options.SBOMPath = tempDir
+			// Don't build the SBOM when we make the layer, since we want to
+			// set the creation timestamp based on the build-date-epoch.
+			bc.Options.WantSBOM = false
 
 			layerTarGZ, err := bc.BuildLayer()
 			if err != nil {
@@ -111,6 +114,20 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 			}
 			// TODO(kaniini): clean up everything correctly for multitag scenario
 			// defer os.Remove(layerTarGZ)
+
+			if bc.Options.SourceDateEpoch, err = bc.GetBuildDateEpoch(); err != nil {
+				return fmt.Errorf("failed to determine build date epoch: %w", err)
+			}
+			bc.Options.SourceDateEpoch = bc.Options.SourceDateEpoch.UTC()
+			// Adjust the index's builder to track the most recent BDE.
+			if bc.Options.SourceDateEpoch.After(obc.Options.SourceDateEpoch) {
+				obc.Options.SourceDateEpoch = bc.Options.SourceDateEpoch
+			}
+
+			// Explicitly generate the SBOM after the BDE calculation
+			if err := bc.GenerateSBOM(); err != nil {
+				return fmt.Errorf("failed to determine build date epoch: %w", err)
+			}
 
 			_, img, err := oci.PublishImageFromLayer(
 				ctx, layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
