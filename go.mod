@@ -6,7 +6,7 @@ require (
 	chainguard.dev/apko v0.8.1-0.20230514182029-458d83d50da6
 	github.com/chainguard-dev/terraform-provider-oci v0.0.0-20230426201150-f82273dff08e
 	github.com/google/go-cmp v0.5.9
-	github.com/google/go-containerregistry v0.15.1
+	github.com/google/go-containerregistry v0.15.2
 	github.com/hashicorp/terraform-plugin-docs v0.14.1
 	github.com/hashicorp/terraform-plugin-framework v1.2.0
 	github.com/hashicorp/terraform-plugin-go v0.15.0
