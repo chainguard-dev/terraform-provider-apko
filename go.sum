@@ -1,5 +1,3 @@
-chainguard.dev/apko v0.8.1-0.20230514153223-53a7260ca9c7 h1:/QXKmatIXPlsMWM/bvISbPZ5fA7Su12+9+EWU42Q5EI=
-chainguard.dev/apko v0.8.1-0.20230514153223-53a7260ca9c7/go.mod h1:qya6JHwNmYI4QbraMu2jxh+qX4FVOxXOY6QJLdPOe5s=
 chainguard.dev/apko v0.8.1-0.20230514182029-458d83d50da6 h1:uu2yjJbFIkFk6+kwvJ+tjJFIiuRRbh5AldpPOzvUGeQ=
 chainguard.dev/apko v0.8.1-0.20230514182029-458d83d50da6/go.mod h1:qya6JHwNmYI4QbraMu2jxh+qX4FVOxXOY6QJLdPOe5s=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
@@ -273,8 +271,8 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/go-containerregistry v0.15.1 h1:RsJ9NbfxYWF8Wl4VmvkpN3zYATwuvlPq2j20zmcs63E=
-github.com/google/go-containerregistry v0.15.1/go.mod h1:wWK+LnOv4jXMM23IT/F1wdYftGWGr47Is8CG+pmHK1Q=
+github.com/google/go-containerregistry v0.15.2 h1:MMkSh+tjSdnmJZO7ljvEqV1DjfekB6VUEAZgy3a+TQE=
+github.com/google/go-containerregistry v0.15.2/go.mod h1:wWK+LnOv4jXMM23IT/F1wdYftGWGr47Is8CG+pmHK1Q=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
