@@ -111,8 +111,8 @@ github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/chainguard-dev/go-apk v0.0.0-20230511181214-d597cb34a9a0 h1:XafuiP4i4pOp7qscgWq5qT2YVJ+6pDurYu86Gfjs9r4=
 github.com/chainguard-dev/go-apk v0.0.0-20230511181214-d597cb34a9a0/go.mod h1:BM0gO+KLpyVLuJSFiYYZP52DS+S4GjQoPaEljWo6uWw=
-github.com/chainguard-dev/terraform-provider-oci v0.0.0-20230426201150-f82273dff08e h1:9FgJN0uYkNRTKa9b4ds8yKWD0ic5ETUlP5mmAZfYmOc=
-github.com/chainguard-dev/terraform-provider-oci v0.0.0-20230426201150-f82273dff08e/go.mod h1:c0UCXzRaVhzUcS1raw1wrDsXJpOkwWvyv5RcnvAmX7U=
+github.com/chainguard-dev/terraform-provider-oci v0.0.1 h1:74wTANvzGddx6NT4lm5ocb7DakwJPjwOjjIVzLuUuL4=
+github.com/chainguard-dev/terraform-provider-oci v0.0.1/go.mod h1:UUuucAv/hYugy2sbYecpJ8gMiyeLpo6cPjw1bZSWRbc=
 github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589 h1:krfRl01rzPzxSxyLyrChD+U+MzsBXbm0OwYYB67uF+4=
 github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589/go.mod h1:OuDyvmLnMCwa2ep4Jkm6nyA0ocJuZlGyk2gGseVzERM=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
