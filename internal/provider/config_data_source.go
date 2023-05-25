@@ -40,6 +40,7 @@ type ConfigDataSourceModel struct {
 	Id             types.String `tfsdk:"id"`
 	ConfigContents types.String `tfsdk:"config_contents"`
 	Config         types.Object `tfsdk:"config"`
+	ExtraPackages  []string     `tfsdk:"extra_packages"`
 }
 
 var imageConfigurationSchema basetypes.ObjectType
@@ -69,6 +70,11 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				MarkdownDescription: "The parsed structure of the apko configuration.",
 				Computed:            true,
 				AttributeTypes:      imageConfigurationSchema.AttrTypes,
+			},
+			"extra_packages": schema.ListAttribute{
+				MarkdownDescription: "A list of extra packages to install.",
+				Optional:            true,
+				ElementType:         basetypes.StringType{},
 			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "A unique identifier for this apko config.",
@@ -112,6 +118,9 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	ic.Contents.Repositories = append(ic.Contents.Repositories, d.popts.repositories...)
 	ic.Contents.Packages = append(ic.Contents.Packages, d.popts.packages...)
 	ic.Contents.Keyring = append(ic.Contents.Keyring, d.popts.keyring...)
+
+	// Append any extra packages specified in the data source configuration.
+	ic.Contents.Packages = append(ic.Contents.Packages, data.ExtraPackages...)
 
 	// Default to the provider architectures when the image configuration
 	// doesn't specify any.
