@@ -48,6 +48,39 @@ data "apko_config" "this" {
 	})
 }
 
+func TestAccDataSourceConfig_ExtraPackages(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://packages.wolfi.dev/os"},
+				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:        []string{"x86_64", "aarch64"},
+				packages:     []string{"wolfi-baselayout=20230201-r0"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: `
+data "apko_config" "this" {
+  config_contents = <<EOF
+contents:
+  packages:
+  - ca-certificates-bundle=20230506-r0
+  - glibc-locale-posix=2.37-r6
+EOF
+  extra_packages = ["tzdata=2023c-r0"]
+}`,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20230506-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.37-r6"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2023c-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r0"),
+			),
+		}},
+	})
+}
+
 func TestAccDataSourceConfig_ProviderOpts_Locked(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck: func() { testAccPreCheck(t) },

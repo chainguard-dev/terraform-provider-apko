@@ -18,6 +18,7 @@ This reads an apko configuration file into a structured form.
 ### Optional
 
 - `config_contents` (String) The raw contents of the apko configuration.
+- `extra_packages` (List of String) A list of extra packages to install.
 
 ### Read-Only
 

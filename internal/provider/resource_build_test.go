@@ -217,7 +217,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:c7ad87840041b6f27de750809ad1e211625fce06b9284f32be5e728fb25d8b50").String()),
+					repo.Digest("sha256:2864ef148f9140f1aef312be95fd3cb222df900ed5d99c7447414eafaae31233").String()),
 				resource.TestMatchResourceAttr("apko_build.foo", `sboms.amd64.predicate`,
 					// With (these) pinned packages we should see the Unix
 					// epoch because these packages weren't embedding
