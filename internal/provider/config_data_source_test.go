@@ -273,6 +273,10 @@ func TestUnify(t *testing.T) {
 				"baz":   "0.0.1",
 				"bonus": "5.4.3",
 			},
+			provided: map[string]sets.Set[string]{
+				"foo": sets.New("abc", "ogg"),
+				"bar": sets.New("def"),
+			},
 		}, {
 			arch:     "arm64",
 			packages: sets.New("foo", "bar", "baz", "bonus"),
@@ -281,6 +285,10 @@ func TestUnify(t *testing.T) {
 				"bar":   "2.4.6",
 				"baz":   "0.0.1",
 				"bonus": "5.4.3",
+			},
+			provided: map[string]sets.Set[string]{
+				"foo": sets.New("abc"),
+				"bar": sets.New("def", "ogg"),
 			},
 		}},
 		want: []string{
@@ -319,6 +327,37 @@ func TestUnify(t *testing.T) {
 		wantDiag: []diag.Diagnostic{
 			diag.NewWarningDiagnostic("unable to lock certain packages for amd64", "[bonus]"),
 			diag.NewWarningDiagnostic("unable to lock certain packages for arm64", "[bonus]"),
+		},
+	}, {
+		name:      "provided direct dependency",
+		originals: []string{"foo", "bar", "baz"},
+		inputs: []resolved{{
+			arch:     "amd64",
+			packages: sets.New("foo", "baz", "bonus"),
+			versions: map[string]string{
+				"foo":   "1.2.3",
+				"baz":   "0.0.1",
+				"bonus": "5.4.3",
+			},
+			provided: map[string]sets.Set[string]{
+				"bonus": sets.New("bar"),
+			},
+		}, {
+			arch:     "arm64",
+			packages: sets.New("foo", "baz", "bonus"),
+			versions: map[string]string{
+				"foo":   "1.2.3",
+				"baz":   "0.0.1",
+				"bonus": "5.4.3",
+			},
+			provided: map[string]sets.Set[string]{
+				"bonus": sets.New("bar"),
+			},
+		}},
+		want: []string{
+			"baz=0.0.1",
+			"bonus=5.4.3",
+			"foo=1.2.3",
 		},
 	}, {
 		name:      "mismatched direct dependency",

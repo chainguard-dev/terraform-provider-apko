@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 
 	apkotypes "chainguard.dev/apko/pkg/build/types"
@@ -154,8 +155,6 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	hash := sha256.Sum256([]byte(data.ConfigContents.ValueString()))
 	data.Id = types.StringValue(hex.EncodeToString(hash[:]))
 
-	tflog.Trace(ctx, "read a data source")
-
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -191,10 +190,24 @@ func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) (
 				arch:     apkotypes.ParseArchitecture(arch.ToAPK()).String(),
 				packages: make(sets.Set[string], len(pkgs)),
 				versions: make(map[string]string, len(pkgs)),
+				provided: make(map[string]sets.Set[string], len(pkgs)),
 			}
 			for _, pkg := range pkgs {
 				r.packages.Insert(pkg.Name)
 				r.versions[pkg.Name] = pkg.Version
+
+				for _, prov := range pkg.Provides {
+					parts := packageNameRegex.FindAllStringSubmatch(prov, -1)
+					if len(parts) == 0 || len(parts[0]) < 2 {
+						continue
+					}
+					ps, ok := r.provided[pkg.Name]
+					if !ok {
+						ps = sets.New[string]()
+					}
+					ps.Insert(parts[0][1])
+					r.provided[pkg.Name] = ps
+				}
 			}
 			archs[i] = r
 			return nil
@@ -212,6 +225,7 @@ type resolved struct {
 	arch     string
 	packages sets.Set[string]
 	versions map[string]string
+	provided map[string]sets.Set[string]
 }
 
 func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
@@ -240,10 +254,11 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 	acc := resolved{
 		packages: inputs[0].packages.Clone(),
 		versions: kmap.Copy(inputs[0].versions),
+		provided: inputs[0].provided,
 	}
 	for _, next := range inputs[1:] {
-		if reflect.DeepEqual(acc.versions, next.versions) {
-			// If the package set matches at the same versions, then we're done.
+		if reflect.DeepEqual(acc.versions, next.versions) && reflect.DeepEqual(acc.provided, next.provided) {
+			// If the package set's versions and provided packages match, then we're done.
 			continue
 		}
 
@@ -260,6 +275,12 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 			if acc.versions[pkg] != next.versions[pkg] {
 				acc.packages.Delete(pkg)
 				delete(acc.versions, pkg)
+				delete(acc.provided, pkg)
+			}
+			if !acc.provided[pkg].Equal(next.provided[pkg]) {
+				// If the package provides different things across architectures
+				// then narrow what it provides to the common subset.
+				acc.provided[pkg] = acc.provided[pkg].Intersection(next.provided[pkg])
 			}
 		}
 	}
@@ -270,11 +291,26 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 	// configuration.
 	missing := originalPackages.packages.Difference(acc.packages)
 	if missing.Len() > 0 {
-		// Append a warning diagnostic with the packages we were unable to lock.
-		warn = append(warn, diag.NewWarningDiagnostic(
-			"unable to lock certain packages",
-			fmt.Sprint(sets.List(missing)),
-		))
+		for _, provider := range acc.provided {
+			if provider == nil {
+				// Doesn't provide anything
+				continue
+			}
+			if provider.HasAny(missing.UnsortedList()...) {
+				// This package provides some of the "missing" packages, so they
+				// are not really missing.  Remove them from the "missing" set,
+				// and elide the warning.
+				missing = missing.Difference(provider)
+			}
+		}
+		// There are still things missing even factoring in "provided" packages.
+		if missing.Len() > 0 {
+			// Append a warning diagnostic with the packages we were unable to lock.
+			warn = append(warn, diag.NewWarningDiagnostic(
+				"unable to lock certain packages",
+				fmt.Sprint(sets.List(missing)),
+			))
+		}
 	}
 
 	// Allocate a list sufficient for holding all of our locked package versions
@@ -288,7 +324,6 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 		if ver := originalPackages.versions[pkg]; ver != "" {
 			pl = append(pl, fmt.Sprintf("%s%s", pkg, ver))
 		} else {
-
 			pl = append(pl, pkg)
 		}
 	}
@@ -313,3 +348,6 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 
 	return pl, warn
 }
+
+// Copied from go-apk's version.go
+var packageNameRegex = regexp.MustCompile(`^([^@=><~]+)(([=><~]+)([^@]+))?(@([a-zA-Z0-9]+))?$`)
