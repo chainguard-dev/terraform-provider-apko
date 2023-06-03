@@ -67,8 +67,14 @@ contents:
   packages:
   - ca-certificates-bundle=20230506-r0
   - glibc-locale-posix=2.37-r6
+annotations:
+  bar: config-provided
 EOF
   extra_packages = ["tzdata=2023c-r0"]
+  extra_annotations = {
+	foo: "bar"
+	bar: "extra-provided"
+  }
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
@@ -76,6 +82,8 @@ EOF
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.37-r6"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2023c-r0"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.foo", "bar"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.bar", "config-provided"),
 			),
 		}},
 	})
