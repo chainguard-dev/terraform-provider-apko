@@ -90,6 +90,7 @@ func (p *Provider) Resources(ctx context.Context) []func() resource.Resource {
 func (p *Provider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewConfigDataSource,
+		NewTagsDataSource,
 	}
 }
 
