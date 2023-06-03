@@ -80,8 +80,6 @@ func (d *TagsDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 	d.popts = *popts
 }
 
-var versionRE = regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)-r(\d+)$`)
-
 func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data TagsDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
