@@ -16,17 +16,20 @@ type Provider struct {
 	version string
 
 	repositories, packages, keyring, archs []string
+	anns                                   map[string]string
 }
 
 type ProviderModel struct {
-	ExtraRepositories []string `tfsdk:"extra_repositories"`
-	ExtraPackages     []string `tfsdk:"extra_packages"`
-	ExtraKeyring      []string `tfsdk:"extra_keyring"`
-	DefaultArchs      []string `tfsdk:"default_archs"`
+	ExtraRepositories  []string          `tfsdk:"extra_repositories"`
+	ExtraPackages      []string          `tfsdk:"extra_packages"`
+	ExtraKeyring       []string          `tfsdk:"extra_keyring"`
+	DefaultAnnotations map[string]string `tfsdk:"default_annotations"`
+	DefaultArchs       []string          `tfsdk:"default_archs"`
 }
 
 type ProviderOpts struct {
 	repositories, packages, keyring, archs []string
+	anns                                   map[string]string
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -52,6 +55,11 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 				Optional:    true,
 				ElementType: basetypes.StringType{},
 			},
+			"default_annotations": schema.MapAttribute{
+				Description: "Default annotations to add",
+				Optional:    true,
+				ElementType: basetypes.StringType{},
+			},
 			"default_archs": schema.ListAttribute{
 				Description: "Default architectures to build for",
 				Optional:    true,
@@ -59,6 +67,18 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 			},
 		},
 	}
+}
+
+// combineMaps combines two maps, with the first map (left) taking precedence.
+func combineMaps(left, right map[string]string) map[string]string {
+	out := map[string]string{}
+	for k, v := range right {
+		out[k] = v
+	}
+	for k, v := range left {
+		out[k] = v
+	}
+	return out
 }
 
 func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
@@ -74,6 +94,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		packages:     append(p.packages, data.ExtraPackages...),
 		keyring:      append(p.keyring, data.ExtraKeyring...),
 		archs:        append(p.archs, data.DefaultArchs...),
+		anns:         combineMaps(p.anns, data.DefaultAnnotations),
 	}
 
 	// Make provider opts available to resources and data sources.
