@@ -57,6 +57,10 @@ func TestAccDataSourceConfig_ExtraPackages(t *testing.T) {
 				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:        []string{"x86_64", "aarch64"},
 				packages:     []string{"wolfi-baselayout=20230201-r0"},
+				anns: map[string]string{
+					"bar": "provider-provided",
+					"baz": "provider-provided",
+				},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -71,9 +75,9 @@ annotations:
   bar: config-provided
 EOF
   extra_packages = ["tzdata=2023c-r0"]
-  extra_annotations = {
+  default_annotations = {
 	foo: "bar"
-	bar: "extra-provided"
+	bar: "datasource-provided"
   }
 }`,
 			Check: resource.ComposeTestCheckFunc(
@@ -82,8 +86,10 @@ EOF
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.37-r6"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2023c-r0"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.%", "3"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.foo", "bar"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.bar", "config-provided"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.baz", "provider-provided"),
 			),
 		}},
 	})
