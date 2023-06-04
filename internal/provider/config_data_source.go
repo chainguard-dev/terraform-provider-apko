@@ -38,10 +38,11 @@ type ConfigDataSource struct {
 
 // ConfigDataSourceModel describes the data source data model.
 type ConfigDataSourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	ConfigContents types.String `tfsdk:"config_contents"`
-	Config         types.Object `tfsdk:"config"`
-	ExtraPackages  []string     `tfsdk:"extra_packages"`
+	Id               types.String      `tfsdk:"id"`
+	ConfigContents   types.String      `tfsdk:"config_contents"`
+	Config           types.Object      `tfsdk:"config"`
+	ExtraPackages    []string          `tfsdk:"extra_packages"`
+	ExtraAnnotations map[string]string `tfsdk:"extra_annotations"`
 }
 
 var imageConfigurationSchema basetypes.ObjectType
@@ -74,6 +75,11 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			},
 			"extra_packages": schema.ListAttribute{
 				MarkdownDescription: "A list of extra packages to install.",
+				Optional:            true,
+				ElementType:         basetypes.StringType{},
+			},
+			"extra_annotations": schema.MapAttribute{
+				MarkdownDescription: "A map of extra annotations to add to the resulting image.",
 				Optional:            true,
 				ElementType:         basetypes.StringType{},
 			},
@@ -122,6 +128,17 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Append any extra packages specified in the data source configuration.
 	ic.Contents.Packages = append(ic.Contents.Packages, data.ExtraPackages...)
+
+	// Append any extra annotations specified in the data source configuration.
+	for k, v := range data.ExtraAnnotations {
+		if ic.Annotations == nil {
+			ic.Annotations = map[string]string{}
+		}
+		// Config annotations take precedence over extra annotations
+		if _, found := ic.Annotations[k]; !found {
+			ic.Annotations[k] = v
+		}
+	}
 
 	// Default to the provider architectures when the image configuration
 	// doesn't specify any.
