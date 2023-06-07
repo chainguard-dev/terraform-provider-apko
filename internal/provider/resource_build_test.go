@@ -267,3 +267,50 @@ resource "apko_build" "foo" {
 		}},
 	})
 }
+
+func TestAccRegressionTests(t *testing.T) {
+	repo, cleanup := ocitesting.SetupRepository(t, "test")
+	defer cleanup()
+
+	repostr := repo.String()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://packages.wolfi.dev/os"},
+				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:        []string{"x86_64", "aarch64"},
+				packages:     []string{"wolfi-baselayout"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = <<EOF
+contents:
+  packages:
+    - postgresql-11-oci-entrypoint
+
+# postgresql-11-oci-entrypoint creates /var/lib/postgresql as owned by root
+# So check that apko can build this.
+paths:
+  - path: /var/lib/postgresql/data
+    type: directory
+    uid: 70
+    gid: 70
+    permissions: 777
+EOF
+}
+
+resource "apko_build" "foo" {
+  repo   = %q
+  config = data.apko_config.foo.config
+}
+`, repostr),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
+			),
+		}},
+	})
+}
