@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/chainguard-dev/terraform-provider-oci/pkg/validators"
-	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -19,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/sigstore/cosign/v2/pkg/oci"
 )
 
 var _ resource.Resource = &BuildResource{}
@@ -131,24 +129,19 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 	dig := repo.Digest(digest.String())
 
-	kc := authn.NewMultiKeychain(
-		authn.DefaultKeychain,
-		// TODO: build in cred helpers.
-	)
+	pushable, ok := se.(remote.Taggable)
+	if !ok {
+		resp.Diagnostics.AddError("unexpected type", dig.String())
+		return
+	}
 
-	switch i := se.(type) {
-	case oci.SignedImage:
-		if err := remote.Write(dig, i, remote.WithAuthFromKeychain(kc)); err != nil {
-			resp.Diagnostics.AddError("Error publishing image", err.Error())
-			return
-		}
-	case oci.SignedImageIndex:
-		if err := remote.WriteIndex(dig, i, remote.WithAuthFromKeychain(kc)); err != nil {
-			resp.Diagnostics.AddError("Error publishing index", err.Error())
-			return
-		}
-	default:
-		resp.Diagnostics.AddError("Unexpected type", fmt.Sprintf("%T", se))
+	pusher, err := remote.NewPusher(r.popts.ropts...)
+	if err != nil {
+		resp.Diagnostics.AddError("NewPusher", err.Error())
+		return
+	}
+	if err := pusher.Push(ctx, dig, pushable); err != nil {
+		resp.Diagnostics.AddError("Error publishing "+dig.String(), err.Error())
 		return
 	}
 

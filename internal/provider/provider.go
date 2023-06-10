@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -30,6 +32,7 @@ type ProviderModel struct {
 type ProviderOpts struct {
 	repositories, packages, keyring, archs []string
 	anns                                   map[string]string
+	ropts                                  []remote.Option
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -88,6 +91,23 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		return
 	}
 
+	ropts := []remote.Option{
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithUserAgent("terraform-provider-apko/" + p.version),
+	}
+
+	puller, err := remote.NewPuller(ropts...)
+	if err != nil {
+		resp.Diagnostics.AddError("Configure []remote.Option", err.Error())
+		return
+	}
+	pusher, err := remote.NewPusher(ropts...)
+	if err != nil {
+		resp.Diagnostics.AddError("Configure []remote.Option", err.Error())
+		return
+	}
+	ropts = append(ropts, remote.Reuse(puller), remote.Reuse(pusher))
+
 	opts := &ProviderOpts{
 		// This is only for testing, so we can inject provider config
 		repositories: append(p.repositories, data.ExtraRepositories...),
@@ -95,6 +115,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		keyring:      append(p.keyring, data.ExtraKeyring...),
 		archs:        append(p.archs, data.DefaultArchs...),
 		anns:         combineMaps(p.anns, data.DefaultAnnotations),
+		ropts:        ropts,
 	}
 
 	// Make provider opts available to resources and data sources.
