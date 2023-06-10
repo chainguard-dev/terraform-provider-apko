@@ -14,6 +14,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	ggcrtypes "github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	coci "github.com/sigstore/cosign/v2/pkg/oci"
@@ -61,7 +62,7 @@ type imagesbom struct {
 	predicate     []byte
 }
 
-func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
+func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
 	tempDir, err := os.MkdirTemp("", "apko-*")
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create temporary directory: %w", err)
@@ -98,6 +99,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		}
 
 		errg.Go(func() error {
+			ropts := append(ropts, remote.WithContext(ctx))
+
 			bc.Options.Arch = arch
 
 			if err := bc.Refresh(); err != nil {
@@ -108,7 +111,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 			// set the creation timestamp based on the build-date-epoch.
 			bc.Options.WantSBOM = false
 
-			layerTarGZ, err := bc.BuildLayer()
+			_, layer, err := bc.BuildLayer()
 			if err != nil {
 				return fmt.Errorf("failed to build layer image for %q: %w", arch, err)
 			}
@@ -130,8 +133,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 			}
 
 			_, img, err := oci.PublishImageFromLayer(
-				ctx, layerTarGZ, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
-				tempDir, bc.Options.SBOMFormats, false /* local */, true, /* shouldPushTags */
+				ctx, layer, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
+				false /* local */, true /* shouldPushTags */, []string{} /* tags */, ropts...,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
@@ -214,10 +217,11 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	// Only the v1.Hash is needed, the rest is discarded by apko...
 	finalDigest, _ := name.NewDigest("ubuntu@" + h.String())
 
-	if err := obc.GenerateIndexSBOM(finalDigest, imgs); err != nil {
+	isboms, err := obc.GenerateIndexSBOM(finalDigest, imgs)
+	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("generating index SBOM: %w", err)
 	}
-	content, err := os.ReadFile(filepath.Join(tempDir, "sbom-index.spdx.json"))
+	content, err := os.ReadFile(isboms[0].Path)
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("unable to read index SBOM: %w", err)
 	}

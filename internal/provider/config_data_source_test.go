@@ -20,10 +20,13 @@ func TestAccDataSourceConfig(t *testing.T) {
 			Config: `
 data "apko_config" "this" {
   config_contents = <<EOF
-  archs:
-  - amd64
-  - aarch64
-  EOF
+contents:
+  repositories:
+  - ./packages
+archs:
+- amd64
+- aarch64
+EOF
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
@@ -34,10 +37,13 @@ data "apko_config" "this" {
 			Config: `
 data "apko_config" "this" {
   config_contents = <<EOF
-  archs:
-  - x86_64
-  - arm64
-  EOF
+contents:
+  repositories:
+  - ./packages
+archs:
+- x86_64
+- arm64
+EOF
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),

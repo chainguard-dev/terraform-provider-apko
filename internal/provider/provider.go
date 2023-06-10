@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -91,8 +92,9 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		return
 	}
 
+	kc := authn.NewMultiKeychain(google.Keychain, authn.DefaultKeychain)
 	ropts := []remote.Option{
-		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithAuthFromKeychain(kc),
 		remote.WithUserAgent("terraform-provider-apko/" + p.version),
 	}
 
