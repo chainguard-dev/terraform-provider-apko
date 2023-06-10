@@ -187,25 +187,7 @@ func (r *BuildResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 	data.popts = r.popts
 
-	repo, err := name.NewRepository(data.Repo.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Error parsing repo: %v", err))
-		return
-	}
-
-	digest, _, _, err := doBuild(ctx, *data)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", err.Error())
-		return
-	}
-	dig := repo.Digest(digest.String()).String()
-
-	if dig != data.ImageRef.ValueString() {
-		data.Id = types.StringValue("")
-	} else {
-		data.Id = types.StringValue(dig)
-		data.ImageRef = types.StringValue(dig)
-	}
+	// We "lock" the config and changes to it already require replacement.
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
