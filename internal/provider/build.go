@@ -20,10 +20,11 @@ import (
 	ocimutate "github.com/sigstore/cosign/v2/pkg/oci/mutate"
 	"github.com/sigstore/cosign/v2/pkg/oci/signed"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
-	ic.Contents.Packages = append(ic.Contents.Packages, popts.packages...)
+	ic.Contents.Packages = sets.List(sets.New(ic.Contents.Packages...).Insert(popts.packages...))
 
 	// Normalize the architecture by calling ParseArchitecture.  This is
 	// something sublte that `apko` gets for free because it only accepts yaml
