@@ -217,7 +217,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:2864ef148f9140f1aef312be95fd3cb222df900ed5d99c7447414eafaae31233").String()),
+					repo.Digest("sha256:334f171474bcc4fb81595489998c077d2916514d3296af8c9952a242f9a0d9d3").String()),
 				resource.TestMatchResourceAttr("apko_build.foo", `sboms.amd64.predicate`,
 					// With (these) pinned packages we should see the Unix
 					// epoch because these packages weren't embedding
@@ -258,7 +258,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:18870c5182bf83dec878c0a4ceeb20eddb5d76811b9e5ffd4fdaf4b6a86a48b4").String()),
+					repo.Digest("sha256:592a4628161006424a3c6a2598b5e6b590eb96690a9e710cd156065e9316b81d").String()),
 				resource.TestMatchResourceAttr("apko_build.foo", `sboms.amd64.predicate`,
 					// With (these) pinned packages we should see the build date
 					// from the APKINDEX for wolfi-baselayout which is 1686086025.

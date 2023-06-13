@@ -122,12 +122,12 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	tflog.Trace(ctx, fmt.Sprintf("got keyring: %v", d.popts.keyring))
 
 	// Append any provider-specified repositories, packages, and keys, if specified.
-	ic.Contents.Repositories = append(ic.Contents.Repositories, d.popts.repositories...)
-	ic.Contents.Packages = append(ic.Contents.Packages, d.popts.packages...)
-	ic.Contents.Keyring = append(ic.Contents.Keyring, d.popts.keyring...)
+	ic.Contents.Repositories = sets.List(sets.New(ic.Contents.Repositories...).Insert(d.popts.repositories...))
+	ic.Contents.Packages = sets.List(sets.New(ic.Contents.Packages...).Insert(d.popts.packages...))
+	ic.Contents.Keyring = sets.List(sets.New(ic.Contents.Keyring...).Insert(d.popts.keyring...))
 
 	// Append any extra packages specified in the data source configuration.
-	ic.Contents.Packages = append(ic.Contents.Packages, data.ExtraPackages...)
+	ic.Contents.Packages = sets.List(sets.New(ic.Contents.Packages...).Insert(data.ExtraPackages...))
 
 	// Append any extra annotations specified in the data source or provider configuration.
 	// The YAML config takes precedence, then the data source config, then the provider config.
