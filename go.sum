@@ -548,6 +548,8 @@ github.com/zclconf/go-cty v1.13.1 h1:0a6bRwuiSHtAmqCqNOE+c2oHgepv0ctoxU4FUe43kwc
 github.com/zclconf/go-cty v1.13.1/go.mod h1:YKQzy/7pZ7iq2jNFzy5go57xdxdWoLLpaEp4u238AE0=
 gitlab.alpinelinux.org/alpine/go v0.7.0 h1:N1uWANXNTdu9soAl1eXSs2SQ+gNV4dE0zfJzNG64DeY=
 gitlab.alpinelinux.org/alpine/go v0.7.0/go.mod h1:maZIvJ1++n6Tc3VI+Ta2Sys2OjEmuoXhd92aRzeIjZI=
+gitlab.alpinelinux.org/alpine/go v0.7.1-0.20230613043312-f696350aabb4 h1:4+AOhkYK3ppV5regspb7kzQfXxE48ZeOnL6ThKmwqKc=
+gitlab.alpinelinux.org/alpine/go v0.7.1-0.20230613043312-f696350aabb4/go.mod h1:maZIvJ1++n6Tc3VI+Ta2Sys2OjEmuoXhd92aRzeIjZI=
 go.lsp.dev/uri v0.3.0 h1:KcZJmh6nFIBeJzTugn5JTU6OOyG0lDOo3R9KwTxTYbo=
 go.lsp.dev/uri v0.3.0/go.mod h1:P5sbO1IQR+qySTWOCnhnK7phBx+W3zbLqSMDJNTw88I=
 go.mongodb.org/mongo-driver v1.7.3/go.mod h1:NqaYOwnXWr5Pm7AOpO5QFxKJ503nbMse/R79oO62zWg=

@@ -159,7 +159,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/zclconf/go-cty v1.13.1 // indirect
-	gitlab.alpinelinux.org/alpine/go v0.7.0 // indirect
+	gitlab.alpinelinux.org/alpine/go v0.7.1-0.20230613043312-f696350aabb4 // indirect
 	go.lsp.dev/uri v0.3.0 // indirect
 	go.mongodb.org/mongo-driver v1.11.4 // indirect
 	golang.org/x/build v0.0.0-20230426163615-85f749bdfab4 // indirect
