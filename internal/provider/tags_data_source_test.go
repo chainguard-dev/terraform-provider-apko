@@ -1,11 +1,13 @@
 package provider
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccDataSourceTags(t *testing.T) {
@@ -69,6 +71,15 @@ data "apko_tags" "ko" {
 
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.#", "2"),
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.0", "20230201"),
+				resource.TestCheckFunc(func(s *terraform.State) error {
+					ms := s.RootModule()
+					rs, ok := ms.Resources["data.apko_config.this"]
+					if !ok {
+						return errors.New("asdf")
+					}
+					t.Logf("GOT: %v", rs.Primary.Attributes)
+					return nil
+				}),
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.1", "20230201-r0"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.#", "2"),
