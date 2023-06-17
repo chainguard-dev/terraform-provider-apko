@@ -58,11 +58,14 @@ resource "apko_build" "example" {
 - `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--config))
 - `repo` (String) The name of the container repository to which we should publish the image.
 
+### Optional
+
+- `sboms` (Attributes Map) A map from the APK architecture to the digest for that architecture and its SBOM. (see [below for nested schema](#nestedatt--sboms))
+
 ### Read-Only
 
 - `id` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
 - `image_ref` (String) The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).
-- `sboms` (Map of Object) A map from the APK architecture to the digest for that architecture and its SBOM. (see [below for nested schema](#nestedatt--sboms))
 
 <a id="nestedatt--config"></a>
 ### Nested Schema for `config`
@@ -213,10 +216,11 @@ Required:
 <a id="nestedatt--sboms"></a>
 ### Nested Schema for `sboms`
 
-Read-Only:
+Optional:
 
-- `digest` (String)
-- `predicate` (String)
-- `predicate_type` (String)
+- `digest` (String) The digest of the index or image.
+- `predicate_path` (String) The path to the SBOM contents.
+- `predicate_sha256` (String) The hex-encoded SHA256 hash of the SBOM contents.
+- `predicate_type` (String) The predicate type of the SBOM.
 
 

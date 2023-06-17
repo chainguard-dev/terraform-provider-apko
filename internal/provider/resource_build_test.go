@@ -1,15 +1,22 @@
 package provider
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 	"time"
 
+	"chainguard.dev/apko/pkg/sbom/generator/spdx"
 	ocitesting "github.com/chainguard-dev/terraform-provider-oci/testing"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccResourceApkoBuild(t *testing.T) {
@@ -218,11 +225,39 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
 					repo.Digest("sha256:334f171474bcc4fb81595489998c077d2916514d3296af8c9952a242f9a0d9d3").String()),
-				resource.TestMatchResourceAttr("apko_build.foo", `sboms.amd64.predicate`,
-					// With (these) pinned packages we should see the Unix
+
+				// Check that the build's amd64 predicate exists, the digest
+				// matches, and the creation timestamp is what we expect.
+				resource.TestCheckFunc(func(s *terraform.State) error {
+					ms := s.RootModule()
+					rs, ok := ms.Resources["apko_build.foo"]
+					if !ok {
+						return errors.New("unable to find build resource foo")
+					}
+					path := rs.Primary.Attributes["sboms.amd64.predicate_path"]
+					sbom, err := os.ReadFile(path)
+					if err != nil {
+						return err
+					}
+
+					// Check that the hash matches.
+					rawHash := sha256.Sum256(sbom)
+					if got, want := hex.EncodeToString(rawHash[:]), rs.Primary.Attributes["sboms.amd64.predicate_sha256"]; got != want {
+						return fmt.Errorf("got sha256 %q, wanted %q", got, want)
+					}
+
+					// With (these) pinned packages we should see the UTC Unix
 					// epoch because these packages weren't embedding
 					// build date.
-					regexp.MustCompile(regexp.QuoteMeta(fmt.Sprintf(`"created": %q`, time.Unix(0, 0).UTC().Format(time.RFC3339))))),
+					var doc spdx.Document
+					if err := json.Unmarshal(sbom, &doc); err != nil {
+						return err
+					}
+					if got, want := doc.CreationInfo.Created, time.Unix(0, 0).UTC().Format(time.RFC3339); got != want {
+						return fmt.Errorf("got created %s, wanted %s", got, want)
+					}
+					return nil
+				}),
 			),
 		}},
 	})
@@ -259,10 +294,38 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
 					repo.Digest("sha256:592a4628161006424a3c6a2598b5e6b590eb96690a9e710cd156065e9316b81d").String()),
-				resource.TestMatchResourceAttr("apko_build.foo", `sboms.amd64.predicate`,
+
+				// Check that the build's amd64 predicate exists, the digest
+				// matches, and the creation timestamp is what we expect.
+				resource.TestCheckFunc(func(s *terraform.State) error {
+					ms := s.RootModule()
+					rs, ok := ms.Resources["apko_build.foo"]
+					if !ok {
+						return errors.New("unable to find build resource foo")
+					}
+					path := rs.Primary.Attributes["sboms.amd64.predicate_path"]
+					sbom, err := os.ReadFile(path)
+					if err != nil {
+						return err
+					}
+
+					// Check that the hash matches.
+					rawHash := sha256.Sum256(sbom)
+					if got, want := hex.EncodeToString(rawHash[:]), rs.Primary.Attributes["sboms.amd64.predicate_sha256"]; got != want {
+						return fmt.Errorf("got sha256 %q, wanted %q", got, want)
+					}
+
 					// With (these) pinned packages we should see the build date
 					// from the APKINDEX for wolfi-baselayout which is 1686086025.
-					regexp.MustCompile(regexp.QuoteMeta(fmt.Sprintf(`"created": %q`, time.Unix(1686086025, 0).UTC().Format(time.RFC3339))))),
+					var doc spdx.Document
+					if err := json.Unmarshal(sbom, &doc); err != nil {
+						return err
+					}
+					if got, want := doc.CreationInfo.Created, time.Unix(1686086025, 0).UTC().Format(time.RFC3339); got != want {
+						return fmt.Errorf("got created %s, wanted %s", got, want)
+					}
+					return nil
+				}),
 			),
 		}},
 	})
