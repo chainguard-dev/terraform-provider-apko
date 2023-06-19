@@ -46,7 +46,10 @@ var digestSBOMSchema = basetypes.ObjectType{
 	AttrTypes: map[string]attr.Type{
 		"digest":         basetypes.StringType{},
 		"predicate_type": basetypes.StringType{},
-		"predicate":      basetypes.StringType{},
+		// TODO(mattmoor): is there a way to designate this path's value as
+		// unimportant for the purposes of planning?
+		"predicate_path":   basetypes.StringType{},
+		"predicate_sha256": basetypes.StringType{},
 	},
 }
 
@@ -99,10 +102,39 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
 				Computed:            true,
 			},
-			"sboms": schema.MapAttribute{
+			"sboms": schema.MapNestedAttribute{
 				MarkdownDescription: "A map from the APK architecture to the digest for that architecture and its SBOM.",
 				Computed:            true,
-				ElementType:         digestSBOMSchema,
+				Optional:            true,
+				Required:            false,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"digest": schema.StringAttribute{
+							MarkdownDescription: "The digest of the index or image.",
+							Computed:            true,
+							Optional:            true,
+							Required:            false,
+						},
+						"predicate_type": schema.StringAttribute{
+							MarkdownDescription: "The predicate type of the SBOM.",
+							Computed:            true,
+							Optional:            true,
+							Required:            false,
+						},
+						"predicate_path": schema.StringAttribute{
+							MarkdownDescription: "The path to the SBOM contents.",
+							Computed:            true,
+							Optional:            true,
+							Required:            false,
+						},
+						"predicate_sha256": schema.StringAttribute{
+							MarkdownDescription: "The hex-encoded SHA256 hash of the SBOM contents.",
+							Computed:            true,
+							Optional:            true,
+							Required:            false,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -151,9 +183,10 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 	sbv := make(map[string]attr.Value, len(sboms))
 	for k, v := range sboms {
 		val, diags := types.ObjectValue(digestSBOMSchema.AttrTypes, map[string]attr.Value{
-			"digest":         types.StringValue(repo.Digest(v.imageHash.String()).String()),
-			"predicate_type": types.StringValue(v.predicateType),
-			"predicate":      types.StringValue(string(v.predicate)),
+			"digest":           types.StringValue(repo.Digest(v.imageHash.String()).String()),
+			"predicate_type":   types.StringValue(v.predicateType),
+			"predicate_path":   types.StringValue(string(v.predicatePath)),
+			"predicate_sha256": types.StringValue(string(v.predicateSHA256)),
 		})
 		resp.Diagnostics = append(resp.Diagnostics, diags...)
 		if diags.HasError() {

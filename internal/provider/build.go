@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -58,9 +60,10 @@ func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (
 }
 
 type imagesbom struct {
-	imageHash     v1.Hash
-	predicateType string
-	predicate     []byte
+	imageHash       v1.Hash
+	predicateType   string
+	predicatePath   string
+	predicateSHA256 string
 }
 
 func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
@@ -144,16 +147,31 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 			if err != nil {
 				return fmt.Errorf("unable to compute digest for %q: %w", arch, err)
 			}
-			content, err := os.ReadFile(filepath.Join(tempDir, fmt.Sprintf("sbom-%s.spdx.json", arch.ToAPK())))
+
+			// Move the sbom to a temporary file outside of the directory we
+			// plan to clean up, so that it outlives the evaluation of this
+			// build resource.
+			sbomPath := filepath.Join(tempDir, fmt.Sprintf("sbom-%s.spdx.json", arch.ToAPK()))
+			f, err := os.CreateTemp("", "sbom-*.spdx.json")
+			if err != nil {
+				return fmt.Errorf("unable to create temporary file for sbom: %w", err)
+			}
+			defer f.Close()
+			content, err := os.ReadFile(sbomPath)
 			if err != nil {
 				return fmt.Errorf("unable to read SBOM %q: %w", arch, err)
 			}
+			if _, err := f.Write(content); err != nil {
+				return err
+			}
+			hash := sha256.Sum256(content)
 
 			imgs[arch] = img
 			sboms[arch.String()] = imagesbom{
-				imageHash:     h,
-				predicateType: "https://spdx.dev/Document",
-				predicate:     content,
+				imageHash:       h,
+				predicateType:   "https://spdx.dev/Document",
+				predicatePath:   f.Name(),
+				predicateSHA256: hex.EncodeToString(hash[:]),
 			}
 			return nil
 		})
@@ -222,14 +240,30 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("generating index SBOM: %w", err)
 	}
-	content, err := os.ReadFile(isboms[0].Path)
+
+	// Move the sbom to a temporary file outside of the directory we
+	// plan to clean up, so that it outlives the evaluation of this
+	// build resource.
+	sbomPath := isboms[0].Path
+	f, err := os.CreateTemp("", "sbom-*.spdx.json")
+	if err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("unable to create temporary file for sbom: %w", err)
+	}
+	defer f.Close()
+	content, err := os.ReadFile(sbomPath)
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("unable to read index SBOM: %w", err)
 	}
+	if _, err := f.Write(content); err != nil {
+		return v1.Hash{}, nil, nil, err
+	}
+	hash := sha256.Sum256(content)
+
 	sboms["index"] = imagesbom{
-		imageHash:     h,
-		predicateType: "https://spdx.dev/Document",
-		predicate:     content,
+		imageHash:       h,
+		predicateType:   "https://spdx.dev/Document",
+		predicatePath:   f.Name(),
+		predicateSHA256: hex.EncodeToString(hash[:]),
 	}
 	return h, idx, sboms, nil
 }
