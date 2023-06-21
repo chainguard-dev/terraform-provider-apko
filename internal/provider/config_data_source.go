@@ -138,8 +138,8 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		if len(d.popts.archs) != 0 {
 			ic.Archs = apkotypes.ParseArchitectures(d.popts.archs)
 		} else {
-			// Default to host arch when provider and config data source don't specify any.
-			ic.Archs = apkotypes.ParseArchitectures([]string{"host"})
+			// Default to all archs when provider and config data source don't specify any.
+			ic.Archs = apkotypes.AllArchs
 		}
 	}
 
