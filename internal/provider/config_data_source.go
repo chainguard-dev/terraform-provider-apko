@@ -60,7 +60,6 @@ func (d *ConfigDataSource) Metadata(ctx context.Context, req datasource.Metadata
 }
 
 func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "This reads an apko configuration file into a structured form.",
 		Attributes: map[string]schema.Attribute{
@@ -138,6 +137,9 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if len(ic.Archs) == 0 {
 		if len(d.popts.archs) != 0 {
 			ic.Archs = apkotypes.ParseArchitectures(d.popts.archs)
+		} else {
+			// Default to all archs when provider and config data source don't specify any.
+			ic.Archs = apkotypes.AllArchs
 		}
 	}
 
