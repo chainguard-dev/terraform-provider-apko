@@ -35,9 +35,14 @@ jobs:
         terraform_version: '1.3.*'
         terraform_wrapper: false
 
+    - uses: chainguard-dev/actions/setup-registry@main
+      with:
+        port: 5000
+        disk: true
+
     - working-directory: images
       env:
-        TF_VAR_target_repository: ttl.sh/tf-apko
+        TF_VAR_target_repository: localhost:5000/tf-apko
       run: |
         terraform init
 
