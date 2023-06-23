@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"chainguard.dev/apko/pkg/build"
 	"chainguard.dev/apko/pkg/build/oci"
@@ -91,9 +92,8 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 
 	var errg errgroup.Group
 	imgs := make(map[types.Architecture]coci.SignedImage, len(obc.ImageConfiguration.Archs))
-
 	sboms := make(map[string]imagesbom, len(obc.ImageConfiguration.Archs)+1)
-
+	var mu sync.Mutex
 	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
 
@@ -166,6 +166,8 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 			}
 			hash := sha256.Sum256(content)
 
+			mu.Lock()
+			defer mu.Unlock()
 			imgs[arch] = img
 			sboms[arch.String()] = imagesbom{
 				imageHash:       h,

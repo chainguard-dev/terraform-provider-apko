@@ -43,4 +43,5 @@ jobs:
 
     - run: go mod download
     - run: go build -v .
+    # TODO(jason): Enable -race
     - run: TF_ACC=1 go test -v -cover ./internal/provider/
