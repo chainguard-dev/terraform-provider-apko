@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"chainguard.dev/apko/pkg/build"
 	"chainguard.dev/apko/pkg/build/oci"
@@ -25,13 +26,6 @@ import (
 
 func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
 	ic.Contents.Packages = sets.List(sets.New(ic.Contents.Packages...).Insert(popts.packages...))
-
-	// Normalize the architecture by calling ParseArchitecture.  This is
-	// something sublte that `apko` gets for free because it only accepts yaml
-	// and the yaml parsing normalizes things.
-	for i, arch := range ic.Archs {
-		ic.Archs[i] = types.ParseArchitecture(arch.String())
-	}
 
 	bc, err := build.New(wd,
 		build.WithImageConfiguration(ic),
@@ -77,6 +71,13 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 	tflog.Trace(ctx, fmt.Sprintf("Got image configuration: %#v", ic))
 
+	// Normalize the architecture by calling ParseArchitecture.  This is
+	// something sublte that `apko` gets for free because it only accepts yaml
+	// and the yaml parsing normalizes things.
+	for i, arch := range ic.Archs {
+		ic.Archs[i] = types.ParseArchitecture(arch.String())
+	}
+
 	// Parse things once to determine the architectures to build from
 	// the config.
 	obc, err := fromImageData(ic, data.popts, workDir)
@@ -87,9 +88,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 	var errg errgroup.Group
 	imgs := make(map[types.Architecture]coci.SignedImage, len(obc.ImageConfiguration.Archs))
-
 	sboms := make(map[string]imagesbom, len(obc.ImageConfiguration.Archs)+1)
-
+	var mu sync.Mutex
 	for _, arch := range obc.ImageConfiguration.Archs {
 		arch := arch
 
@@ -146,6 +146,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 				return fmt.Errorf("unable to read SBOM %q: %w", arch, err)
 			}
 
+			mu.Lock()
+			defer mu.Unlock()
 			imgs[arch] = img
 			sboms[arch.String()] = imagesbom{
 				imageHash:     h,
