@@ -27,6 +27,13 @@ import (
 func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
 	ic.Contents.Packages = sets.List(sets.New(ic.Contents.Packages...).Insert(popts.packages...))
 
+	// Normalize the architecture by calling ParseArchitecture.  This is
+	// something sublte that `apko` gets for free because it only accepts yaml
+	// and the yaml parsing normalizes things.
+	for i, arch := range ic.Archs {
+		ic.Archs[i] = types.ParseArchitecture(arch.String())
+	}
+
 	bc, err := build.New(wd,
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
@@ -70,13 +77,6 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	}
 
 	tflog.Trace(ctx, fmt.Sprintf("Got image configuration: %#v", ic))
-
-	// Normalize the architecture by calling ParseArchitecture.  This is
-	// something sublte that `apko` gets for free because it only accepts yaml
-	// and the yaml parsing normalizes things.
-	for i, arch := range ic.Archs {
-		ic.Archs[i] = types.ParseArchitecture(arch.String())
-	}
 
 	// Parse things once to determine the architectures to build from
 	// the config.

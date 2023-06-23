@@ -176,13 +176,6 @@ func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) (
 	}
 	defer os.RemoveAll(workDir)
 
-	// Normalize the architecture by calling ParseArchitecture.  This is
-	// something subtle that `apko` gets for free because it only accepts yaml
-	// and the yaml parsing normalizes things.
-	for i, arch := range ic.Archs {
-		ic.Archs[i] = apkotypes.ParseArchitecture(arch.String())
-	}
-
 	eg := errgroup.Group{}
 	archs := make([]resolved, len(ic.Archs))
 	for i, arch := range ic.Archs {
