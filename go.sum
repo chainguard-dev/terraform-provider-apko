@@ -1,5 +1,5 @@
-chainguard.dev/apko v0.8.1-0.20230614194955-dc7ac85e1ac6 h1:pD9UiXyI261UjlPZLb8eqNb2+nHFxB2P+ynA4D0Q020=
-chainguard.dev/apko v0.8.1-0.20230614194955-dc7ac85e1ac6/go.mod h1:yniNL9VLVS19ZbIb9BBfI7kZQcRq1mHRzgdQuMMBqm0=
+chainguard.dev/apko v0.8.1-0.20230624215248-a751f0e540e2 h1:McZSAy+ErFMeLXOfCvgUkCSX9eJnNfLwdrqc2sSE3Xg=
+chainguard.dev/apko v0.8.1-0.20230624215248-a751f0e540e2/go.mod h1:ZtH/hF+7MVAzLyHMg+JmguNxGtk5DjMmtc0lw+4gWbs=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go/compute v1.19.1 h1:am86mquDUgjGNWxiGn+5PGLbmgiWXlE/yNWpIpNvuXY=
 cloud.google.com/go/compute v1.19.1/go.mod h1:6ylj3a05WF8leseCdIf77NK0g1ey+nj5IKd5/kvShxE=
@@ -48,10 +48,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
-github.com/chainguard-dev/go-apk v0.0.0-20230615021040-3632f56a6092 h1:x/KGwBpjVt+c4Kx00iL/s1fSoZvoefHwdmeAVIFmqYY=
-github.com/chainguard-dev/go-apk v0.0.0-20230615021040-3632f56a6092/go.mod h1:KBJLhDSM8/TcjL+N0y0pFCos35KqkIMOytkFyw+aJSQ=
-github.com/chainguard-dev/go-apk v0.0.0-20230623221358-f867b780f14b h1:OM8bGocVHI63Dn2o1HOTkdNBxB16+bloOrmBUodfcHc=
-github.com/chainguard-dev/go-apk v0.0.0-20230623221358-f867b780f14b/go.mod h1:koN42sGqNZ9A37tc2/yFVKPpT9c5nDIcOjjxG0AWMls=
+github.com/chainguard-dev/go-apk v0.0.0-20230624211543-feec2b17ac2c h1:VHivcT15SPM1LIfluh9A4X2mNUj3zT/YvZ7qnmRLJ+I=
+github.com/chainguard-dev/go-apk v0.0.0-20230624211543-feec2b17ac2c/go.mod h1:koN42sGqNZ9A37tc2/yFVKPpT9c5nDIcOjjxG0AWMls=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4 h1:BgGdE7eT3z1dEvpcNld9HiUyIF4EUMW51e6YQE0Kay8=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4/go.mod h1:sGjXlGpddLYEZx9i8dkxiEanQL0hLAiEaddsxj3gaoc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
