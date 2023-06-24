@@ -222,5 +222,3 @@ Optional:
 - `predicate_path` (String) The path to the SBOM contents.
 - `predicate_sha256` (String) The hex-encoded SHA256 hash of the SBOM contents.
 - `predicate_type` (String) The predicate type of the SBOM.
-
-

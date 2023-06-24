@@ -168,5 +168,3 @@ Required:
 - `source` (String)
 - `type` (String)
 - `uid` (Number)
-
-
