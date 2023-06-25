@@ -36,7 +36,7 @@ func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (
 	for _, pkg := range sets.List(pkgs) {
 		name := pkg
 		// The function we want from go-apk is private, but these are all the
-		// special characters that delimit the package name from the cosntraint
+		// special characters that delimit the package name from the constraint
 		// so lop off the package name and stick the rest of the constraint into
 		// the versions map.
 		if idx := strings.IndexAny(pkg, "=<>~"); idx >= 0 {
