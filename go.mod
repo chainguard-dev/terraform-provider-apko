@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	chainguard.dev/apko v0.8.1-0.20230624215248-a751f0e540e2
-	github.com/chainguard-dev/terraform-provider-oci v0.0.4
+	github.com/chainguard-dev/terraform-provider-oci v0.0.5
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.15.2
 	github.com/hashicorp/terraform-plugin-docs v0.15.0
@@ -20,7 +20,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.19.1 // indirect
+	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
