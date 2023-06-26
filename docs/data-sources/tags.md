@@ -43,6 +43,7 @@ Required:
 - `paths` (List of Object) (see [below for nested schema](#nestedobjatt--config--paths))
 - `stop-signal` (String)
 - `vcs-url` (String)
+- `volumes` (List of String)
 - `work-dir` (String)
 
 <a id="nestedobjatt--config--accounts"></a>

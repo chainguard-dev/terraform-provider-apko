@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 
 	"chainguard.dev/apko/pkg/build"
@@ -28,7 +29,22 @@ import (
 )
 
 func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
-	ic.Contents.Packages = sets.List(sets.New(ic.Contents.Packages...).Insert(popts.packages...))
+	// Deduplicate any of the extra packages against their potentially resolved
+	// form in the actual image list.
+	pkgs := sets.New(ic.Contents.Packages...)
+	extraPkgs := sets.New(popts.packages...)
+	for _, pkg := range sets.List(pkgs) {
+		name := pkg
+		// The function we want from go-apk is private, but these are all the
+		// special characters that delimit the package name from the constraint
+		// so lop off the package name and stick the rest of the constraint into
+		// the versions map.
+		if idx := strings.IndexAny(pkg, "=<>~"); idx >= 0 {
+			name = pkg[:idx]
+		}
+		extraPkgs.Delete(name)
+	}
+	ic.Contents.Packages = sets.List(pkgs.Union(extraPkgs))
 
 	// Normalize the architecture by calling ParseArchitecture.  This is
 	// something sublte that `apko` gets for free because it only accepts yaml
@@ -125,7 +141,6 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 			if bc.Options.SourceDateEpoch, err = bc.GetBuildDateEpoch(); err != nil {
 				return fmt.Errorf("failed to determine build date epoch: %w", err)
 			}
-			bc.Options.SourceDateEpoch = bc.Options.SourceDateEpoch.UTC()
 			// Adjust the index's builder to track the most recent BDE.
 			if bc.Options.SourceDateEpoch.After(obc.Options.SourceDateEpoch) {
 				obc.Options.SourceDateEpoch = bc.Options.SourceDateEpoch
@@ -194,7 +209,15 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 		}
 	}
 
-	idx := signed.ImageIndex(mutate.IndexMediaType(empty.Index, ggcrtypes.OCIImageIndex))
+	idx := signed.ImageIndex(
+		mutate.IndexMediaType(
+			mutate.Annotations(
+				empty.Index,
+				ic.Annotations,
+			).(v1.ImageIndex),
+			ggcrtypes.OCIImageIndex,
+		),
+	)
 	archs := make([]types.Architecture, 0, len(imgs))
 	for arch := range imgs {
 		archs = append(archs, arch)
