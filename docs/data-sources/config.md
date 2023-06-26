@@ -170,5 +170,3 @@ Read-Only:
 - `source` (String)
 - `type` (String)
 - `uid` (Number)
-
-
