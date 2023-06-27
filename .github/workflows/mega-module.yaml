@@ -5,6 +5,11 @@ on:
   push:
     branches: ['main']
 
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
 concurrency:
   group: presubmit-build-${{ github.head_ref }}
   cancel-in-progress: true
@@ -14,6 +19,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: chainguard-dev/actions/setup-chainctl@main
+      with:
+        # This allows chainguard-dev/terraform-provider-apko to push images to chainreg.biz/tf-apko.pub
+        # We maintain this identity here:
+        # https://github.com/chainguard-dev/mono/blob/main/env/chainguard-staging/iac/chainguard-public.tf
+        environment: chainops.dev
+        identity: 7bd3499071c496a9d1dc27156fedf9a5b82cfe4a/6689fc1916e8bf87
+
     - uses: actions/setup-go@v4
       with:
         go-version: '1.20'
@@ -42,7 +55,7 @@ jobs:
 
     - working-directory: images
       env:
-        TF_VAR_target_repository: registry.local:5000/tf-apko
+        TF_VAR_target_repository: chainreg.biz/tf-apko.pub
       run: |
         terraform init
 
