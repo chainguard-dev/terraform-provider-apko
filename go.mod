@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.19
 
 require (
-	chainguard.dev/apko v0.8.1-0.20230624215248-a751f0e540e2
+	chainguard.dev/apko v0.9.0
 	github.com/chainguard-dev/terraform-provider-oci v0.0.4
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.15.2
@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.16.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.3.0
-	github.com/sigstore/cosign/v2 v2.1.0
+	github.com/sigstore/cosign/v2 v2.1.1
 	golang.org/x/sync v0.3.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.27.3
@@ -35,7 +35,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/chainguard-dev/go-apk v0.0.0-20230624211543-feec2b17ac2c // indirect
+	github.com/chainguard-dev/go-apk v0.0.0-20230630173347-b8abc44cc8ca // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
@@ -73,6 +73,7 @@ require (
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.10 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/hc-install v0.5.2 // indirect
@@ -117,7 +118,7 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sigstore/rekor v1.2.2-0.20230530122220-67cc9e58bd23 // indirect
-	github.com/sigstore/sigstore v1.7.0 // indirect
+	github.com/sigstore/sigstore v1.7.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.1.1 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
