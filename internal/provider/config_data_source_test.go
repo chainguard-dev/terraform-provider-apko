@@ -408,7 +408,10 @@ func TestUnify(t *testing.T) {
 			"foo=1.2.3",
 		},
 		wantDiag: []diag.Diagnostic{
-			diag.NewWarningDiagnostic("unable to lock certain packages", "[bar]"),
+			diag.NewErrorDiagnostic(
+				`Unable to lock package "bar" to a consistent version`,
+				"2.4.6-r0 (amd64), 2.4.6-r1 (arm64)",
+			),
 		},
 	}, {
 		name:      "mismatched direct dependency (with constraint)",
@@ -439,7 +442,10 @@ func TestUnify(t *testing.T) {
 			"foo=1.2.3",
 		},
 		wantDiag: []diag.Diagnostic{
-			diag.NewWarningDiagnostic("unable to lock certain packages", "[bar]"),
+			diag.NewErrorDiagnostic(
+				`Unable to lock package "bar" to a consistent version`,
+				"2.4.6-r0 (amd64), 2.4.6-r1 (arm64)",
+			),
 		},
 	}, {
 		name:      "single-architecture resolved dependency",

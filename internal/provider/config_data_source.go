@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	apkotypes "chainguard.dev/apko/pkg/build/types"
@@ -297,10 +298,10 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 		}
 	}
 
-	var warn diag.Diagnostics
+	var diagnostics diag.Diagnostics
 
 	// Compute the set of original packages that are missing from our locked
-	// configuration.
+	// configuration, and turn them into errors.
 	missing := originalPackages.packages.Difference(acc.packages)
 	if missing.Len() > 0 {
 		for _, provider := range acc.provided {
@@ -317,11 +318,27 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 		}
 		// There are still things missing even factoring in "provided" packages.
 		if missing.Len() > 0 {
-			// Append a warning diagnostic with the packages we were unable to lock.
-			warn = append(warn, diag.NewWarningDiagnostic(
-				"unable to lock certain packages",
-				fmt.Sprint(sets.List(missing)),
-			))
+			for _, pkg := range sets.List(missing) {
+				s := make(map[string]sets.Set[string], 2)
+				for _, in := range inputs {
+					set, ok := s[in.versions[pkg]]
+					if !ok {
+						set = sets.New[string]()
+					}
+					set.Insert(in.arch)
+					s[in.versions[pkg]] = set
+				}
+				versionClusters := make([]string, 0, len(s))
+				for k, v := range s {
+					versionClusters = append(versionClusters, fmt.Sprintf("%s (%s)", k, strings.Join(sets.List(v), ", ")))
+				}
+				sort.Strings(versionClusters)
+				// Append an error diagnostic with the packages we were unable to lock.
+				diagnostics = append(diagnostics, diag.NewErrorDiagnostic(
+					fmt.Sprintf("Unable to lock package %q to a consistent version", pkg),
+					strings.Join(versionClusters, ", "),
+				))
+			}
 		}
 	}
 
@@ -351,14 +368,14 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 	for _, input := range inputs {
 		missingHere := input.packages.Difference(acc.packages).Difference(missing)
 		if missingHere.Len() > 0 {
-			warn = append(warn, diag.NewWarningDiagnostic(
+			diagnostics = append(diagnostics, diag.NewWarningDiagnostic(
 				fmt.Sprintf("unable to lock certain packages for %s", input.arch),
 				fmt.Sprint(sets.List(missingHere)),
 			))
 		}
 	}
 
-	return pl, warn
+	return pl, diagnostics
 }
 
 // Copied from go-apk's version.go
