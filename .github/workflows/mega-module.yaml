@@ -54,4 +54,9 @@ jobs:
         }
         EOF
 
-        terraform apply -auto-approve
+        terraform apply -auto-approve \
+          -target=module.go \
+          -target=module.jdk \
+          -target=module.python \
+          -target=module.kubernetes \
+          -target=module.k3s
