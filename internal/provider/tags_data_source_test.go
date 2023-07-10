@@ -84,3 +84,65 @@ data "apko_tags" "ko" {
 		}},
 	})
 }
+
+func TestAccDataSourceTags_Disabled(t *testing.T) {
+	t.Setenv("TF_APKO_DISABLE_VERSION_TAGS", "anything")
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://packages.wolfi.dev/os"},
+				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:        []string{"x86_64", "aarch64"},
+				packages:     []string{"wolfi-baselayout=20230201-r0"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: `
+data "apko_config" "this" {
+  config_contents = <<EOF
+contents:
+  packages:
+  - ca-certificates-bundle=20230506-r0
+  - glibc-locale-posix=2.37-r6
+  - ko=0.13.0-r3
+EOF
+  extra_packages = ["tzdata=2023c-r0"]
+}
+
+data "apko_tags" "ca-certs" {
+  config         = data.apko_config.this.config
+  target_package = "ca-certificates-bundle"
+}
+
+data "apko_tags" "glibc" {
+  config         = data.apko_config.this.config
+  target_package = "glibc-locale-posix"
+}
+
+data "apko_tags" "wolfi-baselayout" {
+  config         = data.apko_config.this.config
+  target_package = "wolfi-baselayout"
+}
+
+data "apko_tags" "tzdata" {
+  config         = data.apko_config.this.config
+  target_package = "tzdata"
+}
+
+data "apko_tags" "ko" {
+  config         = data.apko_config.this.config
+  target_package = "ko"
+}
+`,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.#", "0"),
+				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.#", "0"),
+				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.#", "0"),
+				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.#", "0"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.#", "0"),
+			),
+		}},
+	})
+}
