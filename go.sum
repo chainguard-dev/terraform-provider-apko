@@ -50,8 +50,8 @@ github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/chainguard-dev/go-apk v0.0.0-20230630173347-b8abc44cc8ca h1:g7/vJI92M86VPfiIWd9We4+Y3ptj1T0CaAsQGZcV4ho=
 github.com/chainguard-dev/go-apk v0.0.0-20230630173347-b8abc44cc8ca/go.mod h1:4oM1wL0ag+5GmaQcGwnhP3dbyPt4iu21laDovCf/t3s=
-github.com/chainguard-dev/terraform-provider-oci v0.0.4 h1:BgGdE7eT3z1dEvpcNld9HiUyIF4EUMW51e6YQE0Kay8=
-github.com/chainguard-dev/terraform-provider-oci v0.0.4/go.mod h1:sGjXlGpddLYEZx9i8dkxiEanQL0hLAiEaddsxj3gaoc=
+github.com/chainguard-dev/terraform-provider-oci v0.0.6 h1:xpDFkAaa7aWBawpdajIOuEdR5drr0tWetbb/+YleH2s=
+github.com/chainguard-dev/terraform-provider-oci v0.0.6/go.mod h1:eDYZ9KaIzsCh0hoUhADShcJi6qiMiAhLmdsb8rHAIts=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudflare/circl v1.3.3 h1:fE/Qz0QdIGqeWfnwq0RE0R7MI51s0M2E4Ga9kq5AEMs=
 github.com/cloudflare/circl v1.3.3/go.mod h1:5XYMA4rFBvNIrhs50XuiBJ15vF2pZn4nnUKZrLbUZFA=
