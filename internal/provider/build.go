@@ -131,7 +131,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 			// set the creation timestamp based on the build-date-epoch.
 			bc.Options.WantSBOM = false
 
-			_, layer, err := bc.BuildLayer()
+			_, layer, err := bc.BuildLayer(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to build layer image for %q: %w", arch, err)
 			}
@@ -147,7 +147,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 			}
 
 			// Explicitly generate the SBOM after the BDE calculation
-			if err := bc.GenerateSBOM(); err != nil {
+			if err := bc.GenerateSBOM(ctx); err != nil {
 				return fmt.Errorf("failed to determine build date epoch: %w", err)
 			}
 
@@ -261,7 +261,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 	// Only the v1.Hash is needed, the rest is discarded by apko...
 	finalDigest, _ := name.NewDigest("ubuntu@" + h.String())
 
-	isboms, err := obc.GenerateIndexSBOM(finalDigest, imgs)
+	isboms, err := obc.GenerateIndexSBOM(ctx, finalDigest, imgs)
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("generating index SBOM: %w", err)
 	}

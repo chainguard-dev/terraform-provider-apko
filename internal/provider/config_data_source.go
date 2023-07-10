@@ -151,7 +151,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Resolve the package list to specific versions (as much as we can with
 	// multi-arch), and overwrite the package list in the ImageConfiguration.
-	pl, diags := d.resolvePackageList(ic)
+	pl, diags := d.resolvePackageList(ctx, ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
 		return
@@ -172,7 +172,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
+func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
 	workDir, err := os.MkdirTemp("", "apko-*")
 	if err != nil {
 		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to create temp directory", err.Error())}
@@ -193,7 +193,7 @@ func (d *ConfigDataSource) resolvePackageList(ic apkotypes.ImageConfiguration) (
 			// Determine the exact versions of our transitive packages and lock them
 			// down in the "resolved" configuration, so that this build may be
 			// reproduced exactly.
-			pkgs, _, err := bc.BuildPackageList()
+			pkgs, _, err := bc.BuildPackageList(ctx)
 			if err != nil {
 				return err
 			}
