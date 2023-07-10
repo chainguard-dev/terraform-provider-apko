@@ -61,3 +61,7 @@ jobs:
           -target=module.python \
           -target=module.kubernetes \
           -target=module.k3s
+
+      - name: Collect diagnostics and upload
+        if: ${{ failure() }}
+        uses: chainguard-dev/actions/kind-diag@main
