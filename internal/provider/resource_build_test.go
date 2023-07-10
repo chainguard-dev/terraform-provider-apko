@@ -224,7 +224,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:3cf315a06325088c5a7700de3d47b6968ce0b7d989e880f5eac42e9eb839b147").String()),
+					repo.Digest("sha256:73959382142e5648feb87ccaa0acc69628fa9b650927642a1583af71eb9e29ae").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -293,7 +293,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:6a6e35c9a21b379a2cf01a94e817f206a5d5d305697b5ade8570c722ca0790b1").String()),
+					repo.Digest("sha256:9c760d149b6ed269e9cf0f8c5d1dee810806c0805034ef4ba98e5ccb45bcd4f8").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
