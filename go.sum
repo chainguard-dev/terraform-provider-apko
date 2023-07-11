@@ -48,8 +48,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
-github.com/chainguard-dev/go-apk v0.0.0-20230710184020-fc67db83c51b h1:fp080fWFQ6OwdZXlL+zYZazGlfq/2EXzEOiK1ZxvKVo=
-github.com/chainguard-dev/go-apk v0.0.0-20230710184020-fc67db83c51b/go.mod h1:woT/bFOpXAUI8PgmogdS4IPPwdNdfhg8XnNQeA+R7j8=
+github.com/chainguard-dev/go-apk v0.0.0-20230711105949-584bc52abd9a h1:RjRNrJc3NjKjY7s9P3AWxlirqHcQJC/56NzfGsqPos0=
+github.com/chainguard-dev/go-apk v0.0.0-20230711105949-584bc52abd9a/go.mod h1:gPcrO0DOixwEmiPNZE+vafU/O/1jppdfNutTtyVZCBo=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4 h1:BgGdE7eT3z1dEvpcNld9HiUyIF4EUMW51e6YQE0Kay8=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4/go.mod h1:sGjXlGpddLYEZx9i8dkxiEanQL0hLAiEaddsxj3gaoc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -294,6 +294,8 @@ github.com/klauspost/compress v1.16.7 h1:2mk3MPGNzKyxErAw8YaohYh69+pa4sIQSC0fPGC
 github.com/klauspost/compress v1.16.7/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/klauspost/pgzip v1.2.5 h1:qnWYvvKqedOF2ulHpMG72XQol4ILEJ8k2wwRl/Km8oE=
 github.com/klauspost/pgzip v1.2.5/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
+github.com/klauspost/readahead v1.4.0 h1:w4hQ3BpdLjBnRQkZyNi+nwdHU7eGP9buTexWK9lU7gY=
+github.com/klauspost/readahead v1.4.0/go.mod h1:7bolpMKhT5LKskLwYXGSDOyA2TYtMFgdgV0Y8gy7QhA=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
