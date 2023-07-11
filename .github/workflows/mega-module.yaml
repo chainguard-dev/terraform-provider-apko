@@ -9,6 +9,29 @@ concurrency:
   group: presubmit-build-${{ github.head_ref }}
   cancel-in-progress: true
 
+permissions:
+  # WARNING: This is mattmoor being a bit *too* clever.
+  # We want to be able to test the reproducibility of things via the upstream
+  # check-reproducibility test, which requires ambient credentials, but those
+  # are only available to pull requests under two circumstances:
+  #  1. The trigger is `pull_request_target`, and
+  #  2. The pull request is from a branch on the main repo.
+  # However, this doesn't cause things to fail when the pull request is from a
+  # fork, it will just make the tf-cosign rules NOPs and the
+  # check-repoducibility skip.
+  #
+  # But why not just use pull_request_target?
+  # This is because to pull in breaking changes to apko, we will need to update
+  # our apko Go dependency and the APKO_IMAGE (below) in the same PR, and the
+  # latter cannot be checked with the former if the workflow is
+  # pull_request_target.
+  #
+  # All of that said, dependabot and digestabot PRs come from branches on the
+  # main repo, so the net effect of this SHOULD be that we get an error
+  # presubmit when digestabot wants to pull in an update that is not
+  # reproducible with the version of the apko Go library we depend on.
+  id-token: write
+
 jobs:
   build-the-world:
     runs-on: ubuntu-latest
