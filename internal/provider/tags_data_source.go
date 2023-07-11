@@ -91,7 +91,7 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	if _, set := os.LookupEnv("TF_APKO_DISABLE_VERSION_TAGS"); set {
 		resp.Diagnostics.AddWarning("Version tags disabled", "Version tags are disabled using TF_APKO_DISABLE_VERSION_TAGS environment variable")
 		data.Tags = []string{}
-		data.Id = types.StringValue("")
+		data.Id = types.StringValue("disabled")
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
