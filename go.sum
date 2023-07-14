@@ -48,8 +48,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
-github.com/chainguard-dev/go-apk v0.0.0-20230711105949-584bc52abd9a h1:RjRNrJc3NjKjY7s9P3AWxlirqHcQJC/56NzfGsqPos0=
-github.com/chainguard-dev/go-apk v0.0.0-20230711105949-584bc52abd9a/go.mod h1:gPcrO0DOixwEmiPNZE+vafU/O/1jppdfNutTtyVZCBo=
+github.com/chainguard-dev/go-apk v0.0.0-20230714165727-30eb178cd770 h1:9P/slEFgF7UbO11khR/vZzm+rZ7UckUSa+DUJtaTXJM=
+github.com/chainguard-dev/go-apk v0.0.0-20230714165727-30eb178cd770/go.mod h1:gPcrO0DOixwEmiPNZE+vafU/O/1jppdfNutTtyVZCBo=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4 h1:BgGdE7eT3z1dEvpcNld9HiUyIF4EUMW51e6YQE0Kay8=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4/go.mod h1:sGjXlGpddLYEZx9i8dkxiEanQL0hLAiEaddsxj3gaoc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
