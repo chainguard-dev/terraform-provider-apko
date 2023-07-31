@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.20
 
 require (
-	chainguard.dev/apko v0.9.1-0.20230710174133-346ce048edec
+	chainguard.dev/apko v0.10.0
 	github.com/chainguard-dev/terraform-provider-oci v0.0.4
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.15.2
@@ -33,7 +33,6 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/chainguard-dev/go-apk v0.0.0-20230714165727-30eb178cd770 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
