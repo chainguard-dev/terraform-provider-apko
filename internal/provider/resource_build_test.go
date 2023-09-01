@@ -224,7 +224,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:73959382142e5648feb87ccaa0acc69628fa9b650927642a1583af71eb9e29ae").String()),
+					repo.Digest("sha256:14f90e68f2603e992cc51916cc70113b1037bc2c5c6566ca26fec292753f3360").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -237,7 +237,7 @@ resource "apko_build" "foo" {
 					path := rs.Primary.Attributes["sboms.amd64.predicate_path"]
 					sbom, err := os.ReadFile(path)
 					if err != nil {
-						return err
+						return fmt.Errorf("reading sboms.amd64.predicate_path: %w", err)
 					}
 
 					// Check that the hash matches.
@@ -293,7 +293,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:9c760d149b6ed269e9cf0f8c5d1dee810806c0805034ef4ba98e5ccb45bcd4f8").String()),
+					repo.Digest("sha256:7ecfd5ca0cec575e96ff46bf53284950ee80e5d1211cba47a51189debe41c79a").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.

@@ -79,7 +79,7 @@ jobs:
     - working-directory: images
       env:
         TF_VAR_target_repository: registry.local:5000/tf-apko
-        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:d2364015923325f0f1e77a1f8e2095e749a4848ced33c32d5e0e0ac434d6c3a3
+        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:35a46bb5e8f52163273ea7636e65c54c1f5a3b5da5fc872d6742a810176cf777
       run: |
         terraform init
 
