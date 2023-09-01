@@ -158,7 +158,6 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-    - ca-certificates-bundle
     - tzdata
   EOF
 }`,
@@ -166,12 +165,11 @@ contents:
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "2"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "amd64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "arm64"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "3"),
+				// This is pulled in as a transitive dependency of wolfi-baselayout.
 				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.0", regexp.MustCompile("^ca-certificates-bundle=.*")),
-				// This is pulled in as a transitive dependency.
-				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.1", regexp.MustCompile("^glibc-locale-posix=.*")),
-				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.2", regexp.MustCompile("^tzdata=.*")),
-				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.3", regexp.MustCompile("^wolfi-baselayout=.*")),
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.1", regexp.MustCompile("^tzdata=.*")),
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.2", regexp.MustCompile("^wolfi-baselayout=.*")),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.#", "1"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://packages.wolfi.dev/os"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.#", "1"),
@@ -200,19 +198,17 @@ archs:
   - aarch64
 contents:
   packages:
-    - ca-certificates-bundle
     - tzdata
   EOF
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.#", "1"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "arm64"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "3"),
+				// This is pulled in as a transitive dependency of wolfi-baselayout.
 				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.0", regexp.MustCompile("^ca-certificates-bundle=.*")),
-				// This is pulled in as a transitive dependency.
-				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.1", regexp.MustCompile("^glibc-locale-posix=.*")),
-				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.2", regexp.MustCompile("^tzdata=.*")),
-				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.3", regexp.MustCompile("^wolfi-baselayout=.*")),
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.1", regexp.MustCompile("^tzdata=.*")),
+				resource.TestMatchResourceAttr("data.apko_config.this", "config.contents.packages.2", regexp.MustCompile("^wolfi-baselayout=.*")),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.#", "1"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://packages.wolfi.dev/os"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.#", "1"),
