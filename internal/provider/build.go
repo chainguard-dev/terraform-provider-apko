@@ -6,29 +6,22 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 
 	"chainguard.dev/apko/pkg/build"
 	"chainguard.dev/apko/pkg/build/oci"
 	"chainguard.dev/apko/pkg/build/types"
-	"github.com/google/go-containerregistry/pkg/name"
+	"chainguard.dev/apko/pkg/options"
+	"chainguard.dev/apko/pkg/tarfs"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/empty"
-	"github.com/google/go-containerregistry/pkg/v1/mutate"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
-	ggcrtypes "github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	coci "github.com/sigstore/cosign/v2/pkg/oci"
-	ocimutate "github.com/sigstore/cosign/v2/pkg/oci/mutate"
-	"github.com/sigstore/cosign/v2/pkg/oci/signed"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (*build.Context, error) {
+func fromImageData(ctx context.Context, ic types.ImageConfiguration, popts ProviderOpts) (*options.Options, *types.ImageConfiguration, error) {
 	// Deduplicate any of the extra packages against their potentially resolved
 	// form in the actual image list.
 	pkgs := sets.New(ic.Contents.Packages...)
@@ -53,27 +46,29 @@ func fromImageData(ic types.ImageConfiguration, popts ProviderOpts, wd string) (
 		ic.Archs[i] = types.ParseArchitecture(arch.String())
 	}
 
-	bc, err := build.New(wd,
+	opts := []build.Option{
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(popts.keyring),
 		build.WithExtraRepos(popts.repositories),
-	)
-
-	if err != nil {
-		return nil, err
 	}
 
-	if len(bc.ImageConfiguration.Archs) != 0 {
+	o, ic2, err := build.NewOptions(opts...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(ic2.Archs) != 0 {
 		// If the configuration has architectures, use them.
 	} else if len(popts.archs) != 0 {
 		// Otherwise, fallback on the provider architectures.
-		bc.ImageConfiguration.Archs = types.ParseArchitectures(popts.archs)
+		ic2.Archs = types.ParseArchitectures(popts.archs)
 	} else {
 		// If neither is specified, build for all architectures!
-		bc.ImageConfiguration.Archs = types.AllArchs
+		ic2.Archs = types.AllArchs
 	}
-	return bc, nil
+
+	return o, ic2, nil
 }
 
 type imagesbom struct {
@@ -83,12 +78,11 @@ type imagesbom struct {
 	predicateSHA256 string
 }
 
-func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
+func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
 	tempDir, err := os.MkdirTemp("", "apko-*")
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create temporary directory: %w", err)
 	}
-	workDir := filepath.Join(tempDir, "builds")
 	defer os.RemoveAll(tempDir)
 
 	var ic types.ImageConfiguration
@@ -100,96 +94,107 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 
 	// Parse things once to determine the architectures to build from
 	// the config.
-	obc, err := fromImageData(ic, data.popts, workDir)
+	o, ic2, err := fromImageData(ctx, ic, data.popts)
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
-	obc.Options.SBOMPath = tempDir
+
+	// We compute the "build date epoch" of the multi-arch image to be the
+	// maximum "build date epoch" of the per-arch images.  If the user has
+	// explicitly set SOURCE_DATE_EPOCH, that will always trump this
+	// computation.
+	multiArchBDE := o.SourceDateEpoch
+
+	var mu sync.Mutex
+	imgs := make(map[types.Architecture]coci.SignedImage, len(ic2.Archs))
+	contexts := make(map[types.Architecture]*build.Context, len(ic2.Archs))
+	sboms := make(map[string]imagesbom, len(ic2.Archs)+1)
 
 	var errg errgroup.Group
-	imgs := make(map[types.Architecture]coci.SignedImage, len(obc.ImageConfiguration.Archs))
-	sboms := make(map[string]imagesbom, len(obc.ImageConfiguration.Archs)+1)
-	var mu sync.Mutex
-	for _, arch := range obc.ImageConfiguration.Archs {
+	for _, arch := range ic2.Archs {
 		arch := arch
 
-		bc, err := fromImageData(ic, data.popts, filepath.Join(workDir, arch.ToAPK()))
-		if err != nil {
-			return v1.Hash{}, nil, nil, err
-		}
-
 		errg.Go(func() error {
-			ropts := append(ropts, remote.WithContext(ctx))
-
-			bc.Options.Arch = arch
-
-			if err := bc.Refresh(); err != nil {
-				return fmt.Errorf("failed to update build context for %q: %w", arch, err)
+			bc, err := build.New(ctx, tarfs.New(),
+				build.WithImageConfiguration(*ic2),
+				build.WithSBOMFormats([]string{"spdx"}),
+				build.WithSBOM(tempDir),
+				build.WithArch(arch),
+				build.WithExtraKeys(data.popts.keyring),
+				build.WithExtraRepos(data.popts.repositories),
+			)
+			if err != nil {
+				return fmt.Errorf("failed to start apko build: %w", err)
 			}
-			bc.Options.SBOMPath = tempDir
-			// Don't build the SBOM when we make the layer, since we want to
-			// set the creation timestamp based on the build-date-epoch.
-			bc.Options.WantSBOM = false
 
 			_, layer, err := bc.BuildLayer(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to build layer image for %q: %w", arch, err)
 			}
-			// TODO(kaniini): clean up everything correctly for multitag scenario
-			// defer os.Remove(layerTarGZ)
 
-			if bc.Options.SourceDateEpoch, err = bc.GetBuildDateEpoch(); err != nil {
-				return fmt.Errorf("failed to determine build date epoch: %w", err)
-			}
-			// Adjust the index's builder to track the most recent BDE.
-			if bc.Options.SourceDateEpoch.After(obc.Options.SourceDateEpoch) {
-				obc.Options.SourceDateEpoch = bc.Options.SourceDateEpoch
-			}
-
-			// Explicitly generate the SBOM after the BDE calculation
-			if err := bc.GenerateSBOM(ctx); err != nil {
+			bde, err := bc.GetBuildDateEpoch()
+			if err != nil {
 				return fmt.Errorf("failed to determine build date epoch: %w", err)
 			}
 
-			_, img, err := oci.PublishImageFromLayer(
-				ctx, layer, bc.ImageConfiguration, bc.Options.SourceDateEpoch, arch, bc.Logger(),
-				false /* local */, true /* shouldPushTags */, []string{} /* tags */, ropts...,
-			)
+			img, err := oci.BuildImageFromLayer(layer, bc.ImageConfiguration(), bde, bc.Arch(), bc.Logger())
 			if err != nil {
 				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
 			}
+
+			outputs, err := bc.GenerateImageSBOM(ctx, arch, img)
+			if err != nil {
+				return fmt.Errorf("generating sbom for %s: %w", arch, err)
+			}
+
 			h, err := img.Digest()
 			if err != nil {
 				return fmt.Errorf("unable to compute digest for %q: %w", arch, err)
 			}
 
+			// We have hardcoded sbom formats to be just "spdx", fail if this isn't right.
+			if len(outputs) != 1 {
+				return fmt.Errorf("saw %d sbom outputs, expected 1", len(outputs))
+			}
+
 			// Move the sbom to a temporary file outside of the directory we
 			// plan to clean up, so that it outlives the evaluation of this
 			// build resource.
-			sbomPath := filepath.Join(tempDir, fmt.Sprintf("sbom-%s.spdx.json", arch.ToAPK()))
+			sbomPath := outputs[0].Path
 			f, err := os.CreateTemp("", "sbom-*.spdx.json")
 			if err != nil {
 				return fmt.Errorf("unable to create temporary file for sbom: %w", err)
 			}
 			defer f.Close()
+
 			content, err := os.ReadFile(sbomPath)
 			if err != nil {
 				return fmt.Errorf("unable to read SBOM %q: %w", arch, err)
 			}
 			if _, err := f.Write(content); err != nil {
-				return err
+				return fmt.Errorf("failed to write sbom to %q: %w", f.Name(), err)
 			}
 			hash := sha256.Sum256(content)
 
 			mu.Lock()
 			defer mu.Unlock()
+
+			// Adjust the index's builder to track the most recent BDE.
+			if bde.After(multiArchBDE) {
+				multiArchBDE = bde
+			}
+
+			// save the build context for later
+			contexts[arch] = bc
 			imgs[arch] = img
+
 			sboms[arch.String()] = imagesbom{
 				imageHash:       h,
 				predicateType:   "https://spdx.dev/Document",
 				predicatePath:   f.Name(),
 				predicateSHA256: hex.EncodeToString(hash[:]),
 			}
+
 			return nil
 		})
 	}
@@ -209,59 +214,22 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 		}
 	}
 
-	idx := signed.ImageIndex(
-		mutate.IndexMediaType(
-			mutate.Annotations(
-				empty.Index,
-				ic.Annotations,
-			).(v1.ImageIndex),
-			ggcrtypes.OCIImageIndex,
-		),
-	)
-	archs := make([]types.Architecture, 0, len(imgs))
-	for arch := range imgs {
-		archs = append(archs, arch)
-	}
-	sort.Slice(archs, func(i, j int) bool {
-		return archs[i].String() < archs[j].String()
-	})
-	for _, arch := range archs {
-		img := imgs[arch]
-		mt, err := img.MediaType()
-		if err != nil {
-			return v1.Hash{}, nil, nil, fmt.Errorf("failed to get mediatype: %w", err)
-		}
-
-		h, err := img.Digest()
-		if err != nil {
-			return v1.Hash{}, nil, nil, fmt.Errorf("failed to compute digest: %w", err)
-		}
-
-		size, err := img.Size()
-		if err != nil {
-			return v1.Hash{}, nil, nil, fmt.Errorf("failed to compute size: %w", err)
-		}
-
-		idx = ocimutate.AppendManifests(idx, ocimutate.IndexAddendum{
-			Add: img,
-			Descriptor: v1.Descriptor{
-				MediaType: mt,
-				Digest:    h,
-				Size:      size,
-				Platform:  arch.ToOCIPlatform(),
-			},
-		})
-	}
-
-	h, err := idx.Digest()
+	// generate the index
+	finalDigest, idx, err := oci.GenerateIndex(ctx, *ic2, imgs)
 	if err != nil {
-		return v1.Hash{}, nil, nil, err
+		return v1.Hash{}, nil, nil, fmt.Errorf("failed to generate OCI index: %w", err)
 	}
 
-	// Only the v1.Hash is needed, the rest is discarded by apko...
-	finalDigest, _ := name.NewDigest("ubuntu@" + h.String())
+	o, ic2, err = build.NewOptions(
+		build.WithImageConfiguration(*ic2),      // We mutate Archs above.
+		build.WithSourceDateEpoch(multiArchBDE), // Maximum child's time.
+		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithSBOM(tempDir),
+		build.WithExtraKeys(data.popts.keyring),
+		build.WithExtraRepos(data.popts.repositories),
+	)
 
-	isboms, err := obc.GenerateIndexSBOM(ctx, finalDigest, imgs)
+	isboms, err := build.GenerateIndexSBOM(ctx, *o, *ic2, finalDigest, imgs)
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("generating index SBOM: %w", err)
 	}
@@ -280,9 +248,14 @@ func doBuild(ctx context.Context, data BuildResourceModel, ropts []remote.Option
 		return v1.Hash{}, nil, nil, fmt.Errorf("unable to read index SBOM: %w", err)
 	}
 	if _, err := f.Write(content); err != nil {
-		return v1.Hash{}, nil, nil, err
+		return v1.Hash{}, nil, nil, fmt.Errorf("failed to write sbom to %q: %w", f.Name(), err)
 	}
 	hash := sha256.Sum256(content)
+
+	h, err := idx.Digest()
+	if err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("unable to compute digest for index: %w", err)
+	}
 
 	sboms["index"] = imagesbom{
 		imageHash:       h,

@@ -5,14 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os"
-	"path/filepath"
 	"reflect"
 	"regexp"
 	"sort"
 	"strings"
 
+	"chainguard.dev/apko/pkg/build"
 	apkotypes "chainguard.dev/apko/pkg/build/types"
+	"chainguard.dev/apko/pkg/tarfs"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -173,22 +173,23 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 }
 
 func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
-	workDir, err := os.MkdirTemp("", "apko-*")
+	_, ic2, err := fromImageData(ctx, ic, d.popts)
 	if err != nil {
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to create temp directory", err.Error())}
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse apko config", err.Error())}
 	}
-	defer os.RemoveAll(workDir)
 
 	eg := errgroup.Group{}
 	archs := make([]resolved, len(ic.Archs))
 	for i, arch := range ic.Archs {
 		i, arch := i, arch
 		eg.Go(func() error {
-			bc, err := fromImageData(ic, d.popts, filepath.Join(workDir, arch.ToAPK()))
-			if err != nil {
-				return err
-			}
-			bc.Options.Arch = arch
+			bc, err := build.New(ctx, tarfs.New(),
+				build.WithImageConfiguration(*ic2),
+				build.WithSBOMFormats([]string{"spdx"}),
+				build.WithArch(arch),
+				build.WithExtraKeys(d.popts.keyring),
+				build.WithExtraRepos(d.popts.repositories),
+			)
 
 			// Determine the exact versions of our transitive packages and lock them
 			// down in the "resolved" configuration, so that this build may be

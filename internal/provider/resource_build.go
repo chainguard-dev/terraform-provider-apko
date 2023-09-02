@@ -154,7 +154,7 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	digest, se, sboms, err := doBuild(ctx, *data, r.popts.ropts)
+	digest, se, sboms, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -232,7 +232,7 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	digest, _, _, err := doBuild(ctx, *data, r.popts.ropts)
+	digest, _, _, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
