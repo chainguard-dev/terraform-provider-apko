@@ -71,9 +71,9 @@ jobs:
         terraform_version: '1.3.*'
         terraform_wrapper: false
 
-    - uses: chainguard-dev/actions/setup-kind@main
+    - uses: chainguard-dev/actions/setup-k3d@main
       with:
-        k8s-version: v1.24.x
+        k3s-image: cgr.dev/chainguard/k3s:latest@sha256:8fa32f1d5bd91717cb316492f38212fbeb681b9c56805bc18a75278a6553046f
         registry-authority: registry.local:5000
 
     - working-directory: images
@@ -101,4 +101,6 @@ jobs:
 
     - name: Collect diagnostics and upload
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@main
+      uses: chainguard-dev/actions/k8s-diag@main
+      with:
+        cluster-type: k3d
