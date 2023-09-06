@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.16.2-0.20230905180039-a748190e18d4
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
-	github.com/hashicorp/terraform-plugin-framework v1.3.1
+	github.com/hashicorp/terraform-plugin-framework v1.3.5
 	github.com/hashicorp/terraform-plugin-go v0.18.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.3.0
