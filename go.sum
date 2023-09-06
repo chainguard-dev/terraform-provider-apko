@@ -1,5 +1,5 @@
-chainguard.dev/apko v0.10.1-0.20230906162424-ca5cfc3f0ace h1:KY7LPdSkGSSDiWnOvMyzdm7KwFVI3HND62cnpeeAAIs=
-chainguard.dev/apko v0.10.1-0.20230906162424-ca5cfc3f0ace/go.mod h1:c0q/fFyLZoflHB1mFsfYA0ALDbyuYcXSau2h+k5SKK8=
+chainguard.dev/apko v0.10.1-0.20230906171757-7c910a4b75ca h1:ms9iVRs5ppWGM1ajqrYko8kqNMsBTw+8n4RbU00f7WY=
+chainguard.dev/apko v0.10.1-0.20230906171757-7c910a4b75ca/go.mod h1:c0q/fFyLZoflHB1mFsfYA0ALDbyuYcXSau2h+k5SKK8=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go/compute v1.23.0 h1:tP41Zoavr8ptEqaW6j+LQOnyBBhO7OkOMAGrgLopTwY=
 cloud.google.com/go/compute v1.23.0/go.mod h1:4tCnrn48xsqlwSAiLf1HXMQk8CONslYbdiEZc9FEIbM=
@@ -498,8 +498,8 @@ go.opentelemetry.io/otel/metric v1.17.0 h1:iG6LGVz5Gh+IuO0jmgvpTB6YVrCGngi8QGm+p
 go.opentelemetry.io/otel/metric v1.17.0/go.mod h1:h4skoxdZI17AxwITdmdZjjYJQH5nzijUUjm+wtPph5o=
 go.opentelemetry.io/otel/trace v1.17.0 h1:/SWhSRHmDPOImIAetP1QAeMnZYiQXrTy4fMMYOdSKWQ=
 go.opentelemetry.io/otel/trace v1.17.0/go.mod h1:I/4vKTgFclIsXRVucpH25X0mpFSczM7aHeaz0ZBLWjY=
-golang.org/x/build v0.0.0-20230906153909-ed87657276df h1:jhlkm+R2HJXzJiwBBSvw636HagW2RDw7nn3yE/GG+VU=
-golang.org/x/build v0.0.0-20230906153909-ed87657276df/go.mod h1:MxpeLdBPNhS3SrunE4G6YOdcYL2RH/Vbw+TNE7PYNSk=
+golang.org/x/build v0.0.0-20230906165202-245708aee151 h1:M8nSGL7K3zu3jSxJfJHCf10wwgg1fdzUUkrY3Jbb56A=
+golang.org/x/build v0.0.0-20230906165202-245708aee151/go.mod h1:MxpeLdBPNhS3SrunE4G6YOdcYL2RH/Vbw+TNE7PYNSk=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190422162423-af44ce270edf/go.mod h1:WFFai1msRO1wXaEeE5yQxYXgSfI8pQAWXbQop6sCtWE=
