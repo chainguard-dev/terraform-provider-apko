@@ -1,5 +1,5 @@
-chainguard.dev/apko v0.10.1-0.20230905211807-ecb0cb37fdd9 h1:eo9QHXxIEHy4uU42cnzF8WMMOAJs7MjwbXny1Iwlbts=
-chainguard.dev/apko v0.10.1-0.20230905211807-ecb0cb37fdd9/go.mod h1:RVhJBDHB718xCDoniBwxfYE+lYD3Tm0EAG79kbUnTEI=
+chainguard.dev/apko v0.10.1-0.20230905235952-732781c69d74 h1:VTFIw7/vzrXPpWQEVb2whLG1NvVtqIBlGC5xn9FrAFY=
+chainguard.dev/apko v0.10.1-0.20230905235952-732781c69d74/go.mod h1:NUBiKG1Qutjski/eIUGln27hd88gEorRtqjLrqCzxKI=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go/compute v1.23.0 h1:tP41Zoavr8ptEqaW6j+LQOnyBBhO7OkOMAGrgLopTwY=
 cloud.google.com/go/compute v1.23.0/go.mod h1:4tCnrn48xsqlwSAiLf1HXMQk8CONslYbdiEZc9FEIbM=
@@ -53,8 +53,8 @@ github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7N
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/chainguard-dev/go-apk v0.0.0-20230905210805-b6ab4d3019de h1:H5BaInXUXayEUej/xyFbCKeNinojtTLa2tSA3fyeGPU=
-github.com/chainguard-dev/go-apk v0.0.0-20230905210805-b6ab4d3019de/go.mod h1:I7uFl3LBMG1UQONJRQN+3lzZE4tw8myh87FzkDEztHg=
+github.com/chainguard-dev/go-apk v0.0.0-20230905225536-84ea59b2c569 h1:HfrcjbCvoNJoQ4iJe53azgubFwbDRJR6Zw+KMJ9VZ6U=
+github.com/chainguard-dev/go-apk v0.0.0-20230905225536-84ea59b2c569/go.mod h1:I7uFl3LBMG1UQONJRQN+3lzZE4tw8myh87FzkDEztHg=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4 h1:BgGdE7eT3z1dEvpcNld9HiUyIF4EUMW51e6YQE0Kay8=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4/go.mod h1:sGjXlGpddLYEZx9i8dkxiEanQL0hLAiEaddsxj3gaoc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
