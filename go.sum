@@ -1,5 +1,5 @@
-chainguard.dev/apko v0.10.1-0.20230905235952-732781c69d74 h1:VTFIw7/vzrXPpWQEVb2whLG1NvVtqIBlGC5xn9FrAFY=
-chainguard.dev/apko v0.10.1-0.20230905235952-732781c69d74/go.mod h1:NUBiKG1Qutjski/eIUGln27hd88gEorRtqjLrqCzxKI=
+chainguard.dev/apko v0.10.1-0.20230906162424-ca5cfc3f0ace h1:KY7LPdSkGSSDiWnOvMyzdm7KwFVI3HND62cnpeeAAIs=
+chainguard.dev/apko v0.10.1-0.20230906162424-ca5cfc3f0ace/go.mod h1:c0q/fFyLZoflHB1mFsfYA0ALDbyuYcXSau2h+k5SKK8=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go/compute v1.23.0 h1:tP41Zoavr8ptEqaW6j+LQOnyBBhO7OkOMAGrgLopTwY=
 cloud.google.com/go/compute v1.23.0/go.mod h1:4tCnrn48xsqlwSAiLf1HXMQk8CONslYbdiEZc9FEIbM=
@@ -53,8 +53,8 @@ github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7N
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/chainguard-dev/go-apk v0.0.0-20230905225536-84ea59b2c569 h1:HfrcjbCvoNJoQ4iJe53azgubFwbDRJR6Zw+KMJ9VZ6U=
-github.com/chainguard-dev/go-apk v0.0.0-20230905225536-84ea59b2c569/go.mod h1:I7uFl3LBMG1UQONJRQN+3lzZE4tw8myh87FzkDEztHg=
+github.com/chainguard-dev/go-apk v0.0.0-20230906161245-0728258ab917 h1:/FvFggKayia7a3cA/UcD18Dtn53/be/EBhPpQla65g8=
+github.com/chainguard-dev/go-apk v0.0.0-20230906161245-0728258ab917/go.mod h1:I7uFl3LBMG1UQONJRQN+3lzZE4tw8myh87FzkDEztHg=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4 h1:BgGdE7eT3z1dEvpcNld9HiUyIF4EUMW51e6YQE0Kay8=
 github.com/chainguard-dev/terraform-provider-oci v0.0.4/go.mod h1:sGjXlGpddLYEZx9i8dkxiEanQL0hLAiEaddsxj3gaoc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -498,8 +498,8 @@ go.opentelemetry.io/otel/metric v1.17.0 h1:iG6LGVz5Gh+IuO0jmgvpTB6YVrCGngi8QGm+p
 go.opentelemetry.io/otel/metric v1.17.0/go.mod h1:h4skoxdZI17AxwITdmdZjjYJQH5nzijUUjm+wtPph5o=
 go.opentelemetry.io/otel/trace v1.17.0 h1:/SWhSRHmDPOImIAetP1QAeMnZYiQXrTy4fMMYOdSKWQ=
 go.opentelemetry.io/otel/trace v1.17.0/go.mod h1:I/4vKTgFclIsXRVucpH25X0mpFSczM7aHeaz0ZBLWjY=
-golang.org/x/build v0.0.0-20230905185615-7f65e2bc812a h1:0XvhCUgBoH8lCN4oOJ/fshXfKKlqPYIXUC2KAJgWZI0=
-golang.org/x/build v0.0.0-20230905185615-7f65e2bc812a/go.mod h1:LblaorLo4w94wk4xZvKeLSaFLku6WbfOih5CoMhhvVc=
+golang.org/x/build v0.0.0-20230906153909-ed87657276df h1:jhlkm+R2HJXzJiwBBSvw636HagW2RDw7nn3yE/GG+VU=
+golang.org/x/build v0.0.0-20230906153909-ed87657276df/go.mod h1:MxpeLdBPNhS3SrunE4G6YOdcYL2RH/Vbw+TNE7PYNSk=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190422162423-af44ce270edf/go.mod h1:WFFai1msRO1wXaEeE5yQxYXgSfI8pQAWXbQop6sCtWE=
