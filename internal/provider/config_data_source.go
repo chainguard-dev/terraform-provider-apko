@@ -190,6 +190,9 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 				build.WithExtraKeys(d.popts.keyring),
 				build.WithExtraRepos(d.popts.repositories),
 			)
+			if err != nil {
+				return err
+			}
 
 			// Determine the exact versions of our transitive packages and lock them
 			// down in the "resolved" configuration, so that this build may be
