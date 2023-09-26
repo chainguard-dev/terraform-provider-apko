@@ -202,17 +202,6 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	if err := errg.Wait(); err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
-	// If we built a final image, then return that instead of wrapping it in an
-	// image index.
-	if len(imgs) == 1 {
-		for _, img := range imgs {
-			h, err := img.Digest()
-			if err != nil {
-				return v1.Hash{}, nil, nil, err
-			}
-			return h, img, sboms, nil
-		}
-	}
 
 	// generate the index
 	finalDigest, idx, err := oci.GenerateIndex(ctx, *ic2, imgs)
