@@ -51,7 +51,7 @@ jobs:
         path: tf-apko
     - uses: actions/setup-go@v4
       with:
-        go-version-file: 'go.mod'
+        go-version-file: 'tf-apko/go.mod'
 
     - working-directory: tf-apko
       run: go build .
