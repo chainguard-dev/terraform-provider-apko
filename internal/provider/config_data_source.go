@@ -113,7 +113,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	var ic apkotypes.ImageConfiguration
-	if err := yaml.Unmarshal([]byte(data.ConfigContents.ValueString()), &ic); err != nil {
+	if err := yaml.UnmarshalStrict([]byte(data.ConfigContents.ValueString()), &ic); err != nil {
 		resp.Diagnostics.AddError("Unable to parse apko configuration", err.Error())
 		return
 	}

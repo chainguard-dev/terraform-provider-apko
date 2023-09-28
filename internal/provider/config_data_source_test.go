@@ -488,3 +488,23 @@ func TestUnify(t *testing.T) {
 		})
 	}
 }
+
+func TestAccDataSourceConfig_Invalid(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: `
+data "apko_config" "this" {
+  config_contents = <<EOF
+contents:
+  repositories:
+  - ./packages
+
+unknown-field: 'blah'
+EOF
+}`,
+			ExpectError: regexp.MustCompile("field unknown-field not found in type types.ImageConfiguration"),
+		}},
+	})
+}
