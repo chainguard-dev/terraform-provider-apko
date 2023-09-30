@@ -1,20 +1,32 @@
-package provider
+package reflect
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func generateType(v any) (attr.Type, error) {
-	return generateTypeReflect(reflect.TypeOf(v))
+func GenerateType(v any) (attr.Type, error) {
+	return generateTypeReflect("", reflect.TypeOf(v))
 }
 
-func generateTypeReflect(t reflect.Type) (attr.Type, error) {
+var inProgress = sets.NewString()
+
+func generateTypeReflect(path string, t reflect.Type) (attr.Type, error) {
+	if inProgress.Has(t.String()) {
+		log.Println("detected recursive type:", path)
+		// If we're already trying to figure out this type, then we're in a recursive loop. Avoid this by just returning an empty object.
+		return basetypes.ObjectType{}, nil
+	}
+	inProgress.Insert(t.String())
+	defer func() { inProgress.Delete(t.String()) }()
+
 	switch t.Kind() {
 	case reflect.String:
 		return basetypes.StringType{}, nil
@@ -25,9 +37,11 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 		return basetypes.Int64Type{}, nil
 	case reflect.Float32, reflect.Float64:
 		return basetypes.Float64Type{}, nil
+	case reflect.Ptr:
+		return generateTypeReflect("*"+path, t.Elem())
 
 	case reflect.Array, reflect.Slice:
-		st, err := generateTypeReflect(t.Elem())
+		st, err := generateTypeReflect(path+"[]", t.Elem())
 		if err != nil {
 			return nil, fmt.Errorf("[]%v: %w", t.Elem(), err)
 		}
@@ -39,7 +53,8 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 		if t.Key().Kind() != reflect.String {
 			return nil, fmt.Errorf("%v only string map keys are supported", t.Key())
 		}
-		et, err := generateTypeReflect(t.Elem())
+
+		et, err := generateTypeReflect(path+"{}", t.Elem())
 		if err != nil {
 			return nil, fmt.Errorf("map[string]%v: %w", t.Elem(), err)
 		}
@@ -53,11 +68,15 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 		}
 		for i := 0; i < t.NumField(); i++ {
 			sf := t.Field(i)
+			if !sf.IsExported() {
+				continue
+			}
 			tag := yamlName(sf)
 			if tag == nil {
 				continue
 			}
-			ft, err := generateTypeReflect(sf.Type)
+
+			ft, err := generateTypeReflect(path+"."+*tag, sf.Type)
 			if err != nil {
 				return nil, fmt.Errorf("struct %w", err)
 			}
@@ -66,19 +85,29 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 		return ot, nil
 
 	default:
-		return nil, fmt.Errorf("unknown type encountered: %v", t.Kind())
+		return nil, fmt.Errorf("unknown type encountered at %q: %v", path, t.Kind())
 	}
 }
 
-func generateValue(v any) (attr.Value, diag.Diagnostics) {
-	return generateValueReflect(reflect.ValueOf(v))
+func GenerateValue(v any) (attr.Value, diag.Diagnostics) {
+	return generateValueReflect("", reflect.ValueOf(v))
 }
 
-func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
+var valueInProgress = sets.NewString()
+
+func generateValueReflect(path string, v reflect.Value) (out attr.Value, diagout diag.Diagnostics) {
+	if inProgress.Has(v.String()) {
+		log.Println("detected recursive type:", path)
+		// If we're already trying to figure out this value, then we're in a recursive loop. Avoid this by just returning an empty object.
+		return basetypes.NewObjectValue(nil, nil)
+	}
+	inProgress.Insert(v.String())
+	defer func() { inProgress.Delete(v.String()) }()
+
 	t := v.Type()
 	switch t.Kind() {
 	case reflect.Pointer:
-		return generateValueReflect(v.Elem())
+		return generateValueReflect(path, v.Elem())
 	case reflect.String:
 		return basetypes.NewStringValue(v.String()), nil
 	case reflect.Bool:
@@ -91,13 +120,13 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 		return basetypes.NewFloat64Value(v.Float()), nil
 
 	case reflect.Array, reflect.Slice:
-		st, err := generateTypeReflect(t.Elem())
+		st, err := generateTypeReflect(path+"[]", t.Elem())
 		if err != nil {
 			return nil, []diag.Diagnostic{diag.NewErrorDiagnostic(err.Error(), "")}
 		}
 		ets := make([]attr.Value, 0, v.Len())
 		for i := 0; i < v.Len(); i++ {
-			et, diags := generateValueReflect(v.Index(i))
+			et, diags := generateValueReflect(path+"[]", v.Index(i))
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -106,14 +135,14 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 		return basetypes.NewListValue(st, ets)
 
 	case reflect.Map:
-		et, err := generateTypeReflect(t.Elem())
+		et, err := generateTypeReflect(path+"{}", t.Elem())
 		if err != nil {
 			return nil, []diag.Diagnostic{diag.NewErrorDiagnostic(err.Error(), "")}
 		}
 
 		em := make(map[string]attr.Value, v.Len())
 		for _, key := range v.MapKeys() {
-			et, diags := generateValueReflect(v.MapIndex(key))
+			et, diags := generateValueReflect(path+"{"+key.String()+"}", v.MapIndex(key))
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -122,7 +151,7 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 		return basetypes.NewMapValue(et, em)
 
 	case reflect.Struct:
-		ot, err := generateTypeReflect(t)
+		ot, err := generateTypeReflect(path+"{}", t)
 		if err != nil {
 			return nil, []diag.Diagnostic{diag.NewErrorDiagnostic(err.Error(), "")}
 		}
@@ -134,7 +163,7 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 			if tag == nil {
 				continue
 			}
-			ft, diags := generateValueReflect(v.Field(i))
+			ft, diags := generateValueReflect(path+"{}", v.Field(i))
 			if diags.HasError() {
 				return nil, diags
 			}
@@ -147,7 +176,7 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 	}
 }
 
-func assignValue(in attr.Value, out any) diag.Diagnostics {
+func AssignValue(in attr.Value, out any) diag.Diagnostics {
 	rv := reflect.ValueOf(out)
 	if rv.Kind() != reflect.Pointer || rv.IsNil() {
 		return []diag.Diagnostic{diag.NewErrorDiagnostic("not a pointer or nil", fmt.Sprintf("got: %T", out))}

@@ -1,4 +1,4 @@
-package provider
+package reflect
 
 import (
 	"testing"
@@ -9,6 +9,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"gopkg.in/yaml.v2"
 )
+
+type recursive struct {
+	Recursive []recursive
+}
 
 func TestGenerateType(t *testing.T) {
 	tests := []struct {
@@ -80,16 +84,35 @@ func TestGenerateType(t *testing.T) {
 				},
 			},
 		},
+	}, {
+		name: "recursive object",
+		obj: struct {
+			Name   string
+			Tagged int64 `yaml:"different"`
+			Outer  []recursive
+		}{},
+		want: basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"name":      basetypes.StringType{},
+				"different": basetypes.Int64Type{},
+				"outer": basetypes.ListType{
+					ElemType: basetypes.ObjectType{
+						AttrTypes: map[string]attr.Type{
+							"recursive": basetypes.ObjectType{},
+						},
+					},
+				},
+			},
+		},
 	}}
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := generateType(test.obj)
+			got, err := GenerateType(test.obj)
 			if err != nil {
-				t.Fatalf("generateType() = %v", err)
+				t.Fatalf("GenerateType() = %v", err)
 			}
 			if !test.want.Equal(got) {
-				t.Errorf("got = %+v, wanted %v", got, test.want)
+				t.Errorf("\n got = %+v\nwant = %v", got, test.want)
 			}
 		})
 	}
@@ -153,21 +176,21 @@ archs:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			want, diags := generateValue(test.want)
+			want, diags := GenerateValue(test.want)
 			if diags.HasError() {
-				t.Fatalf("generateValue() = %v", diags.Errors())
+				t.Fatalf("GenerateValue() = %v", diags.Errors())
 			}
 
-			t.Logf("generateValue() = %#v", want)
+			t.Logf("GenerateValue() = %#v", want)
 
-			diags = assignValue(want, test.blank)
+			diags = AssignValue(want, test.blank)
 			if diags.HasError() {
-				t.Fatalf("assignValue() = %v", diags.Errors())
+				t.Fatalf("AssignValue() = %v", diags.Errors())
 			}
 
-			got, diags := generateValue(test.blank)
+			got, diags := GenerateValue(test.blank)
 			if diags.HasError() {
-				t.Fatalf("generateValue() = %v", diags.Errors())
+				t.Fatalf("GenerateValue() = %v", diags.Errors())
 			}
 
 			if diff := cmp.Diff(want, got); diff != "" {

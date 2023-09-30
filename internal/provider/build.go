@@ -14,6 +14,7 @@ import (
 	"chainguard.dev/apko/pkg/build/types"
 	"chainguard.dev/apko/pkg/options"
 	"chainguard.dev/apko/pkg/tarfs"
+	"github.com/chainguard-dev/terraform-provider-apko/reflect"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	coci "github.com/sigstore/cosign/v2/pkg/oci"
@@ -86,7 +87,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	defer os.RemoveAll(tempDir)
 
 	var ic types.ImageConfiguration
-	if diags := assignValue(data.Config, &ic); diags.HasError() {
+	if diags := reflect.AssignValue(data.Config, &ic); diags.HasError() {
 		return v1.Hash{}, nil, nil, fmt.Errorf("assigning value: %v", diags.Errors())
 	}
 

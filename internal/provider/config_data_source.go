@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"reflect"
+	stdreflect "reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -13,6 +13,7 @@ import (
 	"chainguard.dev/apko/pkg/build"
 	apkotypes "chainguard.dev/apko/pkg/build/types"
 	"chainguard.dev/apko/pkg/tarfs"
+	"github.com/chainguard-dev/terraform-provider-apko/reflect"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -49,7 +50,7 @@ type ConfigDataSourceModel struct {
 var imageConfigurationSchema basetypes.ObjectType
 
 func init() {
-	sch, err := generateType(apkotypes.ImageConfiguration{})
+	sch, err := reflect.GenerateType(apkotypes.ImageConfiguration{})
 	if err != nil {
 		panic(err)
 	}
@@ -158,7 +159,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 	ic.Contents.Packages = pl
 
-	ov, diags := generateValue(ic)
+	ov, diags := reflect.GenerateValue(ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
 		return
@@ -274,7 +275,7 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 		provided: inputs[0].provided,
 	}
 	for _, next := range inputs[1:] {
-		if reflect.DeepEqual(acc.versions, next.versions) && reflect.DeepEqual(acc.provided, next.provided) {
+		if stdreflect.DeepEqual(acc.versions, next.versions) && stdreflect.DeepEqual(acc.provided, next.provided) {
 			// If the package set's versions and provided packages match, then we're done.
 			continue
 		}

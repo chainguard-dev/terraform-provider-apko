@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	apkotypes "chainguard.dev/apko/pkg/build/types"
+	"github.com/chainguard-dev/terraform-provider-apko/reflect"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -97,7 +98,7 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	var ic apkotypes.ImageConfiguration
-	if diags := assignValue(data.Config, &ic); diags.HasError() {
+	if diags := reflect.AssignValue(data.Config, &ic); diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
