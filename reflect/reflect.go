@@ -96,13 +96,13 @@ func GenerateValue(v any) (attr.Value, diag.Diagnostics) {
 var valueInProgress = sets.NewString()
 
 func generateValueReflect(path string, v reflect.Value) (out attr.Value, diagout diag.Diagnostics) {
-	if inProgress.Has(v.String()) {
+	if valueInProgress.Has(v.String()) {
 		log.Println("detected recursive type:", path)
 		// If we're already trying to figure out this value, then we're in a recursive loop. Avoid this by just returning an empty object.
 		return basetypes.NewObjectValue(nil, nil)
 	}
-	inProgress.Insert(v.String())
-	defer func() { inProgress.Delete(v.String()) }()
+	valueInProgress.Insert(v.String())
+	defer func() { valueInProgress.Delete(v.String()) }()
 
 	t := v.Type()
 	switch t.Kind() {
