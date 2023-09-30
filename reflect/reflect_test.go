@@ -11,7 +11,12 @@ import (
 )
 
 type recursive struct {
-	Recursive []recursive
+	Foo   string
+	Slice []recursive
+	Map   map[string]recursive
+	// Go doesn't support these recursive types.
+	//Array [3]recursive
+	//Struct recursive
 }
 
 func TestGenerateType(t *testing.T) {
@@ -69,6 +74,7 @@ func TestGenerateType(t *testing.T) {
 				Skipped string `yaml:"-"`
 				Bar     []string
 			}
+			Pointer *string `yaml:"ptr"`
 		}{},
 		want: basetypes.ObjectType{
 			AttrTypes: map[string]attr.Type{
@@ -82,6 +88,7 @@ func TestGenerateType(t *testing.T) {
 						},
 					},
 				},
+				"ptr": basetypes.StringType{},
 			},
 		},
 	}, {
@@ -98,7 +105,13 @@ func TestGenerateType(t *testing.T) {
 				"outer": basetypes.ListType{
 					ElemType: basetypes.ObjectType{
 						AttrTypes: map[string]attr.Type{
-							"recursive": basetypes.ObjectType{},
+							"foo": basetypes.StringType{},
+							"slice": basetypes.ListType{
+								ElemType: basetypes.ObjectType{},
+							},
+							"map": basetypes.MapType{
+								ElemType: basetypes.ObjectType{},
+							},
 						},
 					},
 				},
