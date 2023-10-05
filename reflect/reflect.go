@@ -28,7 +28,7 @@ func generateTypeReflect(path string, inProgress sets.Set[string], t reflect.Typ
 	case reflect.Float32, reflect.Float64:
 		return basetypes.Float64Type{}, nil
 	case reflect.Ptr:
-		return generateTypeReflect("*"+path, inProgress, t.Elem())
+		return generateTypeReflect("*"+path, inProgress, reflect.New(t.Elem()).Type())
 
 	case reflect.Array, reflect.Slice:
 		st, err := generateTypeReflect(path+"[]", inProgress, t.Elem())
