@@ -17,7 +17,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.2.0
 	golang.org/x/sync v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apimachinery v0.28.1
+	k8s.io/apimachinery v0.28.2
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 )
 
