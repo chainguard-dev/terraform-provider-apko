@@ -46,7 +46,7 @@ jobs:
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-    - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       with:
         path: tf-apko
     - uses: actions/setup-go@v4
@@ -60,7 +60,7 @@ jobs:
     - uses: sigstore/cosign-installer@v3.1.1
     - uses: imjasonh/setup-crane@v0.3
 
-    - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       with:
         repository: chainguard-images/images
         path: images
