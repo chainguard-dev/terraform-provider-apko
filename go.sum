@@ -262,10 +262,10 @@ github.com/hashicorp/terraform-plugin-go v0.18.0 h1:IwTkOS9cOW1ehLd/rG0y+u/TGLK9
 github.com/hashicorp/terraform-plugin-go v0.18.0/go.mod h1:l7VK+2u5Kf2y+A+742GX0ouLut3gttudmvMgN0PA74Y=
 github.com/hashicorp/terraform-plugin-log v0.9.0 h1:i7hOA+vdAItN1/7UrfBqBwvYPQ9TFvymaRGZED3FCV0=
 github.com/hashicorp/terraform-plugin-log v0.9.0/go.mod h1:rKL8egZQ/eXSyDqzLUuwUYLVdlYeamldAHSxjUFADow=
-github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1 h1:G9WAfb8LHeCxu7Ae8nc1agZlQOSCUWsb610iAogBhCs=
-github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1/go.mod h1:xcOSYlRVdPLmDUoqPhO9fiO/YCN/l6MGYeTzGt5jgkQ=
-github.com/hashicorp/terraform-plugin-testing v1.3.0 h1:4Pn8fSspPCRUc5zRGPNZYc00VhQmQPEH6y6Pv4e/42M=
-github.com/hashicorp/terraform-plugin-testing v1.3.0/go.mod h1:mGOfGFTVIhP9buGPZyDQhmZFIO/Ig8E0Fo694UACr64=
+github.com/hashicorp/terraform-plugin-sdk/v2 v2.28.0 h1:gY4SG34ANc6ZSeWEKC9hDTChY0ZiN+Myon17fSA0Xgc=
+github.com/hashicorp/terraform-plugin-sdk/v2 v2.28.0/go.mod h1:deXEw/iJXtJxNV9d1c/OVJrvL7Zh0a++v7rzokW6wVY=
+github.com/hashicorp/terraform-plugin-testing v1.5.1 h1:T4aQh9JAhmWo4+t1A7x+rnxAJHCDIYW9kXyo4sVO92c=
+github.com/hashicorp/terraform-plugin-testing v1.5.1/go.mod h1:dg8clO6K59rZ8w9EshBmDp1CxTIPu3yA4iaDpX1h5u0=
 github.com/hashicorp/terraform-registry-address v0.2.1 h1:QuTf6oJ1+WSflJw6WYOHhLgwUiQ0FrROpHPYFtwTYWM=
 github.com/hashicorp/terraform-registry-address v0.2.1/go.mod h1:BSE9fIFzp0qWsJUUyGquo4ldV9k2n+psif6NYkBRS3Y=
 github.com/hashicorp/terraform-svchost v0.1.1 h1:EZZimZ1GxdqFRinZ1tpJwVxxt49xc/S52uzrw4x0jKQ=
@@ -481,8 +481,8 @@ github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d/go.mod h1:rHwXgn7Jul
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
-github.com/zclconf/go-cty v1.13.2 h1:4GvrUxe/QUDYuJKAav4EYqdM47/kZa672LwmXFmEKT0=
-github.com/zclconf/go-cty v1.13.2/go.mod h1:YKQzy/7pZ7iq2jNFzy5go57xdxdWoLLpaEp4u238AE0=
+github.com/zclconf/go-cty v1.13.3 h1:m+b9q3YDbg6Bec5rr+KGy1MzEVzY/jC2X+YX4yqKtHI=
+github.com/zclconf/go-cty v1.13.3/go.mod h1:YKQzy/7pZ7iq2jNFzy5go57xdxdWoLLpaEp4u238AE0=
 gitlab.alpinelinux.org/alpine/go v0.8.0 h1:faYglciTTi2FWF/KKLiBoT3AdvHwcyhJtASD8yzahqQ=
 gitlab.alpinelinux.org/alpine/go v0.8.0/go.mod h1:T/T1d7CqnA79HrEP/nMTbn/iMO/yanIQ3iF8A5Uz4Ks=
 go.lsp.dev/uri v0.3.0 h1:KcZJmh6nFIBeJzTugn5JTU6OOyG0lDOo3R9KwTxTYbo=
