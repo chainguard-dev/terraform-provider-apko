@@ -57,7 +57,7 @@ jobs:
       run: go build .
 
     # Make cosign/crane CLI available to the tests
-    - uses: sigstore/cosign-installer@v3.1.1
+    - uses: sigstore/cosign-installer@v3.1.2
     - uses: imjasonh/setup-crane@v0.3
 
     - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
