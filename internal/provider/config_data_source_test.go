@@ -341,8 +341,8 @@ func TestUnify(t *testing.T) {
 			"foo=1.2.3",
 		},
 		wantDiag: []diag.Diagnostic{
-			diag.NewWarningDiagnostic("unable to lock certain packages for amd64", "[bonus]"),
-			diag.NewWarningDiagnostic("unable to lock certain packages for arm64", "[bonus]"),
+			diag.NewErrorDiagnostic("unable to lock certain packages for amd64", "[bonus]"),
+			diag.NewErrorDiagnostic("unable to lock certain packages for arm64", "[bonus]"),
 		},
 	}, {
 		name:      "provided direct dependency",
@@ -471,8 +471,8 @@ func TestUnify(t *testing.T) {
 			"foo=1.2.3",
 		},
 		wantDiag: []diag.Diagnostic{
-			diag.NewWarningDiagnostic("unable to lock certain packages for amd64", "[intel-fast-as-f-math]"),
-			diag.NewWarningDiagnostic("unable to lock certain packages for arm64", "[arm-energy-efficient-as-f-arithmetic]"),
+			diag.NewErrorDiagnostic("unable to lock certain packages for amd64", "[intel-fast-as-f-math]"),
+			diag.NewErrorDiagnostic("unable to lock certain packages for arm64", "[arm-energy-efficient-as-f-arithmetic]"),
 		},
 	}}
 
