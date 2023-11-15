@@ -372,7 +372,7 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 	for _, input := range inputs {
 		missingHere := input.packages.Difference(acc.packages).Difference(missing)
 		if missingHere.Len() > 0 {
-			diagnostics = append(diagnostics, diag.NewWarningDiagnostic(
+			diagnostics = append(diagnostics, diag.NewErrorDiagnostic(
 				fmt.Sprintf("unable to lock certain packages for %s", input.arch),
 				fmt.Sprint(sets.List(missingHere)),
 			))
