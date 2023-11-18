@@ -172,7 +172,9 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.AddError("NewPusher", err.Error())
 		return
 	}
-	if err := pusher.Push(ctx, dig, pushable); err != nil {
+	if err := retry(ctx, longBackoff, func(ctx context.Context) error {
+		return pusher.Push(ctx, dig, pushable)
+	}); err != nil {
 		resp.Diagnostics.AddError("Error publishing "+dig.String(), err.Error())
 		return
 	}
