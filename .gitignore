@@ -35,3 +35,6 @@ website/vendor
 *.winfile eol=crlf
 
 terraform-provider-apko
+
+# Test output when using TF_APKO_OUT_DIR
+*.apko.json
