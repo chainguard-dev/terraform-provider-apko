@@ -4,7 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"sort"
@@ -149,6 +152,16 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		ic.Archs[i] = apkotypes.ParseArchitecture(a.ToAPK())
 	}
 
+	h := sha256.Sum256([]byte(data.ConfigContents.ValueString()))
+	hash := hex.EncodeToString(h[:])
+
+	if out := os.Getenv("TF_APKO_OUT_DIR"); out != "" {
+		if err := writeFile(out, hash, "pre", ic); err != nil {
+			resp.Diagnostics.AddError("Unable to write apko configuration", err.Error())
+			return
+		}
+	}
+
 	// Resolve the package list to specific versions (as much as we can with
 	// multi-arch), and overwrite the package list in the ImageConfiguration.
 	pl, diags := d.resolvePackageList(ctx, ic)
@@ -158,6 +171,13 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 	ic.Contents.Packages = pl
 
+	if out := os.Getenv("TF_APKO_OUT_DIR"); out != "" {
+		if err := writeFile(out, hash, "post", ic); err != nil {
+			resp.Diagnostics.AddError("Unable to write apko configuration", err.Error())
+			return
+		}
+	}
+
 	ov, diags := generateValue(ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
@@ -165,11 +185,22 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 	data.Config = ov.(basetypes.ObjectValue)
 
-	hash := sha256.Sum256([]byte(data.ConfigContents.ValueString()))
-	data.Id = types.StringValue(hex.EncodeToString(hash[:]))
+	data.Id = types.StringValue(hash)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func writeFile(dir, hash, variant string, ic apkotypes.ImageConfiguration) error {
+	if err := os.MkdirAll(dir, 0644); err != nil {
+		return err
+	}
+	b, err := json.MarshalIndent(ic, "", "  ")
+	if err != nil {
+		return err
+	}
+	fn := fmt.Sprintf("%s.%s.apko.json", hash[0:6], variant)
+	return os.WriteFile(filepath.Join(dir, fn), b, 0644)
 }
 
 func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
