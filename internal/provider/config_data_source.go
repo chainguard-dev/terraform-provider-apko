@@ -152,7 +152,13 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		ic.Archs[i] = apkotypes.ParseArchitecture(a.ToAPK())
 	}
 
-	h := sha256.Sum256([]byte(data.ConfigContents.ValueString()))
+	input, err := yaml.Marshal(ic)
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to marshal apko configuration", err.Error())
+		return
+	}
+
+	h := sha256.Sum256(input)
 	hash := hex.EncodeToString(h[:])
 
 	if out := os.Getenv("TF_APKO_OUT_DIR"); out != "" {
