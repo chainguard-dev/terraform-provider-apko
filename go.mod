@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.0
 
 require (
-	chainguard.dev/apko v0.13.1
+	chainguard.dev/apko v0.13.3
 	github.com/chainguard-dev/terraform-provider-oci v0.0.10
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.17.0
