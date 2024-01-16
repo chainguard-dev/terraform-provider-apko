@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"sync"
@@ -14,6 +15,7 @@ import (
 	"chainguard.dev/apko/pkg/build/types"
 	"chainguard.dev/apko/pkg/options"
 	"chainguard.dev/apko/pkg/tarfs"
+	"github.com/chainguard-dev/clog"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	coci "github.com/sigstore/cosign/v2/pkg/oci"
@@ -113,6 +115,9 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	var errg errgroup.Group
 	for _, arch := range ic2.Archs {
 		arch := arch
+
+		log := clog.New(slog.Default().Handler()).With("arch", arch.ToAPK())
+		ctx := clog.WithLogger(ctx, log)
 
 		errg.Go(func() error {
 			bc, err := build.New(ctx, tarfs.New(),
