@@ -11,9 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
+      id-token: write # Used for gitsign
 
     steps:
       - uses: actions/checkout@v4

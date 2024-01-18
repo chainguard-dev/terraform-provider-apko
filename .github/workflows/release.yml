@@ -3,8 +3,12 @@ on:
   push:
     tags:
       - 'v*'
+
 jobs:
   goreleaser:
+    permissions:
+      contents: write # To publish the release.
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
