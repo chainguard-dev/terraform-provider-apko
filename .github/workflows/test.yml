@@ -9,8 +9,8 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
       with:
         go-version-file: 'go.mod'
     - run: go generate ./...
@@ -31,12 +31,12 @@ jobs:
         - '1.1.*'
         - '1.0.*'
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
       with:
         go-version-file: 'go.mod'
 
-    - uses: hashicorp/setup-terraform@v3
+    - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0
       with:
         terraform_version: ${{ matrix.terraform }}
         terraform_wrapper: false
