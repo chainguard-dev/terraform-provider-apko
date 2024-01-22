@@ -57,15 +57,15 @@ jobs:
       run: go build .
 
     # Make cosign/crane CLI available to the tests
-    - uses: sigstore/cosign-installer@v3.3.0
-    - uses: imjasonh/setup-crane@v0.3
+    - uses: sigstore/cosign-installer@9614fae9e5c5eddabb09f90a270fcb487c9f7149 # v3.3.0
+    - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c # v0.3
 
     - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       with:
         repository: chainguard-images/images
         path: images
 
-    - uses: hashicorp/setup-terraform@v3
+    - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
       with:
         terraform_version: '1.3.*'
         terraform_wrapper: false
