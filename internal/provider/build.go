@@ -137,7 +137,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 				return fmt.Errorf("failed to determine build date epoch: %w", err)
 			}
 
-			img, err := oci.BuildImageFromLayer(layer, bc.ImageConfiguration(), bde, bc.Arch(), bc.Logger())
+			img, err := oci.BuildImageFromLayer(ctx, layer, bc.ImageConfiguration(), bde, bc.Arch())
 			if err != nil {
 				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
 			}
