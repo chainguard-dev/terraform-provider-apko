@@ -50,8 +50,8 @@ github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyY
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/chainguard-dev/clog v1.3.0 h1:L/ey0VNH958YpzQa5OO2e2q+iOENxtLAhqkmgzh03e0=
-github.com/chainguard-dev/clog v1.3.0/go.mod h1:cV516KZWqYc/phZsCNwF36u/KMGS+Gj5Uqeb8Hlp95Y=
+github.com/chainguard-dev/clog v1.3.1 h1:CDNCty5WKQhJzoOPubk0GdXt+bPQyargmfClqebrpaQ=
+github.com/chainguard-dev/clog v1.3.1/go.mod h1:cV516KZWqYc/phZsCNwF36u/KMGS+Gj5Uqeb8Hlp95Y=
 github.com/chainguard-dev/go-apk v0.0.0-20240130195846-91a06ffe6715 h1:riuOFg3Ay1Js10GQtCAsCL2Hp2DJweUlYjKaxXteYV8=
 github.com/chainguard-dev/go-apk v0.0.0-20240130195846-91a06ffe6715/go.mod h1:OdsmvVJb8RNVcTVQ7x07L319LLeiRaRnnsmj8qBBgb4=
 github.com/chainguard-dev/terraform-provider-oci v0.0.10 h1:DNt2ZMcl/pCCctbc67a4GhTKu9f4KU5hxipvIq1pBs4=

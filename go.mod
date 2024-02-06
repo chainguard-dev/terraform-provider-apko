@@ -6,6 +6,7 @@ toolchain go1.21.5
 
 require (
 	chainguard.dev/apko v0.14.0
+	github.com/chainguard-dev/clog v1.3.1
 	github.com/chainguard-dev/terraform-provider-oci v0.0.10
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.19.0
@@ -36,7 +37,6 @@ require (
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/chainguard-dev/clog v1.3.0 // indirect
 	github.com/chainguard-dev/go-apk v0.0.0-20240130195846-91a06ffe6715 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
