@@ -8,6 +8,7 @@ jobs:
   goreleaser:
     permissions:
       contents: write # To publish the release.
+      id-token: write # To federate for the GPG key.
 
     runs-on: ubuntu-latest
     steps:
@@ -18,11 +19,25 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      # This is provisioned here: https://github.com/chainguard-dev/secrets/blob/main/terraform-provider-apko.tf
+      - uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        id: auth
+        with:
+          workload_identity_provider: "projects/12758742386/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "terraform-provider-apko@chainguard-github-secrets.iam.gserviceaccount.com"
+      - uses: google-github-actions/setup-gcloud@5a5f7b85fca43e76e53463acaa9d408a03c98d3a # v2.0.1
+        with:
+          project_id: "chainguard-github-secrets"
+      - uses: google-github-actions/get-secretmanager-secrets@ae0d4054c32840e2ced71207a9df55161ae3debc # v2.0.0
+        id: secrets
+        with:
+          secrets: |-
+            token:chainguard-github-secrets/terraform-provider-apko-signing-key
+
       - id: import_gpg
         uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
         with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
+          gpg_private_key: ${{ steps.secrets.outputs.token }}
 
       - uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
         with:
