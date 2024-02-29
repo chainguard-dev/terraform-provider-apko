@@ -9,7 +9,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: chainguard-dev/setup-chainctl@main
+      - uses: chainguard-dev/actions/setup-chainctl@main
         with:
           identity: 7bd3499071c496a9d1dc27156fedf9a5b82cfe4a/6689fc1916e8bf87
       - uses: imjasonh/setup-crane@main
