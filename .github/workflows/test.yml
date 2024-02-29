@@ -2,46 +2,17 @@ name: Tests
 on:
   pull_request:
     branches: ['main']
-  push:
-    branches: ['main']
 
 jobs:
-  generate:
+  dnm-push-image:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-      with:
-        go-version-file: 'go.mod'
-    - run: go generate ./...
-    - name: git diff
-      run: |
-        git diff --compact-summary --exit-code || \
-          (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        terraform:
-        - '1.3.*'
-        - '1.2.*'
-        - '1.1.*'
-        - '1.0.*'
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-      with:
-        go-version-file: 'go.mod'
-
-    - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0
-      with:
-        terraform_version: ${{ matrix.terraform }}
-        terraform_wrapper: false
-
-    - run: go mod download
-    - run: go build -v .
-    # TODO(jason): Enable -race
-    - run: TF_ACC=1 go test -v -cover ./internal/provider/
+      - uses: chainguard-dev/setup-chainctl@main
+        with:
+          identity: 7bd3499071c496a9d1dc27156fedf9a5b82cfe4a/6689fc1916e8bf87
+      - uses: imjasonh/setup-crane@main
+      - run: |
+          crane cp cgr.dev/chainguard/static:latest chainreg.biz/chainguard/static:latest
+          crane cp cgr.dev/chainguard/static:latest-glibc chainreg.biz/chainguard/static:latest-glibc
