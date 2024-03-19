@@ -18,7 +18,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.2.3
 	golang.org/x/sync v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apimachinery v0.29.2
+	k8s.io/apimachinery v0.29.3
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 )
 
@@ -72,7 +72,7 @@ require (
 	github.com/go-openapi/validate v0.23.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/cli v1.1.6 // indirect
