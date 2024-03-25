@@ -72,13 +72,13 @@ jobs:
 
     - uses: chainguard-dev/actions/setup-k3d@main
       with:
-        k3s-image: cgr.dev/chainguard/k3s:latest@sha256:2cce22ae3d776f2b924de7735bb10647320b1563dbca4ab1082a1eedae3b81c5
+        k3s-image: cgr.dev/chainguard/k3s:latest@sha256:055bf8db29bff169a5a22043f09b46a6bdfb02c42ed86b8d47dfad57fb9ad4f9
         registry-authority: registry.local:5000
 
     - working-directory: images
       env:
         TF_VAR_target_repository: registry.local:5000/tf-apko
-        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:e730eda546704a3c7a963eaefea32ceea66fbbbe958638700e660cbe57a1393d
+        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:358af87768d72b81c938d06a587b42dda8ac0cfd295b4936c8a5775a241e400a
       run: |
         terraform init
 
