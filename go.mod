@@ -1,8 +1,7 @@
 module github.com/chainguard-dev/terraform-provider-apko
 
 go 1.21.2
-
-toolchain go1.21.5
+toolchain go1.22.2
 
 require (
 	chainguard.dev/apko v0.14.1-0.20240320191131-d77c026f368a
@@ -18,7 +17,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.2.4
 	golang.org/x/sync v0.7.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apimachinery v0.29.3
+	k8s.io/apimachinery v0.30.0
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 )
 
