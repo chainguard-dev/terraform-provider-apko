@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -57,6 +58,13 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 			if tag == nil {
 				continue
 			}
+
+			// HACK: Handle this field.
+			if sf.Type.Kind() == reflect.Pointer {
+				log.Println("skipping pointer field", sf.Name)
+				continue
+			}
+
 			ft, err := generateTypeReflect(sf.Type)
 			if err != nil {
 				return nil, fmt.Errorf("struct %w", err)
@@ -134,6 +142,13 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 			if tag == nil {
 				continue
 			}
+
+			// HACK: Handle this field.
+			if sf.Type.Kind() == reflect.Pointer {
+				log.Println("skipping pointer field", sf.Name)
+				continue
+			}
+
 			ft, diags := generateValueReflect(v.Field(i))
 			if diags.HasError() {
 				return nil, diags

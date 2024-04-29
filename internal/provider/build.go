@@ -17,6 +17,7 @@ import (
 	"chainguard.dev/apko/pkg/tarfs"
 	"github.com/chainguard-dev/clog"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	coci "github.com/sigstore/cosign/v2/pkg/oci"
 	"golang.org/x/sync/errgroup"
@@ -142,7 +143,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 				return fmt.Errorf("failed to determine build date epoch: %w", err)
 			}
 
-			img, err := oci.BuildImageFromLayer(ctx, layer, bc.ImageConfiguration(), bde, bc.Arch())
+			img, err := oci.BuildImageFromLayer(ctx, empty.Image, layer, bc.ImageConfiguration(), bde, bc.Arch())
 			if err != nil {
 				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
 			}
@@ -222,6 +223,9 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraRepos(data.popts.repositories),
 	)
+	if err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create options for index: %w", err)
+	}
 
 	isboms, err := build.GenerateIndexSBOM(ctx, *o, *ic2, finalDigest, imgs)
 	if err != nil {

@@ -71,6 +71,7 @@ Read-Only:
 Read-Only:
 
 - `gid` (Number)
+- `shell` (String)
 - `uid` (Number)
 - `username` (String)
 
