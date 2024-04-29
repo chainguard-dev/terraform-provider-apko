@@ -112,6 +112,7 @@ Required:
 Required:
 
 - `gid` (Number)
+- `shell` (String)
 - `uid` (Number)
 - `username` (String)
 
