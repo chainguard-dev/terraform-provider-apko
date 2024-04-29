@@ -223,6 +223,9 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraRepos(data.popts.repositories),
 	)
+	if err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create options for index: %w", err)
+	}
 
 	isboms, err := build.GenerateIndexSBOM(ctx, *o, *ic2, finalDigest, imgs)
 	if err != nil {
