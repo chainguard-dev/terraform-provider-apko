@@ -117,8 +117,13 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	} else {
 		for pkg := range pkgs {
 			if strings.HasPrefix(pkg, data.TargetPackage.ValueString()+"-") {
+				if found != "" {
+					resp.Diagnostics.AddError("Multiple packages match", fmt.Sprintf("Multiple packages match: %s and %s", found, pkg))
+					return
+				}
+
 				found = pkg
-				break
+				// Don't stop; keep looking in case there are multiple matches!
 			}
 		}
 	}
