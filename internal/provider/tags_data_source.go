@@ -115,14 +115,19 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	if _, ok := pkgs[data.TargetPackage.ValueString()]; ok {
 		found = data.TargetPackage.ValueString()
 	} else {
-		for pkg := range pkgs {
+		var foundver string
+		for pkg, ver := range pkgs {
+			// If the package name didn't match exactly, see if we have a package that starts with the target package name.
+			// This is to handle the common case where a package named "foo" might be provided by a package named "foo-1.23".
+			// In case there are multiple packages that match that provide different versions, we'll error out.
 			if strings.HasPrefix(pkg, data.TargetPackage.ValueString()+"-") {
-				if found != "" {
-					resp.Diagnostics.AddError("Multiple packages match", fmt.Sprintf("Multiple packages match: %s and %s", found, pkg))
+				if found != "" && foundver != ver {
+					resp.Diagnostics.AddError("Multiple packages match", fmt.Sprintf("Multiple packages match with different versions: %s (%s) and %s (%s)", found, foundver, pkg, ver))
 					return
 				}
 
 				found = pkg
+				foundver = ver
 				// Don't stop; keep looking in case there are multiple matches!
 			}
 		}
