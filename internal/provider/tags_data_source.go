@@ -102,21 +102,35 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	found := false
+	pkgs := map[string]string{}
+	var found string
 	for _, pkg := range ic.Contents.Packages {
-		if strings.HasPrefix(pkg, data.TargetPackage.ValueString()+"=") {
-			fullVersion := strings.TrimPrefix(pkg, data.TargetPackage.ValueString()+"=")
-			data.Tags = getStemmedVersionTags(fullVersion)
-			data.Tags = append(data.Tags, fullVersion)
-			sort.Strings(data.Tags)
-			found = true
-			break
+		pkg, version, ok := strings.Cut(pkg, "=")
+		if !ok {
+			resp.Diagnostics.AddError("Invalid package", fmt.Sprintf("Invalid package: %s", pkg))
+			return
+		}
+		pkgs[pkg] = version
+	}
+	if _, ok := pkgs[data.TargetPackage.ValueString()]; ok {
+		found = data.TargetPackage.ValueString()
+	} else {
+		for pkg := range pkgs {
+			if strings.HasPrefix(pkg, data.TargetPackage.ValueString()+"-") {
+				found = pkg
+				break
+			}
 		}
 	}
-	if !found {
-		resp.Diagnostics.AddError("Unable to find package", fmt.Sprintf("Unable to find package: %s", data.TargetPackage.ValueString()))
+
+	if found == "" {
+		resp.Diagnostics.AddError("Unable to find package for tags", fmt.Sprintf("Unable to find package for tags: %s; have %+v", data.TargetPackage.ValueString(), ic.Contents.Packages))
 		return
 	}
+
+	data.Tags = getStemmedVersionTags(pkgs[found])
+	data.Tags = append(data.Tags, pkgs[found])
+	sort.Strings(data.Tags)
 
 	data.Id = types.StringValue(strings.Join(data.Tags, ","))
 
