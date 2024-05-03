@@ -28,6 +28,7 @@ contents:
   - ca-certificates-bundle=20230506-r0
   - glibc-locale-posix=2.37-r6
   - ko=0.13.0-r3
+  - nodejs=21.7.3-r1 # Initial request will be satisfied by 'provides'
 EOF
   extra_packages = ["tzdata=2023c-r0"]
 }
@@ -55,6 +56,16 @@ data "apko_tags" "tzdata" {
 data "apko_tags" "ko" {
   config         = data.apko_config.this.config
   target_package = "ko"
+}
+
+data "apko_tags" "nodejs" {
+  config         = data.apko_config.this.config
+  target_package = "nodejs" # Tags can be inferred from 'provides'
+}
+
+data "apko_tags" "nodejs-21" {
+  config         = data.apko_config.this.config
+  target_package = "nodejs-21"
 }
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
@@ -85,6 +96,22 @@ data "apko_tags" "ko" {
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.2", "0.13.0"),
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.3", "0.13.0-r3"),
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "id", "0,0.13,0.13.0,0.13.0-r3"),
+
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.#", "4"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.0", "21"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.1", "21.7"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.2", "21.7.3"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.3", "21.7.3-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "id", "21,21.7,21.7.3,21.7.3-r1"),
+
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.#", "4"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.0", "21"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.1", "21.7"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.2", "21.7.3"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.3", "21.7.3-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "id", "21,21.7,21.7.3,21.7.3-r1"),
+
+				//21.7.3-r1.apk
 			),
 		}},
 	})
@@ -112,6 +139,7 @@ contents:
   - ca-certificates-bundle=20230506-r0
   - glibc-locale-posix=2.37-r6
   - ko=0.13.0-r3
+  - nodejs=21.7.3-r1
 EOF
   extra_packages = ["tzdata=2023c-r0"]
 }

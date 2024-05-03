@@ -102,21 +102,45 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	found := false
+	pkgs := map[string]string{}
+	var found string
 	for _, pkg := range ic.Contents.Packages {
-		if strings.HasPrefix(pkg, data.TargetPackage.ValueString()+"=") {
-			fullVersion := strings.TrimPrefix(pkg, data.TargetPackage.ValueString()+"=")
-			data.Tags = getStemmedVersionTags(fullVersion)
-			data.Tags = append(data.Tags, fullVersion)
-			sort.Strings(data.Tags)
-			found = true
-			break
+		pkg, version, ok := strings.Cut(pkg, "=")
+		if !ok {
+			resp.Diagnostics.AddError("Invalid package", fmt.Sprintf("Invalid package: %s", pkg))
+			return
+		}
+		pkgs[pkg] = version
+	}
+	if _, ok := pkgs[data.TargetPackage.ValueString()]; ok {
+		found = data.TargetPackage.ValueString()
+	} else {
+		var foundver string
+		for pkg, ver := range pkgs {
+			// If the package name didn't match exactly, see if we have a package that starts with the target package name.
+			// This is to handle the common case where a package named "foo" might be provided by a package named "foo-1.23".
+			// In case there are multiple packages that match that provide different versions, we'll error out.
+			if strings.HasPrefix(pkg, data.TargetPackage.ValueString()+"-") {
+				if found != "" && foundver != ver {
+					resp.Diagnostics.AddError("Multiple packages match", fmt.Sprintf("Multiple packages match with different versions: %s (%s) and %s (%s)", found, foundver, pkg, ver))
+					return
+				}
+
+				found = pkg
+				foundver = ver
+				// Don't stop; keep looking in case there are multiple matches!
+			}
 		}
 	}
-	if !found {
-        resp.Diagnostics.AddError(fmt.Sprintf("Unable to find package: %s...", data.TargetPackage.ValueString()), fmt.Sprintf("...in package list:\n\t%s", strings.Join(ic.Contents.Packages, "\n\t")))
+
+	if found == "" {
+    resp.Diagnostics.AddError(fmt.Sprintf("Unable to find package: %s...", data.TargetPackage.ValueString()), fmt.Sprintf("...in package list:\n\t%s", strings.Join(ic.Contents.Packages, "\n\t")))
 		return
 	}
+
+	data.Tags = getStemmedVersionTags(pkgs[found])
+	data.Tags = append(data.Tags, pkgs[found])
+	sort.Strings(data.Tags)
 
 	data.Id = types.StringValue(strings.Join(data.Tags, ","))
 
