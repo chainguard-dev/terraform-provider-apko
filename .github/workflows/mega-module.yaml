@@ -72,7 +72,7 @@ jobs:
 
     - uses: chainguard-dev/actions/setup-k3d@main
       with:
-        k3s-image: cgr.dev/chainguard/k3s:latest@sha256:6e58143addb99310c9cae4dffc86ce0caeed34a735ff553102cad3fd3a2e9c6b
+        k3s-image: cgr.dev/chainguard/k3s:latest@sha256:7ffe98b7d155cede42797d4931f22f784fc7ddbc5d96b771f8467cc11443a070
         registry-authority: registry.local:5000
 
     - working-directory: images
