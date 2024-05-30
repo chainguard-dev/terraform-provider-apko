@@ -70,14 +70,13 @@ jobs:
         terraform_version: '1.3.*'
         terraform_wrapper: false
 
-    - uses: chainguard-dev/actions/setup-k3d@main
+    - uses: chainguard-dev/actions/setup-registry@main
       with:
-        k3s-image: cgr.dev/chainguard/k3s:latest@sha256:f8d75508d3df7215eeb595b886af8ffc36c6f5b6444ab69f06f6204abc1897fb
-        registry-authority: registry.local:5000
+        port: 5000
 
     - working-directory: images
       env:
-        TF_VAR_target_repository: registry.local:5000/tf-apko
+        TF_VAR_target_repository: localhost:5000/tf-apko
         APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:a87353f424a3ccd50cdaa3bb51585aeae7cecea839f746900858dc965274386b
       run: |
         terraform init
@@ -93,13 +92,11 @@ jobs:
         terraform apply -auto-approve \
           -target=module.go \
           -target=module.jdk \
-          -target=module.python \
-          -target=module.kubernetes
-          # TODO(joshwolf): reinclude this once we understand why the tests are failing.
-          # -target=module.k3s
+          -target=module.python
 
-    - name: Collect diagnostics and upload
-      if: ${{ failure() }}
-      uses: chainguard-dev/actions/k8s-diag@main
+    - name: Upload imagetest logs
+      if: always()
+      uses: actions/upload-artifact@v4
       with:
-        cluster-type: k3d
+        name: "mega-module-imagetest-logs"
+        path: imagetest-logs
