@@ -113,6 +113,11 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	contexts := make(map[types.Architecture]*build.Context, len(ic2.Archs))
 	sboms := make(map[string]imagesbom, len(ic2.Archs)+1)
 
+	authOpt, err := authOption()
+	if err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create auth option: %w", err)
+	}
+
 	var errg errgroup.Group
 	for _, arch := range ic2.Archs {
 		arch := arch
@@ -122,12 +127,13 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 
 		errg.Go(func() error {
 			bc, err := build.New(ctx, tarfs.New(),
-				build.WithImageConfiguration(*ic2),
-				build.WithSBOMFormats([]string{"spdx"}),
-				build.WithSBOM(tempDir),
-				build.WithArch(arch),
-				build.WithExtraKeys(data.popts.keyring),
-				build.WithExtraRepos(data.popts.repositories),
+				append(authOpt,
+					build.WithImageConfiguration(*ic2),
+					build.WithSBOMFormats([]string{"spdx"}),
+					build.WithSBOM(tempDir),
+					build.WithArch(arch),
+					build.WithExtraKeys(data.popts.keyring),
+					build.WithExtraRepos(data.popts.repositories))...,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to start apko build: %w", err)
