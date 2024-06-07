@@ -92,7 +92,8 @@ jobs:
         terraform apply -auto-approve \
           -target=module.go \
           -target=module.jdk \
-          -target=module.python
+          -target=module.python \
+          -target=module.scanner-test
 
     - name: Upload imagetest logs
       if: always()
