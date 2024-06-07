@@ -330,3 +330,51 @@ resource "apko_build" "foo" {
 		}},
 	})
 }
+
+func TestAccResourceApkoBuild_OldPackages(t *testing.T) {
+	repo, cleanup := ocitesting.SetupRepository(t, "test")
+	defer cleanup()
+
+	repostr := repo.String()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories: []string{"https://packages.wolfi.dev/os"},
+				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:        []string{"x86_64", "aarch64"},
+				packages:     []string{"wolfi-baselayout"},
+			}),
+		}, Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = <<EOF
+contents:
+  packages:
+    # Testing that old packages with potentially invalid SBOMs can produce a valid image SBOM.
+    - glibc=2.36-r3
+    - binutils=2.39-r4
+    - git=2.39.0-r0
+    - openssl=3.0.7-r0
+    - sysstat=12.6.2-r0
+    - libcrypto3=3.0.8-r0
+  EOF
+}
+
+resource "apko_build" "foo" {
+	repo   = %q
+	config = data.apko_config.foo.config
+}
+`, repostr),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"apko_build.foo", "repo", regexp.MustCompile("^"+repostr)),
+					resource.TestMatchResourceAttr(
+						"apko_build.foo", "image_ref", regexp.MustCompile("^"+repostr+"@sha256:")),
+				),
+			},
+		},
+	})
+}
