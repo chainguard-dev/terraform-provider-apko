@@ -59,10 +59,11 @@ func TestAccDataSourceConfig_ExtraPackages(t *testing.T) {
 		PreCheck: func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"apko": providerserver.NewProtocol6WithError(&Provider{
-				repositories: []string{"https://packages.wolfi.dev/os"},
-				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
-				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout=20230201-r0"},
+				repositories:       []string{"https://packages.wolfi.dev/os"},
+				buildRespositories: []string{"./packages"},
+				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:              []string{"x86_64", "aarch64"},
+				packages:           []string{"wolfi-baselayout=20230201-r0"},
 				anns: map[string]string{
 					"bar": "provider-provided",
 					"baz": "provider-provided",
@@ -106,10 +107,11 @@ func TestAccDataSourceConfig_ProviderOpts_Locked(t *testing.T) {
 		PreCheck: func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"apko": providerserver.NewProtocol6WithError(&Provider{
-				repositories: []string{"https://packages.wolfi.dev/os"},
-				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
-				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout=20230201-r0"},
+				repositories:       []string{"https://packages.wolfi.dev/os"},
+				buildRespositories: []string{"./packages"},
+				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:              []string{"x86_64", "aarch64"},
+				packages:           []string{"wolfi-baselayout=20230201-r0"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -146,10 +148,11 @@ func TestAccDataSourceConfig_ProviderOpts_Unlocked(t *testing.T) {
 		PreCheck: func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"apko": providerserver.NewProtocol6WithError(&Provider{
-				repositories: []string{"https://packages.wolfi.dev/os"},
-				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
-				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout"},
+				repositories:       []string{"https://packages.wolfi.dev/os"},
+				buildRespositories: []string{"./packages"},
+				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:              []string{"x86_64", "aarch64"},
+				packages:           []string{"wolfi-baselayout"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -184,10 +187,11 @@ func TestAccDataSourceConfig_ProviderOpts_OverrideArchitecture(t *testing.T) {
 		PreCheck: func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"apko": providerserver.NewProtocol6WithError(&Provider{
-				repositories: []string{"https://packages.wolfi.dev/os"},
-				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
-				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout"},
+				repositories:       []string{"https://packages.wolfi.dev/os"},
+				buildRespositories: []string{"./packages"},
+				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:              []string{"x86_64", "aarch64"},
+				packages:           []string{"wolfi-baselayout"},
 			}),
 		},
 		Steps: []resource.TestStep{{
