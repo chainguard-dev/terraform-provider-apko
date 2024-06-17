@@ -53,7 +53,8 @@ func fromImageData(ctx context.Context, ic types.ImageConfiguration, popts Provi
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(popts.keyring),
-		build.WithExtraRepos(popts.repositories),
+		build.WithExtraRuntimeRepos(popts.repositories),
+		build.WithExtraBuildRepos(popts.buildRespositories),
 	}
 
 	o, ic2, err := build.NewOptions(opts...)
@@ -133,7 +134,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 					build.WithSBOM(tempDir),
 					build.WithArch(arch),
 					build.WithExtraKeys(data.popts.keyring),
-					build.WithExtraRepos(data.popts.repositories))...,
+					build.WithExtraBuildRepos(data.popts.buildRespositories),
+					build.WithExtraRuntimeRepos(data.popts.repositories))...,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to start apko build: %w", err)
@@ -227,7 +229,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithSBOM(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
-		build.WithExtraRepos(data.popts.repositories),
+		build.WithExtraRuntimeRepos(data.popts.repositories),
+		build.WithExtraBuildRepos(data.popts.buildRespositories),
 	)
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create options for index: %w", err)
