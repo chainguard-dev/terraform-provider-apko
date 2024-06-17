@@ -83,6 +83,7 @@ Read-Only:
 
 Read-Only:
 
+- `build_repositories` (List of String)
 - `keyring` (List of String)
 - `packages` (List of String)
 - `repositories` (List of String)
