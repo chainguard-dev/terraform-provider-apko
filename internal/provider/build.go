@@ -14,7 +14,6 @@ import (
 	"chainguard.dev/apko/pkg/build/oci"
 	"chainguard.dev/apko/pkg/build/types"
 	"chainguard.dev/apko/pkg/options"
-	"chainguard.dev/apko/pkg/tarfs"
 	"github.com/chainguard-dev/clog"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
@@ -119,6 +118,24 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create auth option: %w", err)
 	}
 
+	opts := append(authOpt,
+		build.WithImageConfiguration(*ic2),
+		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithSBOM(tempDir),
+		build.WithExtraKeys(data.popts.keyring),
+		build.WithExtraBuildRepos(data.popts.buildRespositories),
+		build.WithExtraRuntimeRepos(data.popts.repositories))
+
+	mc, err := build.NewMultiArch(ctx, ic2.Archs, opts...)
+	if err != nil {
+		return v1.Hash{}, nil, nil, err
+	}
+
+	layers, err := mc.BuildLayers(ctx)
+	if err != nil {
+		return v1.Hash{}, nil, nil, fmt.Errorf("building layers: %w", err)
+	}
+
 	var errg errgroup.Group
 	for _, arch := range ic2.Archs {
 		arch := arch
@@ -127,24 +144,8 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		ctx := clog.WithLogger(ctx, log)
 
 		errg.Go(func() error {
-			bc, err := build.New(ctx, tarfs.New(),
-				append(authOpt,
-					build.WithImageConfiguration(*ic2),
-					build.WithSBOMFormats([]string{"spdx"}),
-					build.WithSBOM(tempDir),
-					build.WithArch(arch),
-					build.WithExtraKeys(data.popts.keyring),
-					build.WithExtraBuildRepos(data.popts.buildRespositories),
-					build.WithExtraRuntimeRepos(data.popts.repositories))...,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to start apko build: %w", err)
-			}
-
-			_, layer, err := bc.BuildLayer(ctx)
-			if err != nil {
-				return fmt.Errorf("failed to build layer image for %q: %w", arch, err)
-			}
+			bc := mc.Contexts[arch]
+			layer := layers[arch]
 
 			bde, err := bc.GetBuildDateEpoch()
 			if err != nil {
