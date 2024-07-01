@@ -113,20 +113,12 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	contexts := make(map[types.Architecture]*build.Context, len(ic2.Archs))
 	sboms := make(map[string]imagesbom, len(ic2.Archs)+1)
 
-	authOpt, err := authOption()
-	if err != nil {
-		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create auth option: %w", err)
-	}
-
-	opts := append(authOpt,
-		build.WithImageConfiguration(*ic2),
+	mc, err := build.NewMultiArch(ctx, ic2.Archs, build.WithImageConfiguration(*ic2),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithSBOM(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraBuildRepos(data.popts.buildRespositories),
 		build.WithExtraRuntimeRepos(data.popts.repositories))
-
-	mc, err := build.NewMultiArch(ctx, ic2.Archs, opts...)
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}

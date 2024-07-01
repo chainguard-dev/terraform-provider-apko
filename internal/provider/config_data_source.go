@@ -211,30 +211,10 @@ func writeFile(dir, hash, variant string, ic apkotypes.ImageConfiguration) error
 	return os.WriteFile(filepath.Join(dir, fn), b, 0644)
 }
 
-func authOption() ([]build.Option, error) {
-	auth, ok := os.LookupEnv("HTTP_AUTH")
-	if !ok {
-		// Fine, no auth.
-		return nil, nil
-	}
-	parts := strings.SplitN(auth, ":", 4)
-	if len(parts) != 4 {
-		return nil, fmt.Errorf("HTTP_AUTH must be in the form 'basic:REALM:USERNAME:PASSWORD' (got %d parts)", len(parts))
-	} else if parts[0] != "basic" {
-		return nil, fmt.Errorf("HTTP_AUTH must be in the form 'basic:REALM:USERNAME:PASSWORD' (got %q for first part)", parts[0])
-	}
-	return []build.Option{build.WithAuth(parts[1], parts[2], parts[3])}, nil
-}
-
 func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
 	_, ic2, err := fromImageData(ctx, ic, d.popts)
 	if err != nil {
 		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse apko config", err.Error())}
-	}
-
-	authOpt, err := authOption()
-	if err != nil {
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse HTTP_AUTH", err.Error())}
 	}
 
 	eg := errgroup.Group{}
@@ -243,14 +223,12 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 		i, arch := i, arch
 		eg.Go(func() error {
 			bc, err := build.New(ctx, tarfs.New(),
-				append(authOpt,
-					build.WithImageConfiguration(*ic2),
-					build.WithSBOMFormats([]string{"spdx"}),
-					build.WithArch(arch),
-					build.WithExtraKeys(d.popts.keyring),
-					build.WithExtraBuildRepos(d.popts.buildRespositories),
-					build.WithExtraRuntimeRepos(d.popts.repositories))...,
-			)
+				build.WithImageConfiguration(*ic2),
+				build.WithSBOMFormats([]string{"spdx"}),
+				build.WithArch(arch),
+				build.WithExtraKeys(d.popts.keyring),
+				build.WithExtraBuildRepos(d.popts.buildRespositories),
+				build.WithExtraRuntimeRepos(d.popts.repositories))
 			if err != nil {
 				return err
 			}
