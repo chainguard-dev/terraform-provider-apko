@@ -7,7 +7,7 @@ require (
 	github.com/chainguard-dev/clog v1.4.0
 	github.com/chainguard-dev/terraform-provider-oci v0.0.14
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.20.0
+	github.com/google/go-containerregistry v0.20.1
 	github.com/hashicorp/terraform-plugin-docs v0.19.4
 	github.com/hashicorp/terraform-plugin-framework v1.9.0
 	github.com/hashicorp/terraform-plugin-go v0.23.0
