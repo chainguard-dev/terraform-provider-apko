@@ -1,6 +1,7 @@
 module github.com/chainguard-dev/terraform-provider-apko
 
-go 1.22.3
+go 1.22.5
+
 require (
 	chainguard.dev/apko v0.16.0
 	github.com/chainguard-dev/clog v1.4.0
