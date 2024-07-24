@@ -15,7 +15,6 @@ import (
 
 	"chainguard.dev/apko/pkg/build"
 	apkotypes "chainguard.dev/apko/pkg/build/types"
-	"chainguard.dev/apko/pkg/tarfs"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -217,29 +216,34 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse apko config", err.Error())}
 	}
 
-	eg := errgroup.Group{}
 	archs := make([]resolved, len(ic.Archs))
+
+	mc, err := build.NewMultiArch(ctx, ic.Archs, build.WithImageConfiguration(*ic2),
+		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithExtraKeys(d.popts.keyring),
+		build.WithExtraBuildRepos(d.popts.buildRespositories),
+		build.WithExtraRuntimeRepos(d.popts.repositories))
+	if err != nil {
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", err.Error())}
+	}
+
+	// Determine the exact versions of our transitive packages and lock them
+	// down in the "resolved" configuration, so that this build may be
+	// reproduced exactly.
+	toInstalls, err := mc.BuildPackageLists(ctx)
+	if err != nil {
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", err.Error())}
+	}
+
+	var eg errgroup.Group
 	for i, arch := range ic.Archs {
 		i, arch := i, arch
 		eg.Go(func() error {
-			bc, err := build.New(ctx, tarfs.New(),
-				build.WithImageConfiguration(*ic2),
-				build.WithSBOMFormats([]string{"spdx"}),
-				build.WithArch(arch),
-				build.WithExtraKeys(d.popts.keyring),
-				build.WithExtraBuildRepos(d.popts.buildRespositories),
-				build.WithExtraRuntimeRepos(d.popts.repositories))
-			if err != nil {
-				return err
+			pkgs, ok := toInstalls[arch]
+			if !ok {
+				return fmt.Errorf("missing package list for %s", arch)
 			}
 
-			// Determine the exact versions of our transitive packages and lock them
-			// down in the "resolved" configuration, so that this build may be
-			// reproduced exactly.
-			pkgs, _, err := bc.BuildPackageList(ctx)
-			if err != nil {
-				return err
-			}
 			r := resolved{
 				// ParseArchitecture normalizes the architecture into the
 				// canonical OCI form (amd64, not x86_64)
