@@ -80,7 +80,6 @@ Required:
 - `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--config--entrypoint))
 - `environment` (Map of String)
 - `include` (String)
-- `os-release` (Object) (see [below for nested schema](#nestedobjatt--config--os-release))
 - `paths` (List of Object) (see [below for nested schema](#nestedobjatt--config--paths))
 - `stop-signal` (String)
 - `vcs-url` (String)
@@ -139,19 +138,6 @@ Required:
 - `services` (Map of String)
 - `shell-fragment` (String)
 - `type` (String)
-
-
-<a id="nestedobjatt--config--os-release"></a>
-### Nested Schema for `config.os-release`
-
-Required:
-
-- `bug-report-url` (String)
-- `home-url` (String)
-- `id` (String)
-- `name` (String)
-- `pretty-name` (String)
-- `version-id` (String)
 
 
 <a id="nestedobjatt--config--paths"></a>
