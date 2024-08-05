@@ -51,8 +51,8 @@ github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UF
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/chainguard-dev/clog v1.4.0 h1:x0YyEppnUX+dxQAnfGNYdQEKNDSRCAwC08f/1eIxJ9E=
 github.com/chainguard-dev/clog v1.4.0/go.mod h1:cV516KZWqYc/phZsCNwF36u/KMGS+Gj5Uqeb8Hlp95Y=
-github.com/chainguard-dev/terraform-provider-oci v0.0.14 h1:iUPmhZIwX9JoPjxYX8v4YksFKvy10a875IUscchz74s=
-github.com/chainguard-dev/terraform-provider-oci v0.0.14/go.mod h1:0nCui8Wv1asiXTh5d2StW5kQFl3FmEViq39iFgOCAp4=
+github.com/chainguard-dev/terraform-provider-oci v0.0.16 h1:ZIiVHjfMQYZ/iw7W6DxRN49jDTX4tLMoGsKztw6aNzw=
+github.com/chainguard-dev/terraform-provider-oci v0.0.16/go.mod h1:/BrtN+XVGJQaLmfb4cIR6K5pJMuPsC18ocSMAhZkrd0=
 github.com/cloudflare/circl v1.3.9 h1:QFrlgFYf2Qpi8bSpVPK1HBvWpx16v/1TZivyo7pGuBE=
 github.com/cloudflare/circl v1.3.9/go.mod h1:PDRU+oXvdD7KCtgKxW95M5Z8BpSCJXQORiZFnBQS5QU=
 github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be h1:J5BL2kskAlV9ckgEsNQXscjIaLiOYiZ75d4e94E6dcQ=
