@@ -1,11 +1,15 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -264,4 +268,34 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		predicateSHA256: hex.EncodeToString(hash[:]),
 	}
 	return h, idx, sboms, nil
+}
+
+func remoteBuild(ctx context.Context, data BuildResourceModel) (string, error) {
+	u := fmt.Sprintf("%s/build?repo=%s", *data.popts.remoteBuilder, data.Repo.ValueString())
+	var ic types.ImageConfiguration
+	if diags := assignValue(data.Config, &ic); diags.HasError() {
+		return "", fmt.Errorf("assigning value: %v", diags.Errors())
+	}
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(ic); err != nil {
+		return "", err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, &buf)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	hresp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer hresp.Body.Close()
+	all, err := io.ReadAll(hresp.Body)
+	if err != nil {
+		return "", err
+	}
+	if hresp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("remote build failed: %s", string(all))
+	}
+	return string(all), nil
 }

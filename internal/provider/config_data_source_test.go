@@ -1,9 +1,13 @@
 package provider
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"testing"
 
+	"chainguard.dev/apko/pkg/build/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -509,6 +513,48 @@ unknown-field: 'blah'
 EOF
 }`,
 			ExpectError: regexp.MustCompile("field unknown-field not found in type types.ImageConfiguration"),
+		}},
+	})
+}
+
+func TestAccDataSourceConfig_RemoteBuilder(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(types.ImageConfiguration{
+			Contents: types.ImageContents{
+				Packages: []string{
+					"ca-certificates-bundle=20230506-r0",
+					"glibc-locale-posix=2.37-r6",
+					"tzdata=2023c-r0",
+					"wolfi-baselayout=20230201-r0",
+				},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				remoteBuilder: &srv.URL,
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: `
+data "apko_config" "this" {
+  config_contents = <<EOF
+contents:
+  packages:
+  - does-not-matter
+EOF
+}`,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20230506-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.37-r6"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2023c-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r0"),
+			),
 		}},
 	})
 }

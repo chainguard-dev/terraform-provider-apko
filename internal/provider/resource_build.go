@@ -154,6 +154,19 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
+	if data.popts.remoteBuilder != nil {
+		dig, err := remoteBuild(ctx, *data)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", err.Error())
+			return
+		}
+		data.Id = types.StringValue(dig)
+		data.ImageRef = types.StringValue(dig)
+		data.SBOMs = types.MapNull(digestSBOMSchema) // TODO: Populate SBOMs.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	digest, se, sboms, err := doBuild(ctx, *data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
@@ -231,6 +244,17 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	repo, err := name.NewRepository(data.Repo.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Error parsing repo: %v", err))
+		return
+	}
+
+	if data.popts.remoteBuilder != nil {
+		dig, err := remoteBuild(ctx, *data)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", err.Error())
+			return
+		}
+		data.Id = types.StringValue(dig)
+		data.ImageRef = types.StringValue(dig)
 		return
 	}
 

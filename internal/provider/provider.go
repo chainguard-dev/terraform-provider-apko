@@ -18,6 +18,7 @@ var _ provider.Provider = &Provider{}
 type Provider struct {
 	version string
 
+	remoteBuilder                                              *string
 	repositories, buildRespositories, packages, keyring, archs []string
 	anns                                                       map[string]string
 }
@@ -29,12 +30,14 @@ type ProviderModel struct {
 	ExtraKeyring       []string          `tfsdk:"extra_keyring"`
 	DefaultAnnotations map[string]string `tfsdk:"default_annotations"`
 	DefaultArchs       []string          `tfsdk:"default_archs"`
+	RemoteBuilder      *string           `tfsdk:"remote_builder"`
 }
 
 type ProviderOpts struct {
 	repositories, buildRespositories, packages, keyring, archs []string
 	anns                                                       map[string]string
 	ropts                                                      []remote.Option
+	remoteBuilder                                              *string
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -74,6 +77,10 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 				Description: "Default architectures to build for",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
+			},
+			"remote_builder": schema.StringAttribute{
+				Description: "Remote builder to use (EXPERIMENTAL)",
+				Optional:    true,
 			},
 		},
 	}
@@ -116,6 +123,10 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	}
 	ropts = append(ropts, remote.Reuse(puller), remote.Reuse(pusher))
 
+	if p.remoteBuilder != nil {
+		data.RemoteBuilder = p.remoteBuilder
+	}
+
 	opts := &ProviderOpts{
 		// This is only for testing, so we can inject provider config
 		repositories:       append(p.repositories, data.ExtraRepositories...),
@@ -124,6 +135,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		keyring:            append(p.keyring, data.ExtraKeyring...),
 		archs:              append(p.archs, data.DefaultArchs...),
 		anns:               combineMaps(p.anns, data.DefaultAnnotations),
+		remoteBuilder:      data.RemoteBuilder,
 		ropts:              ropts,
 	}
 

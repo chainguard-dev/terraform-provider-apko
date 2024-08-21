@@ -1,11 +1,14 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -217,6 +220,36 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 	}
 
 	archs := make([]resolved, len(ic.Archs))
+
+	if d.popts.remoteBuilder != nil {
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(ic2); err != nil {
+			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("JSON encoding image config", err.Error())}
+		}
+		u := fmt.Sprintf("%s/resolve", *d.popts.remoteBuilder)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, &buf)
+		if err != nil {
+			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("creating HTTP request", err.Error())}
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("performing HTTP request", err.Error())}
+		}
+		defer resp.Body.Close()
+		all, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("reading HTTP response", err.Error())}
+		}
+		if resp.StatusCode != http.StatusOK {
+			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("HTTP request failed", string(all))}
+		}
+		var ic3 apkotypes.ImageConfiguration
+		if err := json.Unmarshal(all, &ic3); err != nil {
+			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("parsing HTTP response", err.Error())}
+		}
+		return ic3.Contents.Packages, nil
+	}
 
 	mc, err := build.NewMultiArch(ctx, ic.Archs, build.WithImageConfiguration(*ic2),
 		build.WithSBOMFormats([]string{"spdx"}),

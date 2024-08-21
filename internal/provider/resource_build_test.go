@@ -6,11 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"regexp"
 	"testing"
 	"time"
 
+	"chainguard.dev/apko/pkg/build/types"
 	"chainguard.dev/apko/pkg/sbom/generator/spdx"
 	ocitesting "github.com/chainguard-dev/terraform-provider-oci/testing"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -380,5 +383,47 @@ resource "apko_build" "foo" {
 				),
 			},
 		},
+	})
+}
+
+func TestAccResourceApkoBuild_RemoteBuilder(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/resolve" {
+			// The apko_config will request this path, it just needs to respond with any valid ImageConfiguration.
+			_ = json.NewEncoder(w).Encode(types.ImageConfiguration{
+				// Doesn't matter.
+			})
+		} else if r.URL.Path == "/build" {
+			// The apko_build will request this path, and it just needs to respond with a valid image ref,
+			// which will get stored in the state directly.
+			fmt.Fprintf(w, "ttl.sh/jason@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+		} else {
+			http.Error(w, "not found", http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				remoteBuilder: &srv.URL,
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = "" // Doesn't matter.
+}
+
+resource "apko_build" "foo" {
+  repo   = "ttl.sh/jason"
+  config = data.apko_config.foo.config
+}`),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("apko_build.foo", "image_ref", "ttl.sh/jason@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+				resource.TestCheckResourceAttr("apko_build.foo", "id", "ttl.sh/jason@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+			),
+		}},
 	})
 }
