@@ -155,7 +155,13 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 			}
 			fv[*tag] = ft
 		}
-		return basetypes.NewObjectValue(ot.(basetypes.ObjectType).AttrTypes, fv)
+
+		attrTyp, ok := ot.(basetypes.ObjectType)
+		if !ok {
+			return nil, []diag.Diagnostic{diag.NewErrorDiagnostic("expected object type", "")}
+		}
+
+		return basetypes.NewObjectValue(attrTyp.AttrTypes, fv)
 
 	default:
 		return nil, []diag.Diagnostic{diag.NewErrorDiagnostic("unknown type", t.Kind().String())}
@@ -335,7 +341,7 @@ func yamlName(field reflect.StructField) *string {
 // If it encounters an Unmarshaler, indirect stops and returns that.
 // If decodingNull is true, indirect stops at the first settable pointer so it
 // can be set to nil.
-// This is copied/modified from encoding/json
+// This is copied/modified from encoding/json.
 func indirect(v reflect.Value) reflect.Value {
 	// Issue #24153 indicates that it is generally not a guaranteed property
 	// that you may round-trip a reflect.Value by calling Value.Addr().Elem()

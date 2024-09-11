@@ -55,7 +55,12 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	imageConfigurationSchema = sch.(basetypes.ObjectType)
+
+	var ok bool
+	imageConfigurationSchema, ok = sch.(basetypes.ObjectType)
+	if !ok {
+		panic("experted object type")
+	}
 }
 
 func (d *ConfigDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -190,7 +195,13 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if diags.HasError() {
 		return
 	}
-	data.Config = ov.(basetypes.ObjectValue)
+
+	var ok bool
+	data.Config, ok = ov.(basetypes.ObjectValue)
+	if !ok {
+		resp.Diagnostics.AddError("Unable to write apko configuration", "expected object type")
+		return
+	}
 
 	data.Id = types.StringValue(hash)
 
@@ -425,5 +436,5 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 	return pl, diagnostics
 }
 
-// Copied from go-apk's version.go
+// Copied from go-apk's version.go.
 var packageNameRegex = regexp.MustCompile(`^([^@=><~]+)(([=><~]+)([^@]+))?(@([a-zA-Z0-9]+))?$`)
