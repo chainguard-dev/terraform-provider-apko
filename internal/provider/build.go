@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func fromImageData(ctx context.Context, ic types.ImageConfiguration, popts ProviderOpts) (*options.Options, *types.ImageConfiguration, error) {
+func fromImageData(_ context.Context, ic types.ImageConfiguration, popts ProviderOpts) (*options.Options, *types.ImageConfiguration, error) {
 	// Deduplicate any of the extra packages against their potentially resolved
 	// form in the actual image list.
 	pkgs := sets.New(ic.Contents.Packages...)
