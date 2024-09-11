@@ -187,8 +187,8 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		val, diags := types.ObjectValue(digestSBOMSchema.AttrTypes, map[string]attr.Value{
 			"digest":           types.StringValue(repo.Digest(v.imageHash.String()).String()),
 			"predicate_type":   types.StringValue(v.predicateType),
-			"predicate_path":   types.StringValue(string(v.predicatePath)),
-			"predicate_sha256": types.StringValue(string(v.predicateSHA256)),
+			"predicate_path":   types.StringValue(v.predicatePath),
+			"predicate_sha256": types.StringValue(v.predicateSHA256),
 		})
 		resp.Diagnostics = append(resp.Diagnostics, diags...)
 		if diags.HasError() {

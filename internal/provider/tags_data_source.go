@@ -134,7 +134,7 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	if found == "" {
-    resp.Diagnostics.AddError(fmt.Sprintf("Unable to find package: %s...", data.TargetPackage.ValueString()), fmt.Sprintf("...in package list:\n\t%s", strings.Join(ic.Contents.Packages, "\n\t")))
+		resp.Diagnostics.AddError(fmt.Sprintf("Unable to find package: %s...", data.TargetPackage.ValueString()), fmt.Sprintf("...in package list:\n\t%s", strings.Join(ic.Contents.Packages, "\n\t")))
 		return
 	}
 

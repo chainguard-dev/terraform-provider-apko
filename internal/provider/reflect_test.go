@@ -171,7 +171,7 @@ archs:
 			}
 
 			if diff := cmp.Diff(want, got); diff != "" {
-				t.Fatalf(diff)
+				t.Fatal(diff)
 			}
 		})
 	}
