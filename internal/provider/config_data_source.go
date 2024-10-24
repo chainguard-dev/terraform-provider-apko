@@ -230,6 +230,7 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 	archs := make([]resolved, len(ic.Archs))
 
 	mc, err := build.NewMultiArch(ctx, ic.Archs, build.WithImageConfiguration(*ic2),
+		build.WithCache("", false, d.popts.cache),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(d.popts.keyring),
 		build.WithExtraBuildRepos(d.popts.buildRespositories),

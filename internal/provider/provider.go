@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 
+	"chainguard.dev/apko/pkg/apk/apk"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -34,6 +35,7 @@ type ProviderModel struct {
 type ProviderOpts struct {
 	repositories, buildRespositories, packages, keyring, archs []string
 	anns                                                       map[string]string
+	cache                                                      *apk.Cache
 	ropts                                                      []remote.Option
 }
 
@@ -124,6 +126,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		keyring:            append(p.keyring, data.ExtraKeyring...),
 		archs:              append(p.archs, data.DefaultArchs...),
 		anns:               combineMaps(p.anns, data.DefaultAnnotations),
+		cache:              apk.NewCache(true),
 		ropts:              ropts,
 	}
 
