@@ -49,6 +49,7 @@ func fromImageData(_ context.Context, ic types.ImageConfiguration, popts Provide
 	}
 
 	opts := []build.Option{
+		build.WithCache("", false, popts.cache),
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(popts.keyring),
@@ -114,6 +115,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	sboms := make(map[string]imagesbom, len(ic2.Archs)+1)
 
 	mc, err := build.NewMultiArch(ctx, ic2.Archs, build.WithImageConfiguration(*ic2),
+		build.WithCache("", false, data.popts.cache),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithSBOM(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
@@ -211,7 +213,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 	}
 
 	// generate the index
-	finalDigest, idx, err := oci.GenerateIndex(ctx, *ic2, imgs)
+	finalDigest, idx, err := oci.GenerateIndex(ctx, *ic2, imgs, multiArchBDE)
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("failed to generate OCI index: %w", err)
 	}
