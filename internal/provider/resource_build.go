@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/chainguard-dev/terraform-provider-oci/pkg/validators"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -154,7 +155,14 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	digest, se, sboms, err := doBuild(ctx, *data)
+	tempDir, err := os.MkdirTemp("", "apko-*")
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Errorf("failed to create temporary directory: %w", err).Error())
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	digest, se, sboms, err := doBuild(ctx, *data, tempDir)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -234,7 +242,14 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	digest, _, _, err := doBuild(ctx, *data)
+	tempDir, err := os.MkdirTemp("", "apko-*")
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Errorf("failed to create temporary directory: %w", err).Error())
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	digest, _, _, err := doBuild(ctx, *data, tempDir)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return

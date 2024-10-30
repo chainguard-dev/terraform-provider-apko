@@ -82,13 +82,7 @@ type imagesbom struct {
 	predicateSHA256 string
 }
 
-func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
-	tempDir, err := os.MkdirTemp("", "apko-*")
-	if err != nil {
-		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create temporary directory: %w", err)
-	}
-	defer os.RemoveAll(tempDir)
-
+func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
 	var ic types.ImageConfiguration
 	if diags := assignValue(data.Config, &ic); diags.HasError() {
 		return v1.Hash{}, nil, nil, fmt.Errorf("assigning value: %v", diags.Errors())
@@ -118,6 +112,7 @@ func doBuild(ctx context.Context, data BuildResourceModel) (v1.Hash, coci.Signed
 		build.WithCache("", false, data.popts.cache),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithSBOM(tempDir),
+		build.WithTempDir(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraBuildRepos(data.popts.buildRespositories),
 		build.WithExtraRuntimeRepos(data.popts.repositories))
