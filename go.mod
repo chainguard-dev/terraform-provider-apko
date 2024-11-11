@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.23.2
 
 require (
-	chainguard.dev/apko v0.19.6
+	chainguard.dev/apko v0.19.9
 	github.com/chainguard-dev/clog v1.5.1-0.20240811185937-4c523ae4593f
 	github.com/chainguard-dev/terraform-provider-oci v0.0.17
 	github.com/google/go-cmp v0.6.0
@@ -23,8 +23,8 @@ require (
 require (
 	chainguard.dev/go-grpc-kit v0.17.6 // indirect
 	chainguard.dev/sdk v0.1.28 // indirect
-	cloud.google.com/go/auth v0.9.9 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
+	cloud.google.com/go/auth v0.10.0 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.5 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -196,7 +196,7 @@ require (
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
-	google.golang.org/api v0.203.0 // indirect
+	google.golang.org/api v0.204.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
