@@ -382,3 +382,50 @@ resource "apko_build" "foo" {
 		},
 	})
 }
+
+// Test that this things builds if you give it "configs".
+func TestAccResourceApkoBuild_PerArchConfigs(t *testing.T) {
+	repo, cleanup := ocitesting.SetupRepository(t, "test")
+	defer cleanup()
+
+	repostr := repo.String()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories:       []string{"https://packages.wolfi.dev/os"},
+				buildRespositories: []string{"./packages"},
+				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:              []string{"x86_64", "aarch64"},
+				packages:           []string{"wolfi-baselayout"},
+			}),
+		}, Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = <<EOF
+contents:
+  packages:
+    # This package pulls in libpciaccess only for x86_64.
+    - libdrm=2.4.124-r0
+  EOF
+}
+
+resource "apko_build" "foo" {
+	repo    = %q
+	config  = data.apko_config.foo.config
+	configs = data.apko_config.foo.configs
+}
+`, repostr),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"apko_build.foo", "repo", regexp.MustCompile("^"+repostr)),
+					resource.TestMatchResourceAttr(
+						"apko_build.foo", "image_ref", regexp.MustCompile("^"+repostr+"@sha256:")),
+					resource.TestCheckResourceAttr("data.apko_config.foo", "configs.%", "3"),
+				),
+			},
+		},
+	})
+}

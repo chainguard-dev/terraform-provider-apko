@@ -60,6 +60,7 @@ resource "apko_build" "example" {
 
 ### Optional
 
+- `configs` (Attributes Map) A map from the APK architecture to the config for that architecture. (see [below for nested schema](#nestedatt--configs))
 - `sboms` (Attributes Map) A map from the APK architecture to the digest for that architecture and its SBOM. (see [below for nested schema](#nestedatt--sboms))
 
 ### Read-Only
@@ -152,6 +153,102 @@ Required:
 - `source` (String)
 - `type` (String)
 - `uid` (Number)
+
+
+
+<a id="nestedatt--configs"></a>
+### Nested Schema for `configs`
+
+Required:
+
+- `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--configs--config))
+
+<a id="nestedatt--configs--config"></a>
+### Nested Schema for `configs.config`
+
+Optional:
+
+- `accounts` (Object) (see [below for nested schema](#nestedobjatt--configs--config--accounts))
+- `annotations` (Map of String)
+- `archs` (List of String)
+- `cmd` (String)
+- `contents` (Object) (see [below for nested schema](#nestedobjatt--configs--config--contents))
+- `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--configs--config--entrypoint))
+- `environment` (Map of String)
+- `include` (String)
+- `paths` (List of Object) (see [below for nested schema](#nestedobjatt--configs--config--paths))
+- `stop-signal` (String)
+- `vcs-url` (String)
+- `volumes` (List of String)
+- `work-dir` (String)
+
+<a id="nestedobjatt--configs--config--accounts"></a>
+### Nested Schema for `configs.config.accounts`
+
+Optional:
+
+- `groups` (List of Object) (see [below for nested schema](#nestedobjatt--configs--config--accounts--groups))
+- `run-as` (String)
+- `users` (List of Object) (see [below for nested schema](#nestedobjatt--configs--config--accounts--users))
+
+<a id="nestedobjatt--configs--config--accounts--groups"></a>
+### Nested Schema for `configs.config.accounts.groups`
+
+Optional:
+
+- `gid` (Number)
+- `groupname` (String)
+- `members` (List of String)
+
+
+<a id="nestedobjatt--configs--config--accounts--users"></a>
+### Nested Schema for `configs.config.accounts.users`
+
+Optional:
+
+- `gid` (Number)
+- `homedir` (String)
+- `shell` (String)
+- `uid` (Number)
+- `username` (String)
+
+
+
+<a id="nestedobjatt--configs--config--contents"></a>
+### Nested Schema for `configs.config.contents`
+
+Optional:
+
+- `build_repositories` (List of String)
+- `keyring` (List of String)
+- `packages` (List of String)
+- `repositories` (List of String)
+
+
+<a id="nestedobjatt--configs--config--entrypoint"></a>
+### Nested Schema for `configs.config.entrypoint`
+
+Optional:
+
+- `command` (String)
+- `services` (Map of String)
+- `shell-fragment` (String)
+- `type` (String)
+
+
+<a id="nestedobjatt--configs--config--paths"></a>
+### Nested Schema for `configs.config.paths`
+
+Optional:
+
+- `gid` (Number)
+- `path` (String)
+- `permissions` (Number)
+- `recursive` (Boolean)
+- `source` (String)
+- `type` (String)
+- `uid` (Number)
+
 
 
 
