@@ -15,6 +15,7 @@ import (
 
 	"chainguard.dev/apko/pkg/build"
 	apkotypes "chainguard.dev/apko/pkg/build/types"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -44,11 +45,13 @@ type ConfigDataSourceModel struct {
 	Id                 types.String      `tfsdk:"id"`
 	ConfigContents     types.String      `tfsdk:"config_contents"`
 	Config             types.Object      `tfsdk:"config"`
+	Configs            types.Map         `tfsdk:"configs"`
 	ExtraPackages      []string          `tfsdk:"extra_packages"`
 	DefaultAnnotations map[string]string `tfsdk:"default_annotations"`
 }
 
 var imageConfigurationSchema basetypes.ObjectType
+var imageConfigurationsSchema basetypes.ObjectType
 
 func init() {
 	sch, err := generateType(apkotypes.ImageConfiguration{})
@@ -60,6 +63,12 @@ func init() {
 	imageConfigurationSchema, ok = sch.(basetypes.ObjectType)
 	if !ok {
 		panic("expected object type")
+	}
+
+	imageConfigurationsSchema = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"config": imageConfigurationSchema,
+		},
 	}
 }
 
@@ -79,6 +88,21 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				MarkdownDescription: "The parsed structure of the apko configuration.",
 				Computed:            true,
 				AttributeTypes:      imageConfigurationSchema.AttrTypes,
+			},
+			"configs": schema.MapNestedAttribute{
+				MarkdownDescription: "A map from the APK architecture to the config for that architecture.",
+				Computed:            true,
+				Optional:            true,
+				Required:            false,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"config": schema.ObjectAttribute{
+							MarkdownDescription: "The parsed structure of the apko configuration.",
+							Computed:            true,
+							AttributeTypes:      imageConfigurationSchema.AttrTypes,
+						},
+					},
+				},
 			},
 			"extra_packages": schema.ListAttribute{
 				MarkdownDescription: "A list of extra packages to install.",
@@ -176,32 +200,70 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Resolve the package list to specific versions (as much as we can with
 	// multi-arch), and overwrite the package list in the ImageConfiguration.
-	pl, diags := d.resolvePackageList(ctx, ic)
+	pls, diags := d.resolvePackageList(ctx, ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
 		return
 	}
-	ic.Contents.Packages = pl
 
-	if out := os.Getenv("TF_APKO_OUT_DIR"); out != "" {
-		if err := writeFile(out, hash, "post", ic); err != nil {
-			resp.Diagnostics.AddError("Unable to write apko configuration", err.Error())
+	cfgMap := make(map[string]attr.Value)
+
+	for arch, pl := range pls {
+		// Create a defensive copy of "ic".
+		copied := apkotypes.ImageConfiguration{}
+		if err := ic.MergeInto(&copied); err != nil {
+			resp.Diagnostics.AddError("Unable to write apko configuration", "copying image configuration: "+err.Error())
 			return
 		}
+
+		copied.Contents.Packages = pl
+
+		if arch != "index" {
+			// Overwrite single-arch configs with their specific arch.
+			copied.Archs = []apkotypes.Architecture{apkotypes.ParseArchitecture(arch)}
+		}
+
+		ov, diags := generateValue(copied)
+		resp.Diagnostics = append(resp.Diagnostics, diags...)
+		if diags.HasError() {
+			return
+		}
+
+		cfg, ok := ov.(basetypes.ObjectValue)
+		if !ok {
+			resp.Diagnostics.AddError("Unable to write apko configuration", "unexpected object type or malformed object type")
+			return
+		}
+
+		// Keep original behavior for "apko_config.config" that only uses only the merged "index" arch.
+		if arch == "index" {
+			if out := os.Getenv("TF_APKO_OUT_DIR"); out != "" {
+				if err := writeFile(out, hash, "post", copied); err != nil {
+					resp.Diagnostics.AddError("Unable to write apko configuration", err.Error())
+					return
+				}
+			}
+
+			data.Config = cfg
+		}
+
+		val, diags := types.ObjectValue(imageConfigurationsSchema.AttrTypes, map[string]attr.Value{
+			"config": cfg,
+		})
+		resp.Diagnostics = append(resp.Diagnostics, diags...)
+		if diags.HasError() {
+			return
+		}
+
+		cfgMap[arch] = val
 	}
 
-	ov, diags := generateValue(ic)
-	resp.Diagnostics = append(resp.Diagnostics, diags...)
-	if diags.HasError() {
+	cfgMapValue, diags := types.MapValue(imageConfigurationsSchema, cfgMap)
+	if diags != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diags...)
 		return
 	}
-
-	var ok bool
-	data.Config, ok = ov.(basetypes.ObjectValue)
-	if !ok {
-		resp.Diagnostics.AddError("Unable to write apko configuration", "unexpected object type or malformed object type")
-		return
-	}
+	data.Configs = cfgMapValue
 
 	data.Id = types.StringValue(hash)
 
@@ -221,7 +283,7 @@ func writeFile(dir, hash, variant string, ic apkotypes.ImageConfiguration) error
 	return os.WriteFile(filepath.Join(dir, fn), b, 0644)
 }
 
-func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) ([]string, diag.Diagnostics) {
+func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) (map[string][]string, diag.Diagnostics) {
 	_, ic2, err := fromImageData(ctx, ic, d.popts)
 	if err != nil {
 		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse apko config", err.Error())}
@@ -300,14 +362,21 @@ type resolved struct {
 	provided map[string]sets.Set[string]
 }
 
-func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
+func unify(originals []string, inputs []resolved) (map[string][]string, diag.Diagnostics) {
 	if len(originals) == 0 {
-		return nil, nil
+		// If there are no original packages, then we can't really do anything.
+		// This used to return nil but multi-arch unification assumes we always
+		// have an "index" entry, even if it's empty, so we return this now.
+		// Mostly this is to satisfy some tests that have no package inputs.
+		return map[string][]string{"index": {}}, nil
 	}
 	originalPackages := resolved{
 		packages: make(sets.Set[string], len(originals)),
 		versions: make(map[string]string, len(originals)),
 	}
+
+	byArch := map[string][]string{}
+
 	for _, orig := range originals {
 		name := orig
 		// The function we want from go-apk is private, but these are all the
@@ -422,6 +491,18 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 		pl = append(pl, fmt.Sprintf("%s=%s", pkg, acc.versions[pkg]))
 	}
 
+	// "index" is a sentinel value for our multi-arch image index.
+	// This mirrors how "sboms" works in the BuildResource.
+	byArch["index"] = pl
+
+	for _, input := range inputs {
+		pl := make([]string, 0, len(input.packages))
+		for _, pkg := range sets.List(input.packages) {
+			pl = append(pl, fmt.Sprintf("%s=%s", pkg, input.versions[pkg]))
+		}
+		byArch[input.arch] = pl
+	}
+
 	// If a particular architecture is missing additional packages from the
 	// locked set that it produced, than warn about those as well.
 	for _, input := range inputs {
@@ -434,7 +515,7 @@ func unify(originals []string, inputs []resolved) ([]string, diag.Diagnostics) {
 		}
 	}
 
-	return pl, diagnostics
+	return byArch, diagnostics
 }
 
 // Copied from go-apk's version.go.

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -36,6 +37,7 @@ type BuildResourceModel struct {
 	Id       types.String `tfsdk:"id"`
 	Repo     types.String `tfsdk:"repo"`
 	Config   types.Object `tfsdk:"config"`
+	Configs  types.Map    `tfsdk:"configs"`
 	ImageRef types.String `tfsdk:"image_ref"`
 
 	SBOMs types.Map `tfsdk:"sboms"`
@@ -97,6 +99,24 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				AttributeTypes:      imageConfigurationSchema.AttrTypes,
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.RequiresReplace(),
+				},
+			},
+			"configs": schema.MapNestedAttribute{
+				MarkdownDescription: "A map from the APK architecture to the config for that architecture.",
+				Optional:            true,
+				Required:            false,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"config": schema.ObjectAttribute{
+							Optional:            false,
+							Required:            true,
+							MarkdownDescription: "The parsed structure of the apko configuration.",
+							AttributeTypes:      imageConfigurationSchema.AttrTypes,
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.RequiresReplace(),
 				},
 			},
 			"image_ref": schema.StringAttribute{
