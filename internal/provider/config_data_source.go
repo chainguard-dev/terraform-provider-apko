@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -25,7 +26,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"knative.dev/pkg/kmap"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -394,7 +394,7 @@ func unify(originals []string, inputs []resolved) (map[string][]string, diag.Dia
 	// architectures.
 	acc := resolved{
 		packages: inputs[0].packages.Clone(),
-		versions: kmap.Copy(inputs[0].versions),
+		versions: maps.Clone(inputs[0].versions),
 		provided: inputs[0].provided,
 	}
 	for _, next := range inputs[1:] {
