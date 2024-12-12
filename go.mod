@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.23.2
 
 require (
-	chainguard.dev/apko v0.19.6
+	chainguard.dev/apko v0.21.0
 	github.com/chainguard-dev/clog v1.5.1
 	github.com/chainguard-dev/terraform-provider-oci v0.0.17
 	github.com/google/go-cmp v0.6.0
@@ -183,7 +183,7 @@ require (
 	go.opentelemetry.io/otel v1.32.0 // indirect
 	go.opentelemetry.io/otel/metric v1.32.0 // indirect
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect
-	go.step.sm/crypto v0.54.2 // indirect
+	go.step.sm/crypto v0.55.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
