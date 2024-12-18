@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.23.4
 
 require (
-	chainguard.dev/apko v0.21.0
+	chainguard.dev/apko v0.22.2
 	github.com/chainguard-dev/clog v1.5.1
 	github.com/chainguard-dev/terraform-provider-oci v0.0.17
 	github.com/google/go-cmp v0.6.0
@@ -16,7 +16,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.4.1
 	golang.org/x/sync v0.10.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apimachinery v0.31.4
+	k8s.io/apimachinery v0.32.0
 )
 
 require (
@@ -177,11 +177,12 @@ require (
 	go.abhg.dev/goldmark/frontmatter v0.2.0 // indirect
 	go.lsp.dev/uri v0.3.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.1 // indirect
+	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.57.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.57.0 // indirect
-	go.opentelemetry.io/otel v1.32.0 // indirect
-	go.opentelemetry.io/otel/metric v1.32.0 // indirect
-	go.opentelemetry.io/otel/trace v1.32.0 // indirect
+	go.opentelemetry.io/otel v1.33.0 // indirect
+	go.opentelemetry.io/otel/metric v1.33.0 // indirect
+	go.opentelemetry.io/otel/trace v1.33.0 // indirect
 	go.step.sm/crypto v0.55.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
@@ -205,6 +206,6 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/utils v0.0.0-20240902221715-702e33fdd3c3 // indirect
+	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/release-utils v0.8.5 // indirect
 )
