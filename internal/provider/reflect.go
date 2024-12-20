@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 
@@ -58,14 +57,11 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 			if tag == nil {
 				continue
 			}
-
-			// HACK: Handle this field.
-			if sf.Type.Kind() == reflect.Pointer {
-				log.Println("skipping pointer field", sf.Name)
+			if experimental(sf) {
 				continue
 			}
 
-			ft, err := generateTypeReflect(sf.Type)
+			ft, err := generateTypeReflect(maybeDeref(sf.Type))
 			if err != nil {
 				return nil, fmt.Errorf("struct %w", err)
 			}
@@ -78,8 +74,44 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 	}
 }
 
+func maybeDeref(t reflect.Type) reflect.Type {
+	if t.Kind() == reflect.Pointer {
+		// For pointers we want the element's type, not Pointer.
+		return t.Elem()
+	}
+
+	return t
+}
+
 func generateValue(v any) (attr.Value, diag.Diagnostics) {
 	return generateValueReflect(reflect.ValueOf(v))
+}
+
+func generateNull(t reflect.Type, at attr.Type) (attr.Value, diag.Diagnostics) {
+	switch t.Kind() {
+	case reflect.String:
+		return basetypes.NewStringNull(), nil
+	case reflect.Bool:
+		return basetypes.NewBoolNull(), nil
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return basetypes.NewInt64Null(), nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		return basetypes.NewInt64Null(), nil
+	case reflect.Float32, reflect.Float64:
+		return basetypes.NewFloat64Null(), nil
+	case reflect.Array, reflect.Slice:
+		return basetypes.NewListNull(at), nil
+	case reflect.Map:
+		return basetypes.NewMapNull(at), nil
+	case reflect.Struct:
+		attrTyp, ok := at.(basetypes.ObjectType)
+		if !ok {
+			return nil, []diag.Diagnostic{diag.NewErrorDiagnostic("expected object type", "")}
+		}
+		return basetypes.NewObjectNull(attrTyp.AttrTypes), nil
+	default:
+		return nil, []diag.Diagnostic{diag.NewErrorDiagnostic("unexpected null type", t.Kind().String())}
+	}
 }
 
 func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
@@ -142,10 +174,20 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 			if tag == nil {
 				continue
 			}
+			if experimental(sf) {
+				continue
+			}
 
-			// HACK: Handle this field.
-			if sf.Type.Kind() == reflect.Pointer {
-				log.Println("skipping pointer field", sf.Name)
+			if sf.Type.Kind() == reflect.Pointer && v.Field(i).IsNil() {
+				at, err := generateTypeReflect(sf.Type)
+				if err != nil {
+					return nil, []diag.Diagnostic{diag.NewErrorDiagnostic(err.Error(), "")}
+				}
+				ft, diags := generateNull(sf.Type.Elem(), at)
+				if diags.HasError() {
+					return nil, diags
+				}
+				fv[*tag] = ft
 				continue
 			}
 
@@ -298,11 +340,15 @@ func assignValueReflect(in attr.Value, out reflect.Value) diag.Diagnostics {
 			if tag == nil {
 				continue
 			}
+			if experimental(sf) {
+				continue
+			}
 			val, ok := fl[*tag]
 			if !ok {
 				continue
 			}
-			diags := assignValueReflect(val, out.Field(i))
+
+			diags := assignValueReflect(val, indirect(out.Field(i)))
 			if diags.HasError() {
 				return diags
 			}
@@ -334,6 +380,19 @@ func yamlName(field reflect.StructField) *string {
 	}
 	fn := strings.ToLower(field.Name)
 	return &fn
+}
+
+func experimental(field reflect.StructField) bool {
+	tag := field.Tag.Get("apko")
+	if tag == "" {
+		return false
+	}
+	for _, field := range strings.Split(tag, ",") {
+		if field == "experimental" {
+			return true
+		}
+	}
+	return false
 }
 
 // indirect walks down v allocating pointers as needed,
