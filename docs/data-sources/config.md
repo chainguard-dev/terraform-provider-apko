@@ -77,7 +77,6 @@ Optional:
 
 Optional:
 
-- `gid` (Number)
 - `homedir` (String)
 - `shell` (String)
 - `uid` (Number)
@@ -166,7 +165,6 @@ Read-Only:
 
 Read-Only:
 
-- `gid` (Number)
 - `homedir` (String)
 - `shell` (String)
 - `uid` (Number)

@@ -68,7 +68,6 @@ Required:
 
 Required:
 
-- `gid` (Number)
 - `homedir` (String)
 - `shell` (String)
 - `uid` (Number)
