@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"time"
 
 	"chainguard.dev/apko/pkg/apk/apk"
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -100,7 +101,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		return
 	}
 
-	kc := authn.NewMultiKeychain(google.Keychain, authn.DefaultKeychain)
+	kc := authn.NewMultiKeychain(google.Keychain, authn.RefreshingKeychain(authn.DefaultKeychain, 30*time.Minute))
 	ropts := []remote.Option{
 		remote.WithAuthFromKeychain(kc),
 		remote.WithUserAgent("terraform-provider-apko/" + p.version),
