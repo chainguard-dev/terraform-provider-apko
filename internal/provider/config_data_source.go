@@ -276,7 +276,16 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 		build.WithExtraBuildRepos(d.popts.buildRespositories),
 		build.WithExtraRuntimeRepos(d.popts.repositories))
 	if err != nil {
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", err.Error())}
+		// These are a nightmare to debug, so we're going to try to include the apko config in the error.
+		b, merr := json.MarshalIndent(ic, "", "  ")
+		if merr != nil {
+			// If we can't marshal the config, just return the original error.
+			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", err.Error())}
+		}
+
+		// Otherwise include both the config and the error in the details.
+		details := fmt.Sprintf("apko config:\n%s\n\nerror:\n%s", string(b), err)
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", details)}
 	}
 
 	var diagnostics diag.Diagnostics
