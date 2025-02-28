@@ -11,6 +11,7 @@ import (
 	apkotypes "chainguard.dev/apko/pkg/build/types"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -102,28 +103,49 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
+	version, diags := getPkgVers(ic, data.TargetPackage.ValueString())
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	data.Tags = getStemmedVersionTags(version)
+	data.Tags = append(data.Tags, version)
+	sort.Strings(data.Tags)
+
+	data.Id = types.StringValue(strings.Join(data.Tags, ","))
+
+	tflog.Trace(ctx, "read a data source")
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func getPkgVers(ic apkotypes.ImageConfiguration, targetPackage string) (string, diag.Diagnostics) {
+	diags := diag.Diagnostics{}
+
 	pkgs := map[string]string{}
 	var found string
 	for _, pkg := range ic.Contents.Packages {
 		pkg, version, ok := strings.Cut(pkg, "=")
 		if !ok {
-			resp.Diagnostics.AddError("Invalid package", fmt.Sprintf("Invalid package: %s", pkg))
-			return
+			diags.AddError("Invalid package", fmt.Sprintf("Invalid package: %s", pkg))
+			return "", diags
 		}
 		pkgs[pkg] = version
 	}
-	if _, ok := pkgs[data.TargetPackage.ValueString()]; ok {
-		found = data.TargetPackage.ValueString()
+	if _, ok := pkgs[targetPackage]; ok {
+		found = targetPackage
 	} else {
 		var foundver string
 		for pkg, ver := range pkgs {
 			// If the package name didn't match exactly, see if we have a package that starts with the target package name.
 			// This is to handle the common case where a package named "foo" might be provided by a package named "foo-1.23".
 			// In case there are multiple packages that match that provide different versions, we'll error out.
-			if strings.HasPrefix(pkg, data.TargetPackage.ValueString()+"-") {
+			if strings.HasPrefix(pkg, targetPackage+"-") {
 				if found != "" && foundver != ver {
-					resp.Diagnostics.AddError("Multiple packages match", fmt.Sprintf("Multiple packages match with different versions: %s (%s) and %s (%s)", found, foundver, pkg, ver))
-					return
+					diags.AddError("Multiple packages match", fmt.Sprintf("Multiple packages match with different versions: %s (%s) and %s (%s)", found, foundver, pkg, ver))
+					return "", diags
 				}
 
 				found = pkg
@@ -134,20 +156,11 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	if found == "" {
-		resp.Diagnostics.AddError(fmt.Sprintf("Unable to find package: %s...", data.TargetPackage.ValueString()), fmt.Sprintf("...in package list:\n\t%s", strings.Join(ic.Contents.Packages, "\n\t")))
-		return
+		diags.AddError(fmt.Sprintf("Unable to find package: %s...", targetPackage), fmt.Sprintf("...in package list:\n\t%s", strings.Join(ic.Contents.Packages, "\n\t")))
+		return "", diags
 	}
 
-	data.Tags = getStemmedVersionTags(pkgs[found])
-	data.Tags = append(data.Tags, pkgs[found])
-	sort.Strings(data.Tags)
-
-	data.Id = types.StringValue(strings.Join(data.Tags, ","))
-
-	tflog.Trace(ctx, "read a data source")
-
-	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	return pkgs[found], diags
 }
 
 // Copied from https://github.com/chainguard-dev/apko/blob/894dcbee4f44709e5702be03d19a581aeadb5941/pkg/apk/apk.go#L197
