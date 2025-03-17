@@ -270,7 +270,7 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 	}
 
 	pls, missingByArch, err := build.LockImageConfiguration(ctx, *ic2,
-		build.WithCache("", false, d.popts.cache),
+		build.WithCache("", d.popts.planOffline, d.popts.cache),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(d.popts.keyring),
 		build.WithExtraBuildRepos(d.popts.buildRespositories),
