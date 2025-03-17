@@ -31,6 +31,7 @@ type ProviderModel struct {
 	ExtraKeyring       []string          `tfsdk:"extra_keyring"`
 	DefaultAnnotations map[string]string `tfsdk:"default_annotations"`
 	DefaultArchs       []string          `tfsdk:"default_archs"`
+	PlanOffline        *bool             `tfsdk:"plan_offline"`
 }
 
 type ProviderOpts struct {
@@ -38,6 +39,7 @@ type ProviderOpts struct {
 	anns                                                       map[string]string
 	cache                                                      *apk.Cache
 	ropts                                                      []remote.Option
+	planOffline                                                bool
 }
 
 func (p *Provider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -77,6 +79,10 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 				Description: "Default architectures to build for",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
+			},
+			"plan_offline": schema.BoolAttribute{
+				Description: "Whether to plan offline",
+				Optional:    true,
 			},
 		},
 	}
@@ -128,6 +134,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		archs:              append(p.archs, data.DefaultArchs...),
 		anns:               combineMaps(p.anns, data.DefaultAnnotations),
 		cache:              apk.NewCache(true),
+		planOffline:        data.PlanOffline != nil && *data.PlanOffline,
 		ropts:              ropts,
 	}
 
