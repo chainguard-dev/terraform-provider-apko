@@ -4,8 +4,11 @@ on:
     tags:
       - 'v*'
 
+permissions: {}
+
 jobs:
   goreleaser:
+
     permissions:
       contents: write # To publish the release.
       id-token: write # To federate for the GPG key.
