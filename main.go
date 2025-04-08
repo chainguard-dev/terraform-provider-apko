@@ -73,8 +73,8 @@ func (h tfhandler) Handle(ctx context.Context, r slog.Record) error {
 	return nil
 }
 
-func (_ tfhandler) Enabled(context.Context, slog.Level) bool { return true }
+func (tfhandler) Enabled(context.Context, slog.Level) bool { return true }
 func (h tfhandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return tfhandler{attrs: append(h.attrs, attrs...)}
 }
-func (_ tfhandler) WithGroup(name string) slog.Handler { panic("unimplemented") }
+func (tfhandler) WithGroup(name string) slog.Handler { panic("unimplemented") }
