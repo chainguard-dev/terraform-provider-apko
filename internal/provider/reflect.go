@@ -68,6 +68,8 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 			ot.AttrTypes[*tag] = ft
 		}
 		return ot, nil
+	case reflect.Pointer:
+		return generateTypeReflect(maybeDeref(t))
 
 	default:
 		return nil, fmt.Errorf("unknown type encountered: %v", t.Kind())
@@ -118,6 +120,13 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 	t := v.Type()
 	switch t.Kind() {
 	case reflect.Pointer:
+		if v.IsNil() {
+			st, err := generateTypeReflect(t.Elem())
+			if err != nil {
+				return nil, []diag.Diagnostic{diag.NewErrorDiagnostic(err.Error(), "")}
+			}
+			return generateNull(t, st)
+		}
 		return generateValueReflect(v.Elem())
 	case reflect.String:
 		return basetypes.NewStringValue(v.String()), nil
@@ -346,6 +355,11 @@ func assignValueReflect(in attr.Value, out reflect.Value) diag.Diagnostics {
 			val, ok := fl[*tag]
 			if !ok {
 				continue
+			}
+
+			if val.IsNull() {
+				out.Field(i).Set(reflect.Zero(sf.Type))
+				return nil
 			}
 
 			diags := assignValueReflect(val, indirect(out.Field(i)))
