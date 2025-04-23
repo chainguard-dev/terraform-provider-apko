@@ -343,7 +343,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 				return fmt.Errorf("failed to start apko build: %w", err)
 			}
 
-			_, layer, err := bc.BuildLayer(ctx)
+			layers, err := bc.BuildLayers(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to build layer image for %q: %w", arch, err)
 			}
@@ -353,7 +353,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 				return fmt.Errorf("failed to determine build date epoch: %w", err)
 			}
 
-			img, err := oci.BuildImageFromLayer(ctx, empty.Image, layer, bc.ImageConfiguration(), bde, bc.Arch())
+			img, err := oci.BuildImageFromLayers(ctx, empty.Image, layers, bc.ImageConfiguration(), bde, bc.Arch())
 			if err != nil {
 				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
 			}

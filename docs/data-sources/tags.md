@@ -38,6 +38,7 @@ Required:
 - `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--config--entrypoint))
 - `environment` (Map of String)
 - `include` (String)
+- `layering` (Object) (see [below for nested schema](#nestedobjatt--config--layering))
 - `paths` (List of Object) (see [below for nested schema](#nestedobjatt--config--paths))
 - `stop-signal` (String)
 - `vcs-url` (String)
@@ -96,6 +97,15 @@ Required:
 - `services` (Map of String)
 - `shell-fragment` (String)
 - `type` (String)
+
+
+<a id="nestedobjatt--config--layering"></a>
+### Nested Schema for `config.layering`
+
+Required:
+
+- `budget` (Number)
+- `strategy` (String)
 
 
 <a id="nestedobjatt--config--paths"></a>
