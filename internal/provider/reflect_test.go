@@ -94,8 +94,16 @@ func TestGenerateType(t *testing.T) {
 		})
 	}
 }
-
 func TestRoundtripValue(t *testing.T) {
+	// Test that we roundtrip pointers properly.
+	type Bar struct {
+		Field string
+	}
+
+	type Foo struct {
+		Bar *Bar
+	}
+
 	content := `
 contents:
   repositories:
@@ -145,6 +153,14 @@ archs:
 			"c": "d",
 		},
 		blank: &map[string]string{},
+	}, {
+		name:  "nil pointer",
+		want:  &Foo{},
+		blank: &Foo{},
+	}, {
+		name:  "set pointer",
+		want:  &Foo{Bar: &Bar{Field: "hello"}},
+		blank: &Foo{},
 	}, {
 		name:  "image configuration",
 		want:  want,
