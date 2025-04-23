@@ -13,6 +13,7 @@ import (
 
 	"chainguard.dev/apko/pkg/sbom/generator/spdx"
 	ocitesting "github.com/chainguard-dev/terraform-provider-oci/testing"
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -226,7 +227,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:3ebd5a1ae8633ba1c26ae2320478c8883ca519a7b217111dae545161de0c8f92").String()),
+					repo.Digest("sha256:13e12d908fe0ab16d8c19e0a0b6342f7c4b3ceaad96b342b8d027058f9f27cc7").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -296,7 +297,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:6e7ea77ed3be79d79823f3ddaf91cbdf7980be13b293ee177ed0ea06a94082d8").String()),
+					repo.Digest("sha256:8f95fa968a18805da393f4fbe00b5fd20c65915c13bbf697e0ac842df1ca66cb").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -428,4 +429,71 @@ resource "apko_build" "foo" {
 			},
 		},
 	})
+}
+
+// Use layers!
+func TestAccResourceApkoBuild_Layers(t *testing.T) {
+	repo, cleanup := ocitesting.SetupRepository(t, "test")
+	defer cleanup()
+
+	repostr := repo.String()
+
+	// Need to update this if apko changes.
+	digest := repo.Digest("sha256:e8f39b4fc352a14e40a9901600e98bdb1376d975bbbbb9385897ec89e6619233")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories:       []string{"https://packages.wolfi.dev/os"},
+				buildRespositories: []string{"./packages"},
+				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:              []string{"x86_64", "aarch64"},
+				packages:           []string{"wolfi-baselayout"},
+			}),
+		}, Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = <<EOF
+contents:
+  packages:
+    - ca-certificates-bundle=20230506-r0
+    - glibc-locale-posix=2.37-r6
+    - tzdata=2023c-r0
+layering:
+  strategy: origin
+  budget: 10
+  EOF
+}
+
+resource "apko_build" "foo" {
+	repo    = %q
+	config  = data.apko_config.foo.config
+	configs = data.apko_config.foo.configs
+}
+`, repostr),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"apko_build.foo", "repo", regexp.MustCompile("^"+repostr)),
+					// With pinned packages we should always get this digest.
+					resource.TestCheckResourceAttr("apko_build.foo", "image_ref", digest.String()),
+				),
+			},
+		},
+	})
+
+	img, err := crane.Pull(digest.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := img.Manifest()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 5 = len(packages) + wolfi-baselayout + top layer
+	if got, want := len(m.Layers), 5; got != want {
+		t.Errorf("len(layers): %d, want %d", got, want)
+	}
 }

@@ -47,6 +47,7 @@ Optional:
 - `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--configs--config--entrypoint))
 - `environment` (Map of String)
 - `include` (String)
+- `layering` (Object) (see [below for nested schema](#nestedobjatt--configs--config--layering))
 - `paths` (List of Object) (see [below for nested schema](#nestedobjatt--configs--config--paths))
 - `stop-signal` (String)
 - `vcs-url` (String)
@@ -107,6 +108,15 @@ Optional:
 - `type` (String)
 
 
+<a id="nestedobjatt--configs--config--layering"></a>
+### Nested Schema for `configs.config.layering`
+
+Optional:
+
+- `budget` (Number)
+- `strategy` (String)
+
+
 <a id="nestedobjatt--configs--config--paths"></a>
 ### Nested Schema for `configs.config.paths`
 
@@ -136,6 +146,7 @@ Read-Only:
 - `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--config--entrypoint))
 - `environment` (Map of String)
 - `include` (String)
+- `layering` (Object) (see [below for nested schema](#nestedobjatt--config--layering))
 - `paths` (List of Object) (see [below for nested schema](#nestedobjatt--config--paths))
 - `stop-signal` (String)
 - `vcs-url` (String)
@@ -194,6 +205,15 @@ Read-Only:
 - `services` (Map of String)
 - `shell-fragment` (String)
 - `type` (String)
+
+
+<a id="nestedobjatt--config--layering"></a>
+### Nested Schema for `config.layering`
+
+Read-Only:
+
+- `budget` (Number)
+- `strategy` (String)
 
 
 <a id="nestedobjatt--config--paths"></a>
