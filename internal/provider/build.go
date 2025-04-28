@@ -42,6 +42,16 @@ func fromImageData(_ context.Context, ic types.ImageConfiguration, popts Provide
 	}
 	ic.Contents.Packages = sets.List(pkgs.Union(extraPkgs))
 
+	// Apply provider-level layering configuration if none is specified in the image config
+	if ic.Layering == nil && popts.layering != nil {
+		// No layering specified in config, apply provider defaults
+		ic.Layering = &types.Layering{
+			Strategy: popts.layering.Strategy,
+			Budget:   popts.layering.Budget,
+		}
+	}
+	// When layering:{} is present, we preserve the empty object as-is
+
 	// Normalize the architecture by calling ParseArchitecture.  This is
 	// something sublte that `apko` gets for free because it only accepts yaml
 	// and the yaml parsing normalizes things.
@@ -126,11 +136,6 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 		return v1.Hash{}, nil, nil, err
 	}
 
-	layers, err := mc.BuildLayers(ctx)
-	if err != nil {
-		return v1.Hash{}, nil, nil, fmt.Errorf("building layers: %w", err)
-	}
-
 	var errg errgroup.Group
 	for _, arch := range ic2.Archs {
 		arch := arch
@@ -140,14 +145,18 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 
 		errg.Go(func() error {
 			bc := mc.Contexts[arch]
-			layer := layers[arch]
+
+			layers, err := bc.BuildLayers(ctx)
+			if err != nil {
+				return fmt.Errorf("building layers for %q: %w", arch, err)
+			}
 
 			bde, err := bc.GetBuildDateEpoch()
 			if err != nil {
 				return fmt.Errorf("failed to determine build date epoch: %w", err)
 			}
 
-			img, err := oci.BuildImageFromLayer(ctx, empty.Image, layer, bc.ImageConfiguration(), bde, bc.Arch())
+			img, err := oci.BuildImageFromLayers(ctx, empty.Image, layers, bc.ImageConfiguration(), bde, bc.Arch())
 			if err != nil {
 				return fmt.Errorf("failed to build OCI image for %q: %w", arch, err)
 			}

@@ -24,7 +24,16 @@ provider "apko" {}
 - `build_repositories` (List of String) Additional repositories to search for packages, only during apko build
 - `default_annotations` (Map of String) Default annotations to add
 - `default_archs` (List of String) Default architectures to build for
+- `default_layering` (Attributes) Default image layering configuration when not specified in the config (see [below for nested schema](#nestedatt--default_layering))
 - `extra_keyring` (List of String) Additional keys to use for package verification
 - `extra_packages` (List of String) Additional packages to install
 - `extra_repositories` (List of String) Additional repositories to search for packages
 - `plan_offline` (Boolean) Whether to plan offline
+
+<a id="nestedatt--default_layering"></a>
+### Nested Schema for `default_layering`
+
+Required:
+
+- `budget` (Number) Budget for the maximum number of layers that can be generated
+- `strategy` (String) Layering strategy, currently only 'origin' is supported

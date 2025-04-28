@@ -171,6 +171,16 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		}
 	}
 
+	// Apply provider-level layering configuration if none is specified in the image config
+	if ic.Layering == nil && d.popts.layering != nil {
+		// No layering specified in config, apply provider defaults
+		ic.Layering = &apkotypes.Layering{
+			Strategy: d.popts.layering.Strategy,
+			Budget:   d.popts.layering.Budget,
+		}
+	}
+	// When layering:{} is present, we preserve the empty object as-is
+
 	// Normalize the architectures we surface
 	for i, a := range ic.Archs {
 		ic.Archs[i] = apkotypes.ParseArchitecture(a.ToAPK())
