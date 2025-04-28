@@ -8,10 +8,13 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
@@ -22,6 +25,12 @@ type Provider struct {
 
 	repositories, buildRespositories, packages, keyring, archs []string
 	anns                                                       map[string]string
+	layering                                                   *LayeringConfig
+}
+
+type LayeringConfig struct {
+	Strategy string `tfsdk:"strategy"`
+	Budget   int    `tfsdk:"budget"`
 }
 
 type ProviderModel struct {
@@ -31,12 +40,14 @@ type ProviderModel struct {
 	ExtraKeyring       []string          `tfsdk:"extra_keyring"`
 	DefaultAnnotations map[string]string `tfsdk:"default_annotations"`
 	DefaultArchs       []string          `tfsdk:"default_archs"`
+	DefaultLayering    *LayeringConfig   `tfsdk:"default_layering"`
 	PlanOffline        *bool             `tfsdk:"plan_offline"`
 }
 
 type ProviderOpts struct {
 	repositories, buildRespositories, packages, keyring, archs []string
 	anns                                                       map[string]string
+	layering                                                   *LayeringConfig
 	cache                                                      *apk.Cache
 	ropts                                                      []remote.Option
 	planOffline                                                bool
@@ -79,6 +90,26 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 				Description: "Default architectures to build for",
 				Optional:    true,
 				ElementType: basetypes.StringType{},
+			},
+			"default_layering": schema.SingleNestedAttribute{
+				Description: "Default image layering configuration when not specified in the config",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"strategy": schema.StringAttribute{
+						Description: "Layering strategy, currently only 'origin' is supported",
+						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("origin"),
+						},
+					},
+					"budget": schema.Int64Attribute{
+						Description: "Budget for the maximum number of layers that can be generated",
+						Required:    true,
+						Validators: []validator.Int64{
+							int64validator.AtLeast(1),
+						},
+					},
+				},
 			},
 			"plan_offline": schema.BoolAttribute{
 				Description: "Whether to plan offline",
@@ -125,6 +156,14 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	}
 	ropts = append(ropts, remote.Reuse(puller), remote.Reuse(pusher))
 
+	// Use the provider's layering configuration if provided through test, otherwise use the config
+	var layering *LayeringConfig
+	if p.layering != nil {
+		layering = p.layering
+	} else {
+		layering = data.DefaultLayering
+	}
+
 	opts := &ProviderOpts{
 		// This is only for testing, so we can inject provider config
 		repositories:       append(p.repositories, data.ExtraRepositories...),
@@ -133,6 +172,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		keyring:            append(p.keyring, data.ExtraKeyring...),
 		archs:              append(p.archs, data.DefaultArchs...),
 		anns:               combineMaps(p.anns, data.DefaultAnnotations),
+		layering:           layering,
 		cache:              apk.NewCache(true),
 		planOffline:        data.PlanOffline != nil && *data.PlanOffline,
 		ropts:              ropts,
