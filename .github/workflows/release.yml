@@ -43,7 +43,11 @@ jobs:
           gpg_private_key: ${{ steps.secrets.outputs.token }}
 
       - run: |
-          gpg --keyserver keys.openpgp.org --send-keys ${{ steps.import_gpg.outputs.fingerprint }}
+          # Print what signatures keys have
+          gpg --list-signatures
+
+          # Publish by keyid, instead of fingerprint
+          gpg --keyserver keys.openpgp.org --send-keys ${{ steps.import_gpg.outputs.keyid }}
 
       - uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552 # v6.3.0
         with:
