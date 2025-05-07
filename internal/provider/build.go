@@ -19,7 +19,6 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	coci "github.com/sigstore/cosign/v2/pkg/oci"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
@@ -93,7 +92,7 @@ type imagesbom struct {
 	predicateSHA256 string
 }
 
-func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
+func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.Hash, v1.ImageIndex, map[string]imagesbom, error) {
 	// Prefer the new arch-specific configs if they are set.
 	if len(data.Configs.Elements()) != 0 {
 		return doNewBuild(ctx, data, tempDir)
@@ -120,7 +119,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 	multiArchBDE := o.SourceDateEpoch
 
 	var mu sync.Mutex
-	imgs := make(map[types.Architecture]coci.SignedImage, len(ic2.Archs))
+	imgs := make(map[types.Architecture]v1.Image, len(ic2.Archs))
 	contexts := make(map[types.Architecture]*build.Context, len(ic2.Archs))
 	sboms := make(map[string]imagesbom, len(ic2.Archs)+1)
 
@@ -282,7 +281,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 // to process per-arch apko configs, which allows us to have different locked sets of packages per arch.
 // This is important for packages that have different dependencies on each architecture, since
 // we can't accurately unify() them.
-func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.Hash, coci.SignedEntity, map[string]imagesbom, error) {
+func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.Hash, v1.ImageIndex, map[string]imagesbom, error) {
 	byArch := map[string]types.ImageConfiguration{}
 
 	for arch, attr := range data.Configs.Elements() {
@@ -319,7 +318,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 	multiArchBDE := o.SourceDateEpoch
 
 	var mu sync.Mutex
-	imgs := make(map[types.Architecture]coci.SignedImage, len(ic2.Archs))
+	imgs := make(map[types.Architecture]v1.Image, len(ic2.Archs))
 	sboms := make(map[string]imagesbom, len(ic2.Archs)+1)
 
 	var errg errgroup.Group
