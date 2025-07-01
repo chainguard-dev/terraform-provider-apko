@@ -16,7 +16,7 @@ func TestAccDataSourceTags(t *testing.T) {
 				repositories: []string{"https://packages.wolfi.dev/os"},
 				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout=20230201-r20"},
+				packages:     []string{"wolfi-baselayout=20230201-r21"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -82,8 +82,8 @@ data "apko_tags" "nodejs-21" {
 
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.#", "2"),
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.0", "20230201"),
-				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.1", "20230201-r20"),
-				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "id", "20230201,20230201-r20"),
+				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.1", "20230201-r21"),
+				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "id", "20230201,20230201-r21"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.#", "2"),
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.0", "2023c"),
@@ -127,7 +127,7 @@ func TestAccDataSourceTags_Disabled(t *testing.T) {
 				repositories: []string{"https://packages.wolfi.dev/os"},
 				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout=20230201-r20"},
+				packages:     []string{"wolfi-baselayout=20230201-r21"},
 			}),
 		},
 		Steps: []resource.TestStep{{
