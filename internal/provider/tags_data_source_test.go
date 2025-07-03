@@ -16,7 +16,7 @@ func TestAccDataSourceTags(t *testing.T) {
 				repositories: []string{"https://packages.wolfi.dev/os"},
 				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout=20230201-r20"},
+				packages:     []string{"wolfi-baselayout=20230201-r21"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -25,10 +25,10 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20230506-r0
-  - glibc-locale-posix=2.37-r6
-  - ko=0.13.0-r3
-  - nodejs=21.7.3-r1 # Initial request will be satisfied by 'provides'
+  - ca-certificates-bundle=20240315-r4
+  - glibc-locale-posix=2.39-r6
+  - ko=0.18.0-r2
+  - nodejs=21.7.3-r9 # Initial request will be satisfied by 'provides'
 EOF
   extra_packages = ["tzdata=2023c-r0"]
 }
@@ -71,19 +71,19 @@ data "apko_tags" "nodejs-21" {
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.#", "3"),
 				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.0", "2"),
-				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.1", "2.37"),
-				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.2", "2.37-r6"),
-				resource.TestCheckResourceAttr("data.apko_tags.glibc", "id", "2,2.37,2.37-r6"),
+				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.1", "2.39"),
+				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.2", "2.39-r6"),
+				resource.TestCheckResourceAttr("data.apko_tags.glibc", "id", "2,2.39,2.39-r6"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.#", "2"),
-				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.0", "20230506"),
-				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.1", "20230506-r0"),
-				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "id", "20230506,20230506-r0"),
+				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.0", "20240315"),
+				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.1", "20240315-r4"),
+				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "id", "20240315,20240315-r4"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.#", "2"),
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.0", "20230201"),
-				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.1", "20230201-r20"),
-				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "id", "20230201,20230201-r20"),
+				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.1", "20230201-r21"),
+				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "id", "20230201,20230201-r21"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.#", "2"),
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.0", "2023c"),
@@ -92,26 +92,26 @@ data "apko_tags" "nodejs-21" {
 
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.0", "0"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.1", "0.13"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.2", "0.13.0"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.3", "0.13.0-r3"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "id", "0,0.13,0.13.0,0.13.0-r3"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.1", "0.18"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.2", "0.18.0"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.3", "0.18.0-r2"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "id", "0,0.18,0.18.0,0.18.0-r2"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.0", "21"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.1", "21.7"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.2", "21.7.3"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.3", "21.7.3-r1"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "id", "21,21.7,21.7.3,21.7.3-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.3", "21.7.3-r9"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "id", "21,21.7,21.7.3,21.7.3-r9"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.0", "21"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.1", "21.7"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.2", "21.7.3"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.3", "21.7.3-r1"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "id", "21,21.7,21.7.3,21.7.3-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.3", "21.7.3-r9"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "id", "21,21.7,21.7.3,21.7.3-r9"),
 
-				//21.7.3-r1.apk
+				//21.7.3-r9.apk
 			),
 		}},
 	})
@@ -127,7 +127,7 @@ func TestAccDataSourceTags_Disabled(t *testing.T) {
 				repositories: []string{"https://packages.wolfi.dev/os"},
 				keyring:      []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:        []string{"x86_64", "aarch64"},
-				packages:     []string{"wolfi-baselayout=20230201-r20"},
+				packages:     []string{"wolfi-baselayout=20230201-r21"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -136,10 +136,10 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20230506-r0
-  - glibc-locale-posix=2.37-r6
-  - ko=0.13.0-r3
-  - nodejs=21.7.3-r1
+  - ca-certificates-bundle=20240315-r4
+  - glibc-locale-posix=2.39-r6
+  - ko=0.18.0-r2
+  - nodejs=21.7.3-r9
 EOF
   extra_packages = ["tzdata=2023c-r0"]
 }
