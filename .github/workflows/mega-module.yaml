@@ -77,7 +77,7 @@ jobs:
         terraform_version: '1.10.*'
         terraform_wrapper: false
 
-    - uses: chainguard-dev/actions/setup-registry@939ece6bc39459fd24dde56e63ca93adf840031e # v1.2.1
+    - uses: chainguard-dev/actions/setup-registry@16e2fd6603a1c6a1fbc880fdbb922b2e8e2be3e7 # v1.4.3
       with:
         port: 5000
 
