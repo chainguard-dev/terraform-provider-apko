@@ -439,7 +439,7 @@ func TestAccResourceApkoBuild_Layers(t *testing.T) {
 	repostr := repo.String()
 
 	// Need to update this if apko changes.
-	digest := repo.Digest("sha256:888b8460a2827c89d1f697e97195610efb0c25aefafc6fc6960b708590b4df8b")
+	digest := repo.Digest("sha256:a3f2ce830ecc4338bc57b38cfcbef71a35b0b6cbdd16177f07bf16f598c6ec06")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() { testAccPreCheck(t) },
