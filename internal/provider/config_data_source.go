@@ -284,7 +284,7 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(d.popts.keyring),
 		build.WithExtraBuildRepos(d.popts.buildRespositories),
-		build.WithExtraRuntimeRepos(d.popts.repositories))
+		build.WithExtraRepos(d.popts.repositories))
 	if err != nil {
 		// These are a nightmare to debug, so we're going to try to include the apko config in the error.
 		b, merr := json.MarshalIndent(ic, "", "  ")
