@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"log/slog"
+	"runtime/debug"
 
 	"github.com/chainguard-dev/terraform-provider-apko/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -14,7 +15,13 @@ import (
 //go:generate terraform fmt -recursive ./examples/
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
-const version string = "dev"
+// getVersion returns the version from build info, falling back to "dev" if not available
+func getVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		return info.Main.Version
+	}
+	return "dev"
+}
 
 func main() {
 	var debug bool
@@ -26,7 +33,7 @@ func main() {
 		Debug:   debug,
 	}
 
-	if err := providerserver.Serve(context.Background(), provider.New(version), opts); err != nil {
+	if err := providerserver.Serve(context.Background(), provider.New(getVersion()), opts); err != nil {
 		log.Fatal(err.Error())
 	}
 }
