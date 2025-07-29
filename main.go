@@ -15,7 +15,7 @@ import (
 //go:generate terraform fmt -recursive ./examples/
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
-// getVersion returns the version from build info, falling back to "dev" if not available
+// getVersion returns the version from build info, falling back to "dev" if not available.
 func getVersion() string {
 	if info, ok := debug.ReadBuildInfo(); ok {
 		return info.Main.Version
