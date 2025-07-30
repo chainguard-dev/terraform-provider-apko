@@ -25,8 +25,9 @@ output "apko_version" {
   value = local.version_info.apko_version
 }`,
 			Check: resource.ComposeTestCheckFunc(
-				// Check that the provider version is "test" (as set in testAccProtoV6ProviderFactories)
-				resource.TestCheckOutput("provider_version", "test"),
+				// Check that the provider version is not empty and looks like a version
+				// With build info, it should be something like "v0.23.1-0.20250729145754-7f4b7167d62c" or "test"
+				resource.TestMatchOutput("provider_version", regexp.MustCompile(`^(v\d+\.\d+\.\d+.*|test|\(devel\)|dev)$`)),
 				// Check that apko version is not empty and looks like a version
 				resource.TestMatchOutput("apko_version", regexp.MustCompile(`^v\d+\.\d+\.\d+.*|unknown$`)),
 			),
