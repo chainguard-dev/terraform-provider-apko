@@ -63,7 +63,7 @@ func fromImageData(_ context.Context, ic types.ImageConfiguration, popts Provide
 		build.WithImageConfiguration(ic),
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(popts.keyring),
-		build.WithExtraRuntimeRepos(popts.repositories),
+		build.WithExtraRepos(popts.repositories),
 		build.WithExtraBuildRepos(popts.buildRespositories),
 	}
 
@@ -130,7 +130,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 		build.WithTempDir(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraBuildRepos(data.popts.buildRespositories),
-		build.WithExtraRuntimeRepos(data.popts.repositories))
+		build.WithExtraRepos(data.popts.repositories))
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
@@ -233,7 +233,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithSBOM(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
-		build.WithExtraRuntimeRepos(data.popts.repositories),
+		build.WithExtraRepos(data.popts.repositories),
 		build.WithExtraBuildRepos(data.popts.buildRespositories),
 	)
 	if err != nil {
@@ -346,7 +346,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 				build.WithTempDir(tempDir),
 				build.WithExtraKeys(data.popts.keyring),
 				build.WithExtraBuildRepos(data.popts.buildRespositories),
-				build.WithExtraRuntimeRepos(data.popts.repositories))
+				build.WithExtraRepos(data.popts.repositories))
 			if err != nil {
 				return fmt.Errorf("failed to start apko build: %w", err)
 			}
@@ -438,7 +438,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithSBOM(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
-		build.WithExtraRuntimeRepos(data.popts.repositories),
+		build.WithExtraRepos(data.popts.repositories),
 		build.WithExtraBuildRepos(data.popts.buildRespositories),
 	)
 	if err != nil {

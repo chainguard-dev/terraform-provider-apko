@@ -95,6 +95,7 @@ Optional:
 - `keyring` (List of String)
 - `packages` (List of String)
 - `repositories` (List of String)
+- `runtime_repositories` (List of String)
 
 
 <a id="nestedobjatt--configs--config--entrypoint"></a>
@@ -194,6 +195,7 @@ Read-Only:
 - `keyring` (List of String)
 - `packages` (List of String)
 - `repositories` (List of String)
+- `runtime_repositories` (List of String)
 
 
 <a id="nestedobjatt--config--entrypoint"></a>
