@@ -148,7 +148,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	tflog.Trace(ctx, fmt.Sprintf("got keyring: %v", d.popts.keyring))
 
 	// Append any provider-specified repositories, packages, and keys, if specified.
-	ic.Contents.RuntimeRepositories = sets.List(sets.New(ic.Contents.RuntimeRepositories...).Insert(d.popts.repositories...))
+	ic.Contents.Repositories = sets.List(sets.New(ic.Contents.Repositories...).Insert(d.popts.repositories...))
 	ic.Contents.BuildRepositories = sets.List(sets.New(ic.Contents.BuildRepositories...).Insert(d.popts.buildRespositories...))
 	ic.Contents.Packages = sets.List(sets.New(ic.Contents.Packages...).Insert(d.popts.packages...))
 	ic.Contents.Keyring = sets.List(sets.New(ic.Contents.Keyring...).Insert(d.popts.keyring...))
@@ -284,7 +284,7 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 		build.WithSBOMFormats([]string{"spdx"}),
 		build.WithExtraKeys(d.popts.keyring),
 		build.WithExtraBuildRepos(d.popts.buildRespositories),
-		build.WithExtraRuntimeRepos(d.popts.repositories))
+		build.WithExtraRepos(d.popts.repositories))
 	if err != nil {
 		// These are a nightmare to debug, so we're going to try to include the apko config in the error.
 		b, merr := json.MarshalIndent(ic, "", "  ")
