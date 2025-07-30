@@ -206,7 +206,7 @@ func (p *Provider) Functions(ctx context.Context) []func() function.Function {
 	}
 }
 
-// getVersion attempts to get the version from build info
+// getVersion attempts to get the version from build info.
 func getVersion() string {
 	if info, ok := debug.ReadBuildInfo(); ok {
 		// When built with goreleaser, this will be the actual version
