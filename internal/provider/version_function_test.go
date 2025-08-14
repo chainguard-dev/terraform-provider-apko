@@ -26,7 +26,7 @@ output "apko_version" {
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				// Check that the provider version is not empty and looks like a version
-				// With build info, it should be something like "v0.23.1-0.20250729145754-7f4b7167d62c" or "test"
+				// With build info, it should be something like "v0.23.1-0.20250729145754-7f4b7167d62c" or "dev"
 				resource.TestMatchOutput("provider_version", regexp.MustCompile(`^(v\d+\.\d+\.\d+.*|dev)$`)),
 				// Check that apko version is not empty and looks like a version
 				resource.TestMatchOutput("apko_version", regexp.MustCompile(`^v\d+\.\d+\.\d+.*|unknown$`)),
