@@ -12,7 +12,7 @@ import (
 // CLI command executed to create a provider server to which the CLI can
 // reattach.
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"apko": providerserver.NewProtocol6WithError(New("test")()),
+	"apko": providerserver.NewProtocol6WithError(New()()),
 }
 
 func testAccPreCheck(t *testing.T) {
