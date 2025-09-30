@@ -21,14 +21,22 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        persist-credentials: false
+
     - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
       with:
         go-version-file: './.go-version'
-    - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.0
+        check-latest: true
+        cache: false
+
+    - uses: chainguard-dev/actions/setup-terraform@cd899cc96227b82170571cad1c3d6378d8cba678 # v1.4.15
       with:
-        terraform_version: '1.12.x'
-        terraform_wrapper: false
+        terraform-version-file: '${{ github.workspace }}/.terraform-version'
+        terraform-wrapper: false
+
     - run: go generate ./...
+
     - name: git diff
       run: |
         git diff --compact-summary --exit-code || \
@@ -41,9 +49,9 @@ jobs:
       fail-fast: false
       matrix:
         terraform:
-        - '1.10.*'
         - '1.11.*'
         - '1.12.*'
+        - '1.13.*'
 
     permissions:
       contents: read
@@ -55,10 +63,14 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        persist-credentials: false
+
     - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
       with:
         go-version-file: './.go-version'
         check-latest: true
+        cache: false
 
     - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.0
       with:

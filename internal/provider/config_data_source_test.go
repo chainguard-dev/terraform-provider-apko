@@ -60,7 +60,7 @@ func TestAccDataSourceConfig_ExtraPackages(t *testing.T) {
 				buildRespositories: []string{"./packages"},
 				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:              []string{"x86_64", "aarch64"},
-				packages:           []string{"wolfi-baselayout=20230201-r0"},
+				packages:           []string{"wolfi-baselayout=20230201-r16"},
 				anns: map[string]string{
 					"bar": "provider-provided",
 					"baz": "provider-provided",
@@ -73,12 +73,12 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20230506-r0
-  - glibc-locale-posix=2.37-r6
+  - ca-certificates-bundle=20240705-r1
+  - glibc-locale-posix=2.40-r2
 annotations:
   bar: config-provided
 EOF
-  extra_packages = ["tzdata=2023c-r0"]
+  extra_packages = ["tzdata=2024b-r1"]
   default_annotations = {
 	foo: "bar"
 	bar: "datasource-provided"
@@ -86,10 +86,10 @@ EOF
 }`,
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20230506-r0"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.37-r6"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2023c-r0"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20240705-r1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.40-r2"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2024b-r1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r16"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.%", "3"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.foo", "bar"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.annotations.bar", "config-provided"),
@@ -108,7 +108,7 @@ func TestAccDataSourceConfig_ProviderOpts_Locked(t *testing.T) {
 				buildRespositories: []string{"./packages"},
 				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:              []string{"x86_64", "aarch64"},
-				packages:           []string{"wolfi-baselayout=20230201-r0"},
+				packages:           []string{"wolfi-baselayout=20230201-r16"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -117,9 +117,9 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-    - ca-certificates-bundle=20230506-r0
-    - glibc-locale-posix=2.37-r6
-    - tzdata=2023c-r0
+    - ca-certificates-bundle=20240705-r1
+    - glibc-locale-posix=2.40-r2
+    - tzdata=2024b-r1
   EOF
 }`,
 			Check: resource.ComposeTestCheckFunc(
@@ -127,10 +127,10 @@ contents:
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.0", "amd64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.archs.1", "arm64"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.#", "4"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20230506-r0"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.37-r6"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2023c-r0"),
-				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r0"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.0", "ca-certificates-bundle=20240705-r1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.1", "glibc-locale-posix=2.40-r2"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.2", "tzdata=2024b-r1"),
+				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.packages.3", "wolfi-baselayout=20230201-r16"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.#", "1"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.repositories.0", "https://packages.wolfi.dev/os"),
 				resource.TestCheckResourceAttr("data.apko_config.this", "config.contents.keyring.#", "1"),

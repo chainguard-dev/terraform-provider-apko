@@ -9,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"testing"
-	"time"
 
 	"chainguard.dev/apko/pkg/sbom/generator/spdx"
 	ocitesting "github.com/chainguard-dev/terraform-provider-oci/testing"
@@ -203,7 +202,7 @@ func TestAccResourceApkoBuild_BuildDateEpoch(t *testing.T) {
 				buildRespositories: []string{"./packages"},
 				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:              []string{"x86_64"},
-				packages:           []string{"wolfi-baselayout=20230201-r0"},
+				packages:           []string{"wolfi-baselayout=20230201-r24"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -212,9 +211,9 @@ data "apko_config" "foo" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20230506-r0
-  - glibc-locale-posix=2.37-r6
-  - tzdata=2023c-r0
+  - ca-certificates-bundle=20240705-r1
+  - glibc-locale-posix=2.40-r2
+  - tzdata=2024b-r1
 EOF
 }
 
@@ -227,7 +226,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:4f2f87f6a611d89c6b47d87827f22efc4376baf06f85ae6d06c337fafb4089c2").String()),
+					repo.Digest("sha256:e02d412ac77065c70938afe0b465bc482444f92589d9e1997b1e5ce08dd19065").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -249,14 +248,11 @@ resource "apko_build" "foo" {
 						return fmt.Errorf("got sha256 %q, wanted %q", got, want)
 					}
 
-					// With (these) pinned packages we should see the UTC Unix
-					// epoch because these packages weren't embedding
-					// build date.
 					var doc spdx.Document
 					if err := json.Unmarshal(sbom, &doc); err != nil {
 						return err
 					}
-					if got, want := doc.CreationInfo.Created, time.Unix(0, 0).UTC().Format(time.RFC3339); got != want {
+					if got, want := doc.CreationInfo.Created, "2025-09-11T21:14:54Z"; got != want {
 						return fmt.Errorf("got created %s, wanted %s", got, want)
 					}
 					return nil
@@ -273,7 +269,7 @@ resource "apko_build" "foo" {
 				buildRespositories: []string{"./packages"},
 				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:              []string{"x86_64"},
-				packages:           []string{"wolfi-baselayout=20230201-r3"},
+				packages:           []string{"wolfi-baselayout=20230201-r24"},
 			}),
 		},
 		Steps: []resource.TestStep{{
@@ -282,9 +278,9 @@ data "apko_config" "foo" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20230506-r0
-  - glibc-locale-posix=2.37-r6
-  - tzdata=2023c-r0
+  - ca-certificates-bundle=20240705-r1
+  - glibc-locale-posix=2.40-r2
+  - tzdata=2024b-r1
 EOF
 }
 
@@ -297,7 +293,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:91bee4d74207f37d2d2b15c7c54bf5367fcfdef33b888bb7ae88893643ef933e").String()),
+					repo.Digest("sha256:e02d412ac77065c70938afe0b465bc482444f92589d9e1997b1e5ce08dd19065").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -325,7 +321,7 @@ resource "apko_build" "foo" {
 					if err := json.Unmarshal(sbom, &doc); err != nil {
 						return err
 					}
-					if got, want := doc.CreationInfo.Created, time.Unix(1686086025, 0).UTC().Format(time.RFC3339); got != want {
+					if got, want := doc.CreationInfo.Created, "2025-09-11T21:14:54Z"; got != want {
 						return fmt.Errorf("got created %s, wanted %s", got, want)
 					}
 					return nil
@@ -439,7 +435,7 @@ func TestAccResourceApkoBuild_Layers(t *testing.T) {
 	repostr := repo.String()
 
 	// Need to update this if apko changes.
-	digest := repo.Digest("sha256:022e1d4400460b17ea397e73b175d6d37a780c3d945ded4cd996692adc77e229")
+	digest := repo.Digest("sha256:470f41a181db1ae7fa8560228ea6b72285aaca4b929f6e9d9fc908da86799293")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() { testAccPreCheck(t) },
@@ -458,9 +454,9 @@ data "apko_config" "foo" {
   config_contents = <<EOF
 contents:
   packages:
-    - ca-certificates-bundle=20230506-r0
-    - glibc-locale-posix=2.37-r6
-    - tzdata=2023c-r0
+    - ca-certificates-bundle=20240705-r1
+    - glibc-locale-posix=2.40-r2
+    - tzdata=2024b-r1
 layering:
   strategy: origin
   budget: 10
