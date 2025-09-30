@@ -21,10 +21,13 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
       - run: git fetch --prune --unshallow
+
       - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
           go-version-file: './.go-version'
+          check-latest: true
           cache: false
 
       # This is provisioned here: https://github.com/chainguard-dev/secrets/blob/main/terraform-provider-apko.tf
@@ -33,9 +36,11 @@ jobs:
         with:
           workload_identity_provider: "projects/12758742386/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "terraform-provider-apko@chainguard-github-secrets.iam.gserviceaccount.com"
+
       - uses: google-github-actions/setup-gcloud@cb1e50a9932213ecece00a606661ae9ca44f3397 # v2.2.0
         with:
           project_id: "chainguard-github-secrets"
+
       - uses: google-github-actions/get-secretmanager-secrets@50ec04d56ddf2740b0bde82926cc742f90e06d2b # v2.2.4
         id: secrets
         with:

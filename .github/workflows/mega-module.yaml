@@ -72,10 +72,10 @@ jobs:
         repository: chainguard-images/images
         path: images
 
-    - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+    - uses: chainguard-dev/actions/setup-terraform@cd899cc96227b82170571cad1c3d6378d8cba678 # v1.4.15
       with:
-        terraform_version: '1.12.*'
-        terraform_wrapper: false
+        terraform-version-file: 'tf-apko/.terraform-version'
+        terraform-wrapper: false
 
     - uses: chainguard-dev/actions/setup-registry@b1933e3d1f574c772dc7efd68c2060dafbc25e8c # v1.4.9
       with:
@@ -84,7 +84,7 @@ jobs:
     - working-directory: images
       env:
         TF_VAR_target_repository: localhost:5000/tf-apko
-        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:dfc82b5d4cc8e8b94b46d88620d04ae041fe73c4e5912df99fefa45182d94e37
+        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:e39af87d74438a05269972934716387e3978b78511d7968a3a7ea730d418dfb3
       run: |
         terraform init
 
@@ -99,8 +99,7 @@ jobs:
         terraform apply -auto-approve \
           -target=module.go \
           -target=module.jdk \
-          -target=module.python \
-          -target=module.scanner-test
+          -target=module.python
 
     - name: Upload imagetest logs
       if: always()
