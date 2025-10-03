@@ -31,7 +31,7 @@ jobs:
           cache: false
 
       # This is provisioned here: https://github.com/chainguard-dev/secrets/blob/main/terraform-provider-apko.tf
-      - uses: step-security/google-github-auth@40f6deebd366f16c782d7a0ad0844e3b96a032a6 # v2.1.10
+      - uses: step-security/google-github-auth@190f7ef9b7a34cc0dfd0c11f0e327365f70071d6 # v2.1.12
         id: auth
         with:
           workload_identity_provider: "projects/12758742386/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
