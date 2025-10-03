@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"runtime/debug"
 	"time"
 
 	"chainguard.dev/apko/pkg/apk/apk"
@@ -205,10 +206,21 @@ func (p *Provider) Functions(ctx context.Context) []func() function.Function {
 	}
 }
 
-func New(version string) func() provider.Provider {
+// getVersion attempts to get the version from build info.
+func getVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		// When built with goreleaser, this will be the actual version
+		if info.Main.Version != "" && info.Main.Version != "(devel)" {
+			return info.Main.Version
+		}
+	}
+	return "dev"
+}
+
+func New() func() provider.Provider {
 	return func() provider.Provider {
 		return &Provider{
-			version: version,
+			version: getVersion(),
 		}
 	}
 }
