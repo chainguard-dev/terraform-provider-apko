@@ -25,12 +25,12 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20240705-r1
-  - glibc-locale-posix=2.40-r2
+  - ca-certificates-bundle=20250911-r0
+  - glibc-locale-posix=2.42-r2
   - ko=0.18.0-r6
   - nodejs=21.7.3-r9 # Initial request will be satisfied by 'provides'
 EOF
-  extra_packages = ["tzdata=2024b-r1"]
+  extra_packages = ["tzdata=2025b-r2"]
 }
 
 data "apko_tags" "ca-certs" {
@@ -71,14 +71,14 @@ data "apko_tags" "nodejs-21" {
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.#", "3"),
 				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.0", "2"),
-				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.1", "2.40"),
-				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.2", "2.40-r2"),
-				resource.TestCheckResourceAttr("data.apko_tags.glibc", "id", "2,2.40,2.40-r2"),
+				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.1", "2.42"),
+				resource.TestCheckResourceAttr("data.apko_tags.glibc", "tags.2", "2.42-r2"),
+				resource.TestCheckResourceAttr("data.apko_tags.glibc", "id", "2,2.42,2.42-r2"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.#", "2"),
-				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.0", "20240705"),
-				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.1", "20240705-r1"),
-				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "id", "20240705,20240705-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.0", "20250911"),
+				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "tags.1", "20250911-r0"),
+				resource.TestCheckResourceAttr("data.apko_tags.ca-certs", "id", "20250911,20250911-r0"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.#", "2"),
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "tags.0", "20230201"),
@@ -86,9 +86,9 @@ data "apko_tags" "nodejs-21" {
 				resource.TestCheckResourceAttr("data.apko_tags.wolfi-baselayout", "id", "20230201,20230201-r24"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.#", "2"),
-				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.0", "2024b"),
-				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.1", "2024b-r1"),
-				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "id", "2024b,2024b-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.0", "2025b"),
+				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.1", "2025b-r2"),
+				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "id", "2025b,2025b-r2"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.0", "0"),
@@ -136,12 +136,12 @@ data "apko_config" "this" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20240705-r1
-  - glibc-locale-posix=2.40-r2
+  - ca-certificates-bundle=20250911-r0
+  - glibc-locale-posix=2.42-r2
   - ko=0.18.0-r6
   - nodejs=21.7.3-r9
 EOF
-  extra_packages = ["tzdata=2024b-r1"]
+  extra_packages = ["tzdata=2025b-r2"]
 }
 
 data "apko_tags" "ca-certs" {

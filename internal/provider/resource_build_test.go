@@ -211,9 +211,9 @@ data "apko_config" "foo" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20240705-r1
-  - glibc-locale-posix=2.40-r2
-  - tzdata=2024b-r1
+  - ca-certificates-bundle=20250911-r0
+  - glibc-locale-posix=2.42-r2
+  - tzdata=2025b-r2
 EOF
 }
 
@@ -226,7 +226,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:1c1a9e34c58140fdbc26d1725fb4aeb069421d195ef36e55997352959274c6d9").String()),
+					repo.Digest("sha256:9b627a5b37519f61beab070bc72607ca1d9a6f2f84dfedfa218a9c216db417a3").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -252,7 +252,7 @@ resource "apko_build" "foo" {
 					if err := json.Unmarshal(sbom, &doc); err != nil {
 						return err
 					}
-					if got, want := doc.CreationInfo.Created, "2025-09-11T21:14:54Z"; got != want {
+					if got, want := doc.CreationInfo.Created, "2025-10-15T15:46:07Z"; got != want {
 						return fmt.Errorf("got created %s, wanted %s", got, want)
 					}
 					return nil
@@ -278,9 +278,9 @@ data "apko_config" "foo" {
   config_contents = <<EOF
 contents:
   packages:
-  - ca-certificates-bundle=20240705-r1
-  - glibc-locale-posix=2.40-r2
-  - tzdata=2024b-r1
+  - ca-certificates-bundle=20250911-r0
+  - glibc-locale-posix=2.42-r2
+  - tzdata=2025b-r2
 EOF
 }
 
@@ -293,7 +293,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:1c1a9e34c58140fdbc26d1725fb4aeb069421d195ef36e55997352959274c6d9").String()),
+					repo.Digest("sha256:9b627a5b37519f61beab070bc72607ca1d9a6f2f84dfedfa218a9c216db417a3").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -321,7 +321,7 @@ resource "apko_build" "foo" {
 					if err := json.Unmarshal(sbom, &doc); err != nil {
 						return err
 					}
-					if got, want := doc.CreationInfo.Created, "2025-09-11T21:14:54Z"; got != want {
+					if got, want := doc.CreationInfo.Created, "2025-10-15T15:46:07Z"; got != want {
 						return fmt.Errorf("got created %s, wanted %s", got, want)
 					}
 					return nil
@@ -435,7 +435,7 @@ func TestAccResourceApkoBuild_Layers(t *testing.T) {
 	repostr := repo.String()
 
 	// Need to update this if apko changes.
-	digest := repo.Digest("sha256:237a617adf97d67314957470692427befc05e11fc30a8cd02b41e06dbe2987df")
+	digest := repo.Digest("sha256:0b80eb319c9846dc3dae40a307ce153940bc38b85805376f7e47303b9d0bd51c")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() { testAccPreCheck(t) },
@@ -454,9 +454,9 @@ data "apko_config" "foo" {
   config_contents = <<EOF
 contents:
   packages:
-    - ca-certificates-bundle=20240705-r1
-    - glibc-locale-posix=2.40-r2
-    - tzdata=2024b-r1
+    - ca-certificates-bundle=20250911-r0
+    - glibc-locale-posix=2.42-r2
+    - tzdata=2025b-r2
 layering:
   strategy: origin
   budget: 10

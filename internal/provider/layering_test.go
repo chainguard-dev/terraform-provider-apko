@@ -42,9 +42,9 @@ data "apko_config" "provider_layering" {
   config_contents = <<EOF
 contents:
   packages:
-    - ca-certificates-bundle=20240705-r1
-    - glibc-locale-posix=2.40-r2
-    - tzdata=2024b-r1
+    - ca-certificates-bundle=20250911-r0
+    - glibc-locale-posix=2.42-r2
+    - tzdata=2025b-r2
 # No layering configuration specified - should use provider defaults
 EOF
 }
@@ -137,9 +137,9 @@ data "apko_config" "resource_layering" {
   config_contents = <<EOF
 contents:
   packages:
-    - ca-certificates-bundle=20240705-r1
-    - glibc-locale-posix=2.40-r2
-    - tzdata=2024b-r1
+    - ca-certificates-bundle=20250911-r0
+    - glibc-locale-posix=2.42-r2
+    - tzdata=2025b-r2
 layering:
   strategy: origin
   budget: 10  # Resource explicitly sets a higher budget, should override provider
@@ -237,9 +237,9 @@ data "apko_config" "empty_layering" {
   config_contents = <<EOF
 contents:
   packages:
-    - ca-certificates-bundle=20240705-r1
-    - glibc-locale-posix=2.40-r2
-    - tzdata=2024b-r1
+    - ca-certificates-bundle=20250911-r0
+    - glibc-locale-posix=2.42-r2
+    - tzdata=2025b-r2
 layering: {}  # Empty layering block should override provider defaults
 EOF
 }
