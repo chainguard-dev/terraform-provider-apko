@@ -137,8 +137,6 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 
 	var errg errgroup.Group
 	for _, arch := range ic2.Archs {
-		arch := arch
-
 		log := clog.New(slog.Default().Handler()).With("arch", arch.ToAPK())
 		ctx := clog.WithLogger(ctx, log)
 
@@ -323,8 +321,6 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 
 	var errg errgroup.Group
 	for _, arch := range ic2.Archs {
-		arch := arch
-
 		log := clog.New(slog.Default().Handler()).With("arch", arch.ToAPK())
 		ctx := clog.WithLogger(ctx, log)
 
