@@ -13,7 +13,7 @@ import (
 func TestGenerateType(t *testing.T) {
 	tests := []struct {
 		name string
-		obj  interface{}
+		obj  any
 		want attr.Type
 	}{{
 		name: "string",
@@ -140,8 +140,8 @@ archs:
 
 	tests := []struct {
 		name  string
-		want  interface{}
-		blank interface{}
+		want  any
+		blank any
 	}{{
 		name:  "string list",
 		want:  []string{"a", "b", "c"},

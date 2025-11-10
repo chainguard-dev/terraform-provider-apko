@@ -401,7 +401,7 @@ func experimental(field reflect.StructField) bool {
 	if tag == "" {
 		return false
 	}
-	for _, field := range strings.Split(tag, ",") {
+	for field := range strings.SplitSeq(tag, ",") {
 		if field == "experimental" {
 			return true
 		}

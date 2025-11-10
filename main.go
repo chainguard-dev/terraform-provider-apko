@@ -47,7 +47,7 @@ func (h tfhandler) Handle(ctx context.Context, r slog.Record) error {
 	// the message to TF's logger.
 	ctx = tflog.NewSubsystem(ctx, subsystem, tflog.WithAdditionalLocationOffset(3))
 
-	addl := make(map[string]interface{})
+	addl := make(map[string]any)
 	r.Attrs(func(s slog.Attr) bool {
 		addl[s.Key] = s.Value.String()
 		return true

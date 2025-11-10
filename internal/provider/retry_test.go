@@ -22,7 +22,7 @@ func TestBackoffSteps(t *testing.T) {
 
 	steps := backoff.Steps
 
-	for i := 0; i < steps; i++ {
+	for i := range steps {
 		m := mins[i]
 
 		if next := backoff.Step(); next < m || next > 2*m {

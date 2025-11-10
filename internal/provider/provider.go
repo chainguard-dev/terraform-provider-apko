@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"maps"
 	"runtime/debug"
 	"time"
 
@@ -124,12 +125,8 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 // combineMaps combines two maps, with the first map (left) taking precedence.
 func combineMaps(left, right map[string]string) map[string]string {
 	out := map[string]string{}
-	for k, v := range right {
-		out[k] = v
-	}
-	for k, v := range left {
-		out[k] = v
-	}
+	maps.Copy(out, right)
+	maps.Copy(out, left)
 	return out
 }
 

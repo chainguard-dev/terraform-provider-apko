@@ -9,6 +9,7 @@ linters:
     - ineffassign
     - makezero
     - misspell
+    - modernize
     - nilerr
     - predeclared
     - staticcheck
