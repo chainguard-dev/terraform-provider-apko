@@ -76,6 +76,7 @@ Required:
 - `accounts` (Object) (see [below for nested schema](#nestedobjatt--config--accounts))
 - `annotations` (Map of String)
 - `archs` (List of String)
+- `certificates` (Object) (see [below for nested schema](#nestedobjatt--config--certificates))
 - `cmd` (String)
 - `contents` (Object) (see [below for nested schema](#nestedobjatt--config--contents))
 - `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--config--entrypoint))
@@ -117,6 +118,23 @@ Required:
 - `shell` (String)
 - `uid` (Number)
 - `username` (String)
+
+
+
+<a id="nestedobjatt--config--certificates"></a>
+### Nested Schema for `config.certificates`
+
+Required:
+
+- `additional` (List of Object) (see [below for nested schema](#nestedobjatt--config--certificates--additional))
+
+<a id="nestedobjatt--config--certificates--additional"></a>
+### Nested Schema for `config.certificates.additional`
+
+Required:
+
+- `content` (String)
+- `name` (String)
 
 
 
@@ -182,6 +200,7 @@ Optional:
 - `accounts` (Object) (see [below for nested schema](#nestedobjatt--configs--config--accounts))
 - `annotations` (Map of String)
 - `archs` (List of String)
+- `certificates` (Object) (see [below for nested schema](#nestedobjatt--configs--config--certificates))
 - `cmd` (String)
 - `contents` (Object) (see [below for nested schema](#nestedobjatt--configs--config--contents))
 - `entrypoint` (Object) (see [below for nested schema](#nestedobjatt--configs--config--entrypoint))
@@ -223,6 +242,23 @@ Optional:
 - `shell` (String)
 - `uid` (Number)
 - `username` (String)
+
+
+
+<a id="nestedobjatt--configs--config--certificates"></a>
+### Nested Schema for `configs.config.certificates`
+
+Optional:
+
+- `additional` (List of Object) (see [below for nested schema](#nestedobjatt--configs--config--certificates--additional))
+
+<a id="nestedobjatt--configs--config--certificates--additional"></a>
+### Nested Schema for `configs.config.certificates.additional`
+
+Optional:
+
+- `content` (String)
+- `name` (String)
 
 
 
