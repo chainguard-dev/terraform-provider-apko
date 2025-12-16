@@ -405,7 +405,7 @@ data "apko_config" "foo" {
 contents:
   packages:
     # This package pulls in libpciaccess only for x86_64.
-    - libdrm=2.4.124-r0
+    - libdrm=2.4.131-r0
   EOF
 }
 
