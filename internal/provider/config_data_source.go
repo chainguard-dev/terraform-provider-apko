@@ -48,6 +48,8 @@ var imageConfigurationSchema basetypes.ObjectType
 var imageConfigurationsSchema basetypes.ObjectType
 
 func init() {
+	// generateType now uses generateSchemaAttributes internally for tag-aware processing
+	// This ensures consistent handling of tfgen tags and experimental fields
 	sch, err := generateType(apkotypes.ImageConfiguration{})
 	if err != nil {
 		panic(err)
