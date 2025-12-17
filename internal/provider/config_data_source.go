@@ -59,9 +59,10 @@ func init() {
 		panic("expected object type")
 	}
 
-	// TODO: Certificates are optional, but we currently generate all types to
-	// be required. For now, just remove them from the schema until we figure
-	// out optional types.
+	// TODO: Certificates are optional, but our schema generation using
+	// schema.ObjectAttribute with AttributeTypes doesn't support field-level
+	// optional/required controls. For now, remove certificates from the schema
+	// type definition. We also remove it from generated values in the Read method.
 	delete(imageConfigurationSchema.AttrTypes, "certificates")
 
 	imageConfigurationsSchema = basetypes.ObjectType{
@@ -227,6 +228,16 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		cfg, ok := ov.(basetypes.ObjectValue)
 		if !ok {
 			resp.Diagnostics.AddError("Unable to write apko configuration", "unexpected object type or malformed object type")
+			return
+		}
+
+		// Remove certificates from the generated value to match the schema
+		// TODO: see above about optional types.
+		attrs := cfg.Attributes()
+		delete(attrs, "certificates")
+		cfg, diags = types.ObjectValue(imageConfigurationSchema.AttrTypes, attrs)
+		resp.Diagnostics = append(resp.Diagnostics, diags...)
+		if diags.HasError() {
 			return
 		}
 
