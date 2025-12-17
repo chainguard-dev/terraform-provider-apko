@@ -59,6 +59,11 @@ func init() {
 		panic("expected object type")
 	}
 
+	// TODO: Certificates are optional, but we currently generate all types to
+	// be required. For now, just remove them from the schema until we figure
+	// out optional types.
+	delete(imageConfigurationSchema.AttrTypes, "certificates")
+
 	imageConfigurationsSchema = basetypes.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"config": imageConfigurationSchema,
