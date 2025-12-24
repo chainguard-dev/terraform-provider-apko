@@ -60,6 +60,12 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 			if experimental(sf) {
 				continue
 			}
+			// Skip certificates field - it's optional but schema.ObjectAttribute
+			// with AttributeTypes doesn't support field-level optional/required controls.
+			// TODO: Teach this about optional fields properly.
+			if *tag == "certificates" {
+				continue
+			}
 
 			ft, err := generateTypeReflect(maybeDeref(sf.Type))
 			if err != nil {
@@ -184,6 +190,12 @@ func generateValueReflect(v reflect.Value) (attr.Value, diag.Diagnostics) {
 				continue
 			}
 			if experimental(sf) {
+				continue
+			}
+			// Skip certificates field - it's optional but schema.ObjectAttribute
+			// with AttributeTypes doesn't support field-level optional/required controls.
+			// TODO: Teach this about optional fields properly.
+			if *tag == "certificates" {
 				continue
 			}
 
