@@ -445,7 +445,7 @@ func TestAccResourceApkoBuild_Layers(t *testing.T) {
 				buildRespositories: []string{"./packages"},
 				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
 				archs:              []string{"x86_64", "aarch64"},
-				packages:           []string{"wolfi-baselayout"},
+				packages:           []string{"wolfi-baselayout=20230201-r24"},
 			}),
 		}, Steps: []resource.TestStep{
 			{
