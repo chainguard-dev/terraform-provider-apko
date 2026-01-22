@@ -11,6 +11,7 @@ import (
 
 	"chainguard.dev/apko/pkg/build"
 	apkotypes "chainguard.dev/apko/pkg/build/types"
+	"chainguard.dev/apko/pkg/sbom/generator/spdx"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -297,7 +298,7 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 
 	pls, missingByArch, err := build.LockImageConfiguration(ctx, *ic2,
 		build.WithCache("", d.popts.planOffline, d.popts.cache),
-		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithSBOMGenerators(spdx.New()),
 		build.WithExtraKeys(d.popts.keyring),
 		build.WithExtraBuildRepos(d.popts.buildRespositories),
 		build.WithExtraRepos(d.popts.repositories))

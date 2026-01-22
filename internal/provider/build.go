@@ -14,6 +14,7 @@ import (
 	"chainguard.dev/apko/pkg/build/oci"
 	"chainguard.dev/apko/pkg/build/types"
 	"chainguard.dev/apko/pkg/options"
+	"chainguard.dev/apko/pkg/sbom/generator/spdx"
 	"chainguard.dev/apko/pkg/tarfs"
 	"github.com/chainguard-dev/clog"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -61,7 +62,7 @@ func fromImageData(_ context.Context, ic types.ImageConfiguration, popts Provide
 	opts := []build.Option{
 		build.WithCache("", false, popts.cache),
 		build.WithImageConfiguration(ic),
-		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithSBOMGenerators(spdx.New()),
 		build.WithExtraKeys(popts.keyring),
 		build.WithExtraRepos(popts.repositories),
 		build.WithExtraBuildRepos(popts.buildRespositories),
@@ -125,7 +126,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 
 	mc, err := build.NewMultiArch(ctx, ic2.Archs, build.WithImageConfiguration(*ic2),
 		build.WithCache("", false, data.popts.cache),
-		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithSBOMGenerators(spdx.New()),
 		build.WithSBOM(tempDir),
 		build.WithTempDir(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
@@ -228,7 +229,7 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 	o, ic2, err = build.NewOptions(
 		build.WithImageConfiguration(*ic2),      // We mutate Archs above.
 		build.WithSourceDateEpoch(multiArchBDE), // Maximum child's time.
-		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithSBOMGenerators(spdx.New()),
 		build.WithSBOM(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraRepos(data.popts.repositories),
@@ -336,7 +337,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 
 			bc, err := build.New(ctx, tarfs.New(), build.WithImageConfiguration(*ic2),
 				build.WithCache("", false, data.popts.cache),
-				build.WithSBOMFormats([]string{"spdx"}),
+				build.WithSBOMGenerators(spdx.New()),
 				build.WithSBOM(tempDir),
 				build.WithArch(arch),
 				build.WithTempDir(tempDir),
@@ -431,7 +432,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 	o, ic2, err = build.NewOptions(
 		build.WithImageConfiguration(*ic2),      // We mutate Archs above.
 		build.WithSourceDateEpoch(multiArchBDE), // Maximum child's time.
-		build.WithSBOMFormats([]string{"spdx"}),
+		build.WithSBOMGenerators(spdx.New()),
 		build.WithSBOM(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraRepos(data.popts.repositories),
