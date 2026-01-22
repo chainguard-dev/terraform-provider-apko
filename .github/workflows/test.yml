@@ -52,6 +52,7 @@ jobs:
         - '1.11.*'
         - '1.12.*'
         - '1.13.*'
+        - '1.14.*'
 
     permissions:
       contents: read
