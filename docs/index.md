@@ -28,6 +28,7 @@ provider "apko" {}
 - `extra_packages` (List of String) Additional packages to install
 - `extra_repositories` (List of String) Additional repositories to search for packages
 - `plan_offline` (Boolean) Whether to plan offline
+- `size_limits` (Attributes) Size limits for APK operations to protect against decompression bombs. A value of 0 means use the default, and a value of -1 means no limit. (see [below for nested schema](#nestedatt--size_limits))
 
 <a id="nestedatt--default_layering"></a>
 ### Nested Schema for `default_layering`
@@ -36,3 +37,14 @@ Required:
 
 - `budget` (Number) Budget for the maximum number of layers that can be generated
 - `strategy` (String) Layering strategy, currently only 'origin' is supported
+
+
+<a id="nestedatt--size_limits"></a>
+### Nested Schema for `size_limits`
+
+Optional:
+
+- `apk_control_max_size` (Number) Maximum decompressed size for APK control sections in bytes (default: 10MB).
+- `apk_data_max_size` (Number) Maximum decompressed size for APK data sections in bytes (default: 4GB). Protects against gzip bombs.
+- `apk_index_decompressed_max_size` (Number) Maximum decompressed size for APKINDEX archives in bytes (default: 100MB). Protects against gzip bombs.
+- `http_response_max_size` (Number) Maximum size for HTTP responses in bytes (default: 2GB).
