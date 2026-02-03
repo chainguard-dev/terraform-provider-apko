@@ -24,6 +24,27 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
+// toSizeLimits converts a provider SizeLimitsConfig to an apko options.SizeLimits.
+func toSizeLimits(cfg *SizeLimitsConfig) options.SizeLimits {
+	if cfg == nil {
+		return options.SizeLimits{}
+	}
+	var sl options.SizeLimits
+	if cfg.APKIndexDecompressedMaxSize != nil {
+		sl.APKIndexDecompressedMaxSize = *cfg.APKIndexDecompressedMaxSize
+	}
+	if cfg.APKControlMaxSize != nil {
+		sl.APKControlMaxSize = *cfg.APKControlMaxSize
+	}
+	if cfg.APKDataMaxSize != nil {
+		sl.APKDataMaxSize = *cfg.APKDataMaxSize
+	}
+	if cfg.HTTPResponseMaxSize != nil {
+		sl.HTTPResponseMaxSize = *cfg.HTTPResponseMaxSize
+	}
+	return sl
+}
+
 func fromImageData(_ context.Context, ic types.ImageConfiguration, popts ProviderOpts) (*options.Options, *types.ImageConfiguration, error) {
 	// Deduplicate any of the extra packages against their potentially resolved
 	// form in the actual image list.
@@ -66,6 +87,7 @@ func fromImageData(_ context.Context, ic types.ImageConfiguration, popts Provide
 		build.WithExtraKeys(popts.keyring),
 		build.WithExtraRepos(popts.repositories),
 		build.WithExtraBuildRepos(popts.buildRespositories),
+		build.WithSizeLimits(toSizeLimits(popts.sizeLimits)),
 	}
 
 	o, ic2, err := build.NewOptions(opts...)
@@ -131,7 +153,8 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 		build.WithTempDir(tempDir),
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraBuildRepos(data.popts.buildRespositories),
-		build.WithExtraRepos(data.popts.repositories))
+		build.WithExtraRepos(data.popts.repositories),
+		build.WithSizeLimits(toSizeLimits(data.popts.sizeLimits)))
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
@@ -343,7 +366,8 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 				build.WithTempDir(tempDir),
 				build.WithExtraKeys(data.popts.keyring),
 				build.WithExtraBuildRepos(data.popts.buildRespositories),
-				build.WithExtraRepos(data.popts.repositories))
+				build.WithExtraRepos(data.popts.repositories),
+				build.WithSizeLimits(toSizeLimits(data.popts.sizeLimits)))
 			if err != nil {
 				return fmt.Errorf("failed to start apko build: %w", err)
 			}

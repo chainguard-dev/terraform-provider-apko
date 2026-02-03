@@ -36,6 +36,13 @@ type LayeringConfig struct {
 	Budget   int    `tfsdk:"budget"`
 }
 
+type SizeLimitsConfig struct {
+	APKIndexDecompressedMaxSize *int64 `tfsdk:"apk_index_decompressed_max_size"`
+	APKControlMaxSize           *int64 `tfsdk:"apk_control_max_size"`
+	APKDataMaxSize              *int64 `tfsdk:"apk_data_max_size"`
+	HTTPResponseMaxSize         *int64 `tfsdk:"http_response_max_size"`
+}
+
 type ProviderModel struct {
 	ExtraRepositories  []string          `tfsdk:"extra_repositories"`
 	BuildRepositories  []string          `tfsdk:"build_repositories"`
@@ -44,6 +51,7 @@ type ProviderModel struct {
 	DefaultAnnotations map[string]string `tfsdk:"default_annotations"`
 	DefaultArchs       []string          `tfsdk:"default_archs"`
 	DefaultLayering    *LayeringConfig   `tfsdk:"default_layering"`
+	SizeLimits         *SizeLimitsConfig `tfsdk:"size_limits"`
 	PlanOffline        *bool             `tfsdk:"plan_offline"`
 }
 
@@ -51,6 +59,7 @@ type ProviderOpts struct {
 	repositories, buildRespositories, packages, keyring, archs []string
 	anns                                                       map[string]string
 	layering                                                   *LayeringConfig
+	sizeLimits                                                 *SizeLimitsConfig
 	cache                                                      *apk.Cache
 	ropts                                                      []remote.Option
 	planOffline                                                bool
@@ -118,6 +127,28 @@ func (p *Provider) Schema(ctx context.Context, req provider.SchemaRequest, resp 
 				Description: "Whether to plan offline",
 				Optional:    true,
 			},
+			"size_limits": schema.SingleNestedAttribute{
+				Description: "Size limits for APK operations to protect against decompression bombs. A value of 0 means use the default, and a value of -1 means no limit.",
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"apk_index_decompressed_max_size": schema.Int64Attribute{
+						Description: "Maximum decompressed size for APKINDEX archives in bytes (default: 100MB). Protects against gzip bombs.",
+						Optional:    true,
+					},
+					"apk_control_max_size": schema.Int64Attribute{
+						Description: "Maximum decompressed size for APK control sections in bytes (default: 10MB).",
+						Optional:    true,
+					},
+					"apk_data_max_size": schema.Int64Attribute{
+						Description: "Maximum decompressed size for APK data sections in bytes (default: 4GB). Protects against gzip bombs.",
+						Optional:    true,
+					},
+					"http_response_max_size": schema.Int64Attribute{
+						Description: "Maximum size for HTTP responses in bytes (default: 2GB).",
+						Optional:    true,
+					},
+				},
+			},
 		},
 	}
 }
@@ -172,6 +203,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		archs:              append(p.archs, data.DefaultArchs...),
 		anns:               combineMaps(p.anns, data.DefaultAnnotations),
 		layering:           layering,
+		sizeLimits:         data.SizeLimits,
 		cache:              apk.NewCache(true),
 		planOffline:        data.PlanOffline != nil && *data.PlanOffline,
 		ropts:              ropts,
