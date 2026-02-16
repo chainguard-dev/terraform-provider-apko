@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.14.0
 	golang.org/x/sync v0.19.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apimachinery v0.35.0
+	k8s.io/apimachinery v0.35.1
 )
 
 require (
