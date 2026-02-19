@@ -103,7 +103,7 @@ jobs:
       working-directory: images
       env:
         TF_VAR_target_repository: localhost:5005/tf-apko
-        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:606558fb4af96db1e7520ffcec58395919804949f4173687a8141f6eca6c3629
+        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:3b51ec8277d84ec2a668a7ea13d24664bdcd4ddef5ba0ef0f736609f18c02821
       run: |
         # Now change to our custom apko provider, note it may have a
         # digest drift w.r.t. imagetest sandbox digests, but the above
