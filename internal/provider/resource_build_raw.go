@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -23,47 +22,34 @@ import (
 )
 
 var (
-	_ resource.Resource                = &BuildResource{}
-	_ resource.ResourceWithImportState = &BuildResource{}
+	_ resource.Resource                = &BuildRawResource{}
+	_ resource.ResourceWithImportState = &BuildRawResource{}
 )
 
-func NewBuildResource() resource.Resource {
-	return &BuildResource{}
+func NewBuildRawResource() resource.Resource {
+	return &BuildRawResource{}
 }
 
-type BuildResource struct {
+type BuildRawResource struct {
 	popts ProviderOpts
 }
 
-type BuildResourceModel struct {
-	Id       types.String `tfsdk:"id"`
-	Repo     types.String `tfsdk:"repo"`
-	Config   types.Object `tfsdk:"config"`
-	Configs  types.Map    `tfsdk:"configs"`
-	ImageRef types.String `tfsdk:"image_ref"`
+type BuildRawResourceModel struct {
+	Id         types.String `tfsdk:"id"`
+	Repo       types.String `tfsdk:"repo"`
+	ConfigsRaw types.Map    `tfsdk:"configs_raw"`
+	ImageRef   types.String `tfsdk:"image_ref"`
 
 	SBOMs types.Map `tfsdk:"sboms"`
 
 	popts ProviderOpts // Data passed from the provider.
 }
 
-var digestSBOMSchema = basetypes.ObjectType{
-	AttrTypes: map[string]attr.Type{
-		"digest":         basetypes.StringType{},
-		"predicate_type": basetypes.StringType{},
-		// TODO(mattmoor): is there a way to designate this path's value as
-		// unimportant for the purposes of planning?
-		"predicate_path":   basetypes.StringType{},
-		"predicate_sha256": basetypes.StringType{},
-	},
+func (r *BuildRawResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_build_raw"
 }
 
-func (r *BuildResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_build"
-}
-
-func (r *BuildResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
+func (r *BuildRawResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -76,9 +62,11 @@ func (r *BuildResource) Configure(ctx context.Context, req resource.ConfigureReq
 	r.popts = *popts
 }
 
-func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *BuildRawResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "This performs an apko build from the provided config file",
+		MarkdownDescription: "This performs an apko build from raw JSON configuration strings, " +
+			"keyed by architecture (e.g. \"amd64\", \"arm64\", \"index\"). " +
+			"Unlike apko_build, optional fields can be omitted entirely.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
@@ -95,28 +83,11 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"config": schema.ObjectAttribute{
-				MarkdownDescription: "The parsed structure of the apko configuration.",
-				Required:            true,
-				AttributeTypes:      imageConfigurationSchema.AttrTypes,
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
-				},
-			},
-			"configs": schema.MapNestedAttribute{
-				MarkdownDescription: "A map from the APK architecture to the config for that architecture.",
-				Optional:            true,
-				Required:            false,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"config": schema.ObjectAttribute{
-							Optional:            false,
-							Required:            true,
-							MarkdownDescription: "The parsed structure of the apko configuration.",
-							AttributeTypes:      imageConfigurationSchema.AttrTypes,
-						},
-					},
-				},
+			"configs_raw": schema.MapAttribute{
+				MarkdownDescription: "A map from architecture (e.g. \"amd64\", \"arm64\", \"index\") to " +
+					"JSON-encoded apko image configuration. Must include an \"index\" entry.",
+				Required:    true,
+				ElementType: basetypes.StringType{},
 				PlanModifiers: []planmodifier.Map{
 					mapplanmodifier.RequiresReplace(),
 				},
@@ -163,8 +134,22 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 	}
 }
 
-func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *BuildResourceModel
+// rawConfigs extracts the map[string]string from the Terraform map value.
+func (data *BuildRawResourceModel) rawConfigs() (map[string]string, error) {
+	elements := data.ConfigsRaw.Elements()
+	out := make(map[string]string, len(elements))
+	for arch, v := range elements {
+		sv, ok := v.(basetypes.StringValue)
+		if !ok {
+			return nil, fmt.Errorf("configs_raw[%s]: expected StringValue, got %T", arch, v)
+		}
+		out[arch] = sv.ValueString()
+	}
+	return out, nil
+}
+
+func (r *BuildRawResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data *BuildRawResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -184,7 +169,13 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 	defer os.RemoveAll(tempDir)
 
-	digest, se, sboms, err := doBuild(ctx, *data, tempDir)
+	configs, err := data.rawConfigs()
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
+	}
+
+	digest, se, sboms, err := doBuildRaw(ctx, configs, data.popts, tempDir)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -237,21 +228,19 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *BuildResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *BuildResourceModel
+func (r *BuildRawResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *BuildRawResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	data.popts = r.popts
 
-	// We "lock" the config and changes to it already require replacement.
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *BuildResourceModel
+func (r *BuildRawResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *BuildRawResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -271,7 +260,13 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 	defer os.RemoveAll(tempDir)
 
-	digest, _, _, err := doBuild(ctx, *data, tempDir)
+	configs, err := data.rawConfigs()
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", err.Error())
+		return
+	}
+
+	digest, _, _, err := doBuildRaw(ctx, configs, data.popts, tempDir)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", err.Error())
 		return
@@ -285,16 +280,14 @@ func (r *BuildResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *BuildResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *BuildResourceModel
+func (r *BuildRawResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *BuildRawResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// TODO: If we ever want to delete the image from the registry, we can do it here.
 }
 
-func (r *BuildResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *BuildRawResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
