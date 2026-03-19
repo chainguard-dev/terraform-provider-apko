@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -321,6 +322,36 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 		byArch[arch] = ic
 	}
 
+	return doBuildFromConfigs(ctx, byArch, data.popts, tempDir)
+}
+
+// doBuildRaw builds from raw JSON config strings keyed by architecture.
+func doBuildRaw(ctx context.Context, cfgs map[string]string, popts ProviderOpts, tempDir string) (v1.Hash, v1.ImageIndex, map[string]imagesbom, error) {
+	byArch := make(map[string]types.ImageConfiguration, len(cfgs))
+	for arch, raw := range cfgs {
+		var ic types.ImageConfiguration
+		if err := json.Unmarshal([]byte(raw), &ic); err != nil {
+			return v1.Hash{}, nil, nil, fmt.Errorf("decoding config for %s: %w", arch, err)
+		}
+
+		// Normalize arch keys
+		key := arch
+		if arch != "index" {
+			key = types.ParseArchitecture(arch).String()
+		}
+		if _, exists := byArch[key]; exists {
+			return v1.Hash{}, nil, nil, fmt.Errorf("duplicate arch key: input %q normalizes to %q, which was already provided", arch, key)
+		}
+
+		tflog.Trace(ctx, fmt.Sprintf("Got raw image configuration for %s: %#v", key, ic))
+		byArch[key] = ic
+	}
+
+	return doBuildFromConfigs(ctx, byArch, popts, tempDir)
+}
+
+// doBuildFromConfigs builds a multi-arch image from pre-decoded per-arch configs.
+func doBuildFromConfigs(ctx context.Context, byArch map[string]types.ImageConfiguration, popts ProviderOpts, tempDir string) (v1.Hash, v1.ImageIndex, map[string]imagesbom, error) {
 	ic, ok := byArch["index"]
 	if !ok {
 		return v1.Hash{}, nil, nil, fmt.Errorf("missing index configuration")
@@ -328,7 +359,7 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 
 	// Parse things once to determine the architectures to build from
 	// the config.
-	o, ic2, err := fromImageData(ctx, ic, data.popts)
+	o, ic2, err := fromImageData(ctx, ic, popts)
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
@@ -353,21 +384,21 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 			if !ok {
 				return fmt.Errorf("missing arch %q configuration", arch.String())
 			}
-			_, ic2, err := fromImageData(ctx, ic, data.popts)
+			_, ic2, err := fromImageData(ctx, ic, popts)
 			if err != nil {
 				return fmt.Errorf("failed to convert image data to config %q: %w", arch, err)
 			}
 
 			bc, err := build.New(ctx, tarfs.New(), build.WithImageConfiguration(*ic2),
-				build.WithCache("", false, data.popts.cache),
+				build.WithCache("", false, popts.cache),
 				build.WithSBOMGenerators(spdx.New()),
 				build.WithSBOM(tempDir),
 				build.WithArch(arch),
 				build.WithTempDir(tempDir),
-				build.WithExtraKeys(data.popts.keyring),
-				build.WithExtraBuildRepos(data.popts.buildRespositories),
-				build.WithExtraRepos(data.popts.repositories),
-				build.WithSizeLimits(toSizeLimits(data.popts.sizeLimits)))
+				build.WithExtraKeys(popts.keyring),
+				build.WithExtraBuildRepos(popts.buildRespositories),
+				build.WithExtraRepos(popts.repositories),
+				build.WithSizeLimits(toSizeLimits(popts.sizeLimits)))
 			if err != nil {
 				return fmt.Errorf("failed to start apko build: %w", err)
 			}
@@ -458,9 +489,9 @@ func doNewBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v
 		build.WithSourceDateEpoch(multiArchBDE), // Maximum child's time.
 		build.WithSBOMGenerators(spdx.New()),
 		build.WithSBOM(tempDir),
-		build.WithExtraKeys(data.popts.keyring),
-		build.WithExtraRepos(data.popts.repositories),
-		build.WithExtraBuildRepos(data.popts.buildRespositories),
+		build.WithExtraKeys(popts.keyring),
+		build.WithExtraRepos(popts.repositories),
+		build.WithExtraBuildRepos(popts.buildRespositories),
 	)
 	if err != nil {
 		return v1.Hash{}, nil, nil, fmt.Errorf("failed to create options for index: %w", err)
