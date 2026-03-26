@@ -31,6 +31,7 @@ jobs:
             iamcredentials.googleapis.com:443
             keys.openpgp.org:11371
             keys.openpgp.org:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             raw.githubusercontent.com:443
             release-assets.githubusercontent.com:443
