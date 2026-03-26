@@ -42,7 +42,34 @@ jobs:
     - name: Harden the runner (Audit all outbound calls)
       uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
       with:
-        egress-policy: audit
+        egress-policy: block
+        allowed-endpoints: >
+          *.blob.core.windows.net:443
+          *.githubapp.com:443
+          9236a389bd48b984df91adc1bc924620.r2.cloudflarestorage.com:443
+          api.github.com:443
+          apk.cgr.dev:443
+          cgr.dev:443
+          checkpoint-api.hashicorp.com:443
+          files.pythonhosted.org:443
+          fulcio.sigstore.dev:443
+          ghcr.io:443
+          github.com:443
+          go.dev:443
+          packages.cgr.dev:443
+          packages.wolfi.dev:443
+          pkg-containers.githubusercontent.com:443
+          proxy.golang.org:443
+          pypi.org:443
+          raw.githubusercontent.com:443
+          registry.terraform.io:443
+          rekor.sigstore.dev:443
+          release-assets.githubusercontent.com:443
+          releases.hashicorp.com:443
+          spdx.org:443
+          storage.googleapis.com:443
+          sum.golang.org:443
+          tuf-repo-cdn.sigstore.dev:443
 
     # In some cases, we runs out of disk space during tests, so this hack frees up approx 10G.
     # See the following issue for more info: https://github.com/actions/runner-images/issues/2840#issuecomment-1284059930
