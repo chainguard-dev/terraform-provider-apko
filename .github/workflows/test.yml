@@ -45,7 +45,7 @@ jobs:
         check-latest: true
         cache: false
 
-    - uses: chainguard-dev/actions/setup-terraform@d67380d0b02c09412f8e17f660ec48870bd89e6e # v1.6.9
+    - uses: chainguard-dev/actions/setup-terraform@8bb24c24be6871bee44f19be55ea11e3b2aea3dd # v1.6.11
       with:
         terraform-version-file: '${{ github.workspace }}/.terraform-version'
         terraform-wrapper: false
