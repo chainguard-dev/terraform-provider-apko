@@ -105,12 +105,12 @@ jobs:
         repository: chainguard-images/images
         path: images
 
-    - uses: chainguard-dev/actions/setup-terraform@d67380d0b02c09412f8e17f660ec48870bd89e6e # v1.6.9
+    - uses: chainguard-dev/actions/setup-terraform@f45211d3e8f9d2676c6b8cdd6a765435e06c819d # v1.6.13
       with:
         terraform-version-file: 'tf-apko/.terraform-version'
         terraform-wrapper: false
 
-    - uses: chainguard-dev/actions/setup-registry@d67380d0b02c09412f8e17f660ec48870bd89e6e # v1.6.9
+    - uses: chainguard-dev/actions/setup-registry@f45211d3e8f9d2676c6b8cdd6a765435e06c819d # v1.6.13
       with:
         port: 5005
 
