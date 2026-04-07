@@ -26,6 +26,7 @@ jobs:
           *.blob.core.windows.net:443
           *.githubapp.com:443
           api.github.com:443
+          fulcio.sigstore.dev:443
           ghcr.io:443
           github.com:443
           octo-sts.dev:443
