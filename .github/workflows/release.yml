@@ -1,22 +1,23 @@
-name: release
+name: Release
+
 on:
-  push:
-    tags:
-      - 'v*'
+  schedule:
+    - cron: "0 0 * * 1" # every Monday at 00:00 UTC
+  workflow_dispatch:
 
 permissions: {}
 
 jobs:
-  goreleaser:
-
+  release:
+    name: Release
     permissions:
-      contents: write # To publish the release.
-      id-token: write # To federate for the GPG key.
+      id-token: write # For OctoSTS and GCP WIF.
 
     runs-on: ubuntu-latest
+
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -32,6 +33,7 @@ jobs:
             keys.openpgp.org:11371
             keys.openpgp.org:443
             objects.githubusercontent.com:443
+            octo-sts.dev:443
             proxy.golang.org:443
             raw.githubusercontent.com:443
             release-assets.githubusercontent.com:443
@@ -41,11 +43,54 @@ jobs:
             sum.golang.org:443
             uploads.github.com:443
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
+        id: octo-sts
+        with:
+          scope: ${{ github.repository }}
+          identity: release
 
-      - run: git fetch --prune --unshallow
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Check if any changes since last release
+        id: check
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+        run: |
+          git fetch --tags
+          TAG=$(git tag --points-at HEAD)
+          if [ -z "$TAG" ]; then
+            echo "No tag points at HEAD, so we need a new tag and then a new release."
+            echo "need_release=yes" >> "$GITHUB_OUTPUT"
+          else
+            RELEASE=$(gh release view "$TAG" --json tagName --jq '.tagName' || echo "none")
+            if [ "$RELEASE" == "$TAG" ]; then
+              echo "A release exists for tag $TAG, which has the latest changes, so no need for a new tag or release."
+              echo "need_release=no" >> "$GITHUB_OUTPUT"
+            else
+              echo "Tag $TAG exists, but no release is associated. Need a new release."
+              echo "need_release=yes" >> "$GITHUB_OUTPUT"
+              echo "existing_tag=$TAG" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Bump version and push tag
+        id: create_tag
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
+        if: steps.check.outputs.need_release == 'yes' && steps.check.outputs.existing_tag == ''
+        with:
+          github_token: ${{ steps.octo-sts.outputs.token }}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        if: steps.check.outputs.need_release == 'yes'
+        with:
+          ref: ${{ steps.check.outputs.existing_tag || steps.create_tag.outputs.new_tag }}
+          fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        if: steps.check.outputs.need_release == 'yes'
         with:
           go-version-file: './.go-version'
           check-latest: true
@@ -53,33 +98,41 @@ jobs:
 
       # This is provisioned here: https://github.com/chainguard-dev/secrets/blob/main/terraform-provider-apko.tf
       - uses: step-security/google-github-auth@57c51210cb4d85d8a5d39dc4c576c79bd693f914 # v3.0.1
+        if: steps.check.outputs.need_release == 'yes'
         id: auth
         with:
           workload_identity_provider: "projects/12758742386/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "terraform-provider-apko@chainguard-github-secrets.iam.gserviceaccount.com"
 
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        if: steps.check.outputs.need_release == 'yes'
         with:
           project_id: "chainguard-github-secrets"
 
       - uses: google-github-actions/get-secretmanager-secrets@bc9c54b29fdffb8a47776820a7d26e77b379d262 # v3.0.0
+        if: steps.check.outputs.need_release == 'yes'
         id: secrets
         with:
           secrets: |-
             token:chainguard-github-secrets/terraform-provider-apko-signing-key
 
       - id: import_gpg
+        if: steps.check.outputs.need_release == 'yes'
         uses: step-security/ghaction-import-gpg@69c854a83c7f79463f8bdf46772ab09826c560cd # v6.3.1
         with:
           gpg_private_key: ${{ steps.secrets.outputs.token }}
 
-      - run: |
-          gpg --keyserver keys.openpgp.org --send-keys ${{ steps.import_gpg.outputs.fingerprint }}
+      - if: steps.check.outputs.need_release == 'yes'
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+        run: |
+          gpg --keyserver keys.openpgp.org --send-keys "$GPG_FINGERPRINT"
 
       - uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
+        if: steps.check.outputs.need_release == 'yes'
         with:
           version: latest
           args: release --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.octo-sts.outputs.token }}
