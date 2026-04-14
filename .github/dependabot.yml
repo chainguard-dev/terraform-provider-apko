@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -12,3 +14,5 @@ updates:
       terraform:
         patterns:
           - "github.com/hashicorp/*"
+    cooldown:
+      default-days: 7
