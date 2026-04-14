@@ -85,6 +85,7 @@ jobs:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         path: tf-apko
+        persist-credentials: false
     - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
       with:
         go-version-file: 'tf-apko/.go-version'
@@ -104,6 +105,7 @@ jobs:
       with:
         repository: chainguard-images/images
         path: images
+        persist-credentials: false
 
     - uses: chainguard-dev/actions/setup-terraform@d67380d0b02c09412f8e17f660ec48870bd89e6e # v1.6.9
       with:
