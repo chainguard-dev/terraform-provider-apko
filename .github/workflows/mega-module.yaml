@@ -115,6 +115,7 @@ jobs:
     - uses: chainguard-dev/actions/setup-registry@d67380d0b02c09412f8e17f660ec48870bd89e6e # v1.6.9
       with:
         port: 5005
+        disk: true
 
     - name: Build images using current providers, and current reproducibility tests
       working-directory: images
