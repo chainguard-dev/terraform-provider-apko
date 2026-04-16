@@ -128,7 +128,6 @@ jobs:
         terraform apply -auto-approve \
           -target=module.go \
           -target=module.jdk \
-          -target=module.python \
           -target=module.kubernetes
 
     - name: Build images using the new provider, and potentially new reproducibility tests
@@ -152,8 +151,7 @@ jobs:
         # we have just successfully built things
         terraform apply -auto-approve \
           -target=module.go \
-          -target=module.jdk \
-          -target=module.python
+          -target=module.jdk
 
     - name: Upload imagetest logs
       if: always()
