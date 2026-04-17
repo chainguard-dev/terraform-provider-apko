@@ -125,7 +125,7 @@ jobs:
         terraform init
 
         # First do a stock build, to populate imagetest repo with current apko provider
-        terraform apply -auto-approve \
+        TF_LOG=DEBUG terraform apply -auto-approve \
           -target=module.go \
           -target=module.jdk \
           -target=module.python \
@@ -150,7 +150,7 @@ jobs:
 
         # This should not fail, and there is a proof just above that
         # we have just successfully built things
-        terraform apply -auto-approve \
+        TF_LOG=DEBUG terraform apply -auto-approve \
           -target=module.go \
           -target=module.jdk \
           -target=module.python
