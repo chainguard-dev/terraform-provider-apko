@@ -12,8 +12,53 @@ concurrency:
 permissions: {}
 
 jobs:
-  build-the-world:
+  # Walk the images/ tree finding each image with a locked_config.json. That 
+  # file is required for our build.
+  discover:
     runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      images: ${{ steps.list.outputs.images }}
+    steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+      with:
+        egress-policy: block
+        allowed-endpoints: >
+          api.github.com:443
+          github.com:443
+          objects.githubusercontent.com:443
+          release-assets.githubusercontent.com:443
+
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: chainguard-images/images
+        path: images
+        persist-credentials: false
+
+    - id: list
+      shell: bash
+      working-directory: images
+      run: |
+        set -euo pipefail
+        # Emit a JSON array of image names that have a locked_config.json.
+        images=$(for d in images/*/; do
+          [ -f "${d}locked_config.json" ] && basename "${d%/}"
+        done | jq -R . | jq -cs .)
+        echo "images=${images}" >> "$GITHUB_OUTPUT"
+        echo "Discovered images:"
+        echo "${images}" | jq -r '.[]'
+
+  build:
+    needs: discover
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Surface every image's result independently; one broken image should
+      # not mask failures in the rest.
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.discover.outputs.images) }}
 
     permissions:
       # WARNING: This is mattmoor being a bit *too* clever.
@@ -121,21 +166,20 @@ jobs:
       working-directory: images
       env:
         TF_VAR_target_repository: localhost:5005/tf-apko
+        IMAGE_NAME: ${{ matrix.image }}
       run: |
         terraform init
 
         # First do a stock build, to populate imagetest repo with current apko provider
         terraform apply -auto-approve -parallelism=4 \
-          -target=module.go \
-          -target=module.jdk \
-          -target=module.python \
-          -target=module.kubernetes
+          -var "image_name=${IMAGE_NAME}"
 
     - name: Build images using the new provider, and potentially new reproducibility tests
       working-directory: images
       env:
         TF_VAR_target_repository: localhost:5005/tf-apko
         APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:045f6a7ebadf2885785bd728b73644b69aca297bda762f2f78be9bb1fdc86e48
+        IMAGE_NAME: ${{ matrix.image }}
       run: |
         # Now change to our custom apko provider, note it may have a
         # digest drift w.r.t. imagetest sandbox digests, but the above
@@ -151,13 +195,35 @@ jobs:
         # This should not fail, and there is a proof just above that
         # we have just successfully built things
         terraform apply -auto-approve -parallelism=4 \
-          -target=module.go \
-          -target=module.jdk \
-          -target=module.python
+          -var "image_name=${IMAGE_NAME}"
 
     - name: Upload imagetest logs
       if: always()
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
-        name: "mega-module-imagetest-logs"
+        name: "mega-module-imagetest-logs-${{ matrix.image }}"
         path: imagetest-logs
+
+  build-the-world:
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: always()
+
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: block
+
+      - name: Verify build result
+        env:
+          RESULT: ${{ needs.build.result }}
+        run: |
+          echo "build result: ${RESULT}"
+          if [[ "${RESULT}" != "success" && "${RESULT}" != "skipped" ]]; then
+            exit 1
+          fi
