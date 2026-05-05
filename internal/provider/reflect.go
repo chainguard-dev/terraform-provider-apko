@@ -51,8 +51,7 @@ func generateTypeReflect(t reflect.Type) (attr.Type, error) {
 		ot := basetypes.ObjectType{
 			AttrTypes: make(map[string]attr.Type, t.NumField()),
 		}
-		for i := 0; i < t.NumField(); i++ {
-			sf := t.Field(i)
+		for sf := range t.Fields() {
 			tag := yamlName(sf)
 			if tag == nil {
 				continue
