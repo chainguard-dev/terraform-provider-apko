@@ -118,14 +118,22 @@ jobs:
           sum.golang.org:443
           tuf-repo-cdn.sigstore.dev:443
 
-    # In some cases, we runs out of disk space during tests, so this hack frees up approx 10G.
+    # In some cases, we run out of disk space during tests, so this hack frees up
+    # ~30G. The dotnet+AGENT_TOOLSDIRECTORY pair alone (~10G) is not enough headroom
+    # for CUDA-heavy images like pytorch, whose layer tarballs were tipping the
+    # runner over with "no space left on device".
     # See the following issue for more info: https://github.com/actions/runner-images/issues/2840#issuecomment-1284059930
     - name: Free up runner disk space
       shell: bash
       run: |
         set -x
+        df -h /
         sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        df -h /
 
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
