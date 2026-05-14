@@ -20,6 +20,7 @@ import (
 	"github.com/chainguard-dev/clog"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -114,6 +115,19 @@ type imagesbom struct {
 	predicateType   string
 	predicatePath   string
 	predicateSHA256 string
+}
+
+// writeImageLayout writes the given image index as an OCI image layout to the
+// caller-supplied path. The caller owns the directory lifecycle (e.g. an
+// execroot that is torn down by the build driver).
+func writeImageLayout(dir string, ii v1.ImageIndex) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create layout dir %q: %w", dir, err)
+	}
+	if _, err := layout.Write(dir, ii); err != nil {
+		return fmt.Errorf("write layout: %w", err)
+	}
+	return nil
 }
 
 func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.Hash, v1.ImageIndex, map[string]imagesbom, error) {
