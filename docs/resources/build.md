@@ -61,6 +61,7 @@ resource "apko_build" "example" {
 ### Optional
 
 - `configs` (Attributes Map) A map from the APK architecture to the config for that architecture. (see [below for nested schema](#nestedatt--configs))
+- `oci_layout_path` (String) Optional local filesystem path to write an OCI image layout of the built image. When set, the layout is written to this path after the build (creating the directory if needed). The caller owns the directory lifecycle. Leave unset to skip the layout write.
 - `sboms` (Attributes Map) A map from the APK architecture to the digest for that architecture and its SBOM. (see [below for nested schema](#nestedatt--sboms))
 
 ### Read-Only

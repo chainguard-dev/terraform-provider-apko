@@ -13,6 +13,7 @@ import (
 	"chainguard.dev/apko/pkg/sbom/generator/spdx"
 	ocitesting "github.com/chainguard-dev/terraform-provider-oci/testing"
 	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -492,4 +493,75 @@ resource "apko_build" "foo" {
 	if got, want := len(m.Layers), 5; got != want {
 		t.Errorf("len(layers): %d, want %d", got, want)
 	}
+}
+
+// TestAccResourceApkoBuild_OciLayoutPath verifies that when oci_layout_path is
+// set, the resource writes a valid OCI image layout to that directory and the
+// image inside has the same digest as the pushed image_ref.
+func TestAccResourceApkoBuild_OciLayoutPath(t *testing.T) {
+	repo, cleanup := ocitesting.SetupRepository(t, "test")
+	defer cleanup()
+	repostr := repo.String()
+
+	// Use a path under TempDir that does not exist yet — the provider should
+	// create it via MkdirAll.
+	layoutDir := t.TempDir() + "/layout"
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"apko": providerserver.NewProtocol6WithError(&Provider{
+				repositories:       []string{"https://packages.wolfi.dev/os"},
+				buildRespositories: []string{"./packages"},
+				keyring:            []string{"https://packages.wolfi.dev/os/wolfi-signing.rsa.pub"},
+				archs:              []string{"x86_64"},
+				packages:           []string{"wolfi-baselayout=20230201-r24"},
+			}),
+		},
+		Steps: []resource.TestStep{{
+			Config: fmt.Sprintf(`
+data "apko_config" "foo" {
+  config_contents = <<EOF
+contents:
+  packages:
+  - ca-certificates-bundle=20250911-r0
+  - glibc-locale-posix=2.42-r2
+  - tzdata=2025b-r2
+EOF
+}
+
+resource "apko_build" "foo" {
+  repo            = %q
+  config          = data.apko_config.foo.config
+  oci_layout_path = %q
+}
+`, repostr, layoutDir),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("apko_build.foo", "oci_layout_path", layoutDir),
+				resource.TestCheckFunc(func(s *terraform.State) error {
+					rs, ok := s.RootModule().Resources["apko_build.foo"]
+					if !ok {
+						return errors.New("apko_build.foo not in state")
+					}
+					p, err := layout.FromPath(layoutDir)
+					if err != nil {
+						return fmt.Errorf("layout.FromPath(%q): %w", layoutDir, err)
+					}
+					idx, err := p.ImageIndex()
+					if err != nil {
+						return fmt.Errorf("reading layout index: %w", err)
+					}
+					d, err := idx.Digest()
+					if err != nil {
+						return fmt.Errorf("layout digest: %w", err)
+					}
+					want := rs.Primary.Attributes["image_ref"]
+					if got := repo.Digest(d.String()).String(); got != want {
+						return fmt.Errorf("layout digest %s != image_ref %s", got, want)
+					}
+					return nil
+				}),
+			),
+		}},
+	})
 }

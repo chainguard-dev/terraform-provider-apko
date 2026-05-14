@@ -36,11 +36,12 @@ type BuildResource struct {
 }
 
 type BuildResourceModel struct {
-	Id       types.String `tfsdk:"id"`
-	Repo     types.String `tfsdk:"repo"`
-	Config   types.Object `tfsdk:"config"`
-	Configs  types.Map    `tfsdk:"configs"`
-	ImageRef types.String `tfsdk:"image_ref"`
+	Id            types.String `tfsdk:"id"`
+	Repo          types.String `tfsdk:"repo"`
+	Config        types.Object `tfsdk:"config"`
+	Configs       types.Map    `tfsdk:"configs"`
+	ImageRef      types.String `tfsdk:"image_ref"`
+	OciLayoutPath types.String `tfsdk:"oci_layout_path"`
 
 	SBOMs types.Map `tfsdk:"sboms"`
 
@@ -125,6 +126,10 @@ func (r *BuildResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "The resulting fully-qualified digest (e.g. {repo}@sha256:deadbeef).",
 				Computed:            true,
 			},
+			"oci_layout_path": schema.StringAttribute{
+				MarkdownDescription: "Optional local filesystem path to write an OCI image layout of the built image. When set, the layout is written to this path after the build (creating the directory if needed). The caller owns the directory lifecycle. Leave unset to skip the layout write.",
+				Optional:            true,
+			},
 			"sboms": schema.MapNestedAttribute{
 				MarkdownDescription: "A map from the APK architecture to the digest for that architecture and its SBOM.",
 				Computed:            true,
@@ -190,6 +195,13 @@ func (r *BuildResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 	dig := repo.Digest(digest.String())
+
+	if p := data.OciLayoutPath.ValueString(); p != "" {
+		if err := writeImageLayout(p, se); err != nil {
+			resp.Diagnostics.AddError("Client Error", err.Error())
+			return
+		}
+	}
 
 	pushable, ok := se.(remote.Taggable)
 	if !ok {
