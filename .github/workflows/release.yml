@@ -30,6 +30,7 @@ jobs:
             go.dev:443
             goreleaser.com:443
             iamcredentials.googleapis.com:443
+            _pgpkey-https._tcp.keys.openpgp.org:443
             keys.openpgp.org:11371
             keys.openpgp.org:443
             objects.githubusercontent.com:443
