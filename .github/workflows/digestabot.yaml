@@ -43,6 +43,6 @@ jobs:
         token: ${{ steps.octo-sts.outputs.token }}
         persist-credentials: false
 
-    - uses: chainguard-dev/digestabot@afe360aa3b0c29d88844138e8fa0349384398967 # v1.3.1
+    - uses: chainguard-dev/digestabot@33d0b78e580aa0c83fe188eb3dfad6611b662479 # v1.3.2
       with:
         token: ${{ steps.octo-sts.outputs.token }}
