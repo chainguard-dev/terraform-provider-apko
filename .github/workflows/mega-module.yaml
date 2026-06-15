@@ -160,12 +160,12 @@ jobs:
         path: images
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-terraform@c69a264ec2a5934c3186c618f368fc1c86f16cff # v1.6.19
+    - uses: chainguard-dev/actions/setup-terraform@3b7bbeebc3a5d2bc37aa008350202651c32a26e1 # v1.6.22
       with:
         terraform-version-file: 'tf-apko/.terraform-version'
         terraform-wrapper: false
 
-    - uses: chainguard-dev/actions/setup-registry@c69a264ec2a5934c3186c618f368fc1c86f16cff # v1.6.19
+    - uses: chainguard-dev/actions/setup-registry@3b7bbeebc3a5d2bc37aa008350202651c32a26e1 # v1.6.22
       with:
         port: 5005
         disk: true
