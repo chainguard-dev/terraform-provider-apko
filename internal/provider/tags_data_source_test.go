@@ -28,7 +28,7 @@ contents:
   - ca-certificates-bundle=20250911-r0
   - glibc-locale-posix=2.42-r2
   - ko=0.18.0-r6
-  - nodejs=21.7.3-r9 # Initial request will be satisfied by 'provides'
+  - nodejs=24.18.0-r1 # Initial request will be satisfied by 'provides'
 EOF
   extra_packages = ["tzdata=2025b-r2"]
 }
@@ -63,9 +63,9 @@ data "apko_tags" "nodejs" {
   target_package = "nodejs" # Tags can be inferred from 'provides'
 }
 
-data "apko_tags" "nodejs-21" {
+data "apko_tags" "nodejs-24" {
   config         = data.apko_config.this.config
-  target_package = "nodejs-21"
+  target_package = "nodejs-24"
 }
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
@@ -98,20 +98,20 @@ data "apko_tags" "nodejs-21" {
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "id", "0,0.18,0.18.0,0.18.0-r6"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.#", "4"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.0", "21"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.1", "21.7"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.2", "21.7.3"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.3", "21.7.3-r9"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "id", "21,21.7,21.7.3,21.7.3-r9"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.0", "24"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.1", "24.18"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.2", "24.18.0"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.3", "24.18.0-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "id", "24,24.18,24.18.0,24.18.0-r1"),
 
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.#", "4"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.0", "21"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.1", "21.7"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.2", "21.7.3"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "tags.3", "21.7.3-r9"),
-				resource.TestCheckResourceAttr("data.apko_tags.nodejs-21", "id", "21,21.7,21.7.3,21.7.3-r9"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-24", "tags.#", "4"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-24", "tags.0", "24"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-24", "tags.1", "24.18"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-24", "tags.2", "24.18.0"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-24", "tags.3", "24.18.0-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.nodejs-24", "id", "24,24.18,24.18.0,24.18.0-r1"),
 
-				//21.7.3-r9.apk
+				//24.18.0-r1.apk
 			),
 		}},
 	})
@@ -139,7 +139,7 @@ contents:
   - ca-certificates-bundle=20250911-r0
   - glibc-locale-posix=2.42-r2
   - ko=0.18.0-r6
-  - nodejs=21.7.3-r9
+  - nodejs=24.18.0-r1
 EOF
   extra_packages = ["tzdata=2025b-r2"]
 }
