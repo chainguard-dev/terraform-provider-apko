@@ -1,0 +1,8 @@
+rules:
+  # Cosmetic pedantic-only findings — suppressed across the campaign.
+  anonymous-definition:
+    disable: true
+  undocumented-permissions:
+    disable: true
+  concurrency-limits:
+    disable: true

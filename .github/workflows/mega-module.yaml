@@ -195,7 +195,7 @@ jobs:
         cat > ~/.terraformrc <<EOF
         provider_installation {
           dev_overrides {
-            "chainguard-dev/apko" = "${{ github.workspace }}/tf-apko"
+            "chainguard-dev/apko" = "${GITHUB_WORKSPACE}/tf-apko"
           }
         }
         EOF
