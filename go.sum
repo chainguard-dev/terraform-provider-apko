@@ -1,5 +1,5 @@
-chainguard.dev/apko v1.2.19 h1:Ms6nrHS1XGlDQ98+A7z8EzZ81GoNfOkhCr9u9Z2khG4=
-chainguard.dev/apko v1.2.19/go.mod h1:jBGtk/eX5h5EncR/d8MuzTJM63lVc7UzXM+k/Vw9oDA=
+chainguard.dev/apko v1.2.21 h1:yXsIcN0pxUeYAfBprunG5A0y4v/9GDq65svV0fnPkiM=
+chainguard.dev/apko v1.2.21/go.mod h1:JjoDT54U37vRGjHtbZFNyX9++hEbtwBYamKVnR0BQ24=
 chainguard.dev/go-grpc-kit v0.17.17 h1:Jwhc0zyUwQbC2hNcsi+YMeUX/JUnM+dXVCkTw6wtPzs=
 chainguard.dev/go-grpc-kit v0.17.17/go.mod h1:qn0meP6RtrbLicE1bgBZnnVU9dvX95eLs0x0T6kZ+b4=
 chainguard.dev/sdk v0.1.74 h1:igqNf9pavV8+yAM8CI5ICGgeIgNfzy1ps8ILw2Pecto=
@@ -50,8 +50,8 @@ github.com/bufbuild/protocompile v0.14.1 h1:iA73zAf/fyljNjQKwYzUHD6AD4R8KMasmwa/
 github.com/bufbuild/protocompile v0.14.1/go.mod h1:ppVdAIhbr2H8asPk6k4pY7t9zB1OU5DoEw9xY/FUi1c=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/chainguard-dev/clog v1.8.0 h1:frlTMEdg3XQR+ioQ6O9i92uigY8GTUcWKpuCFkhcCHA=
-github.com/chainguard-dev/clog v1.8.0/go.mod h1:5MQOZi+Iu7fV7GcJG8ag8rCB5elEOpqRMKEASgnGVdo=
+github.com/chainguard-dev/clog v1.8.1 h1:Lab3GEDsVm1J9XGlpWEBuzXX7eETRmd0vN5PYoNyT+Y=
+github.com/chainguard-dev/clog v1.8.1/go.mod h1:5MQOZi+Iu7fV7GcJG8ag8rCB5elEOpqRMKEASgnGVdo=
 github.com/chainguard-dev/terraform-provider-oci v0.1.6 h1:XH/jnWaxyZuVfueBbPHnxKQiX/HqUZ+g8puqWUHuGhQ=
 github.com/chainguard-dev/terraform-provider-oci v0.1.6/go.mod h1:6mbRTfeVHPar0xbDe5vz4l1KyTXIYoLgt/xf05Gei10=
 github.com/clipperhouse/uax29/v2 v2.6.0 h1:z0cDbUV+aPASdFb2/ndFnS9ts/WNXgTNNGFoKXuhpos=
