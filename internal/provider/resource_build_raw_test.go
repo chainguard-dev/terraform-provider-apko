@@ -132,20 +132,20 @@ func TestAccResourceApkoBuildRaw_PerArchConfigs(t *testing.T) {
 locals {
   index_config = jsonencode({
     contents = {
-      packages = ["libdrm=2.4.131-r0"]
+      packages = ["libdrm"]
     }
     archs = ["x86_64", "aarch64"]
   })
 
   amd64_config = jsonencode({
     contents = {
-      packages = ["libdrm=2.4.131-r0"]
+      packages = ["libdrm"]
     }
   })
 
   aarch64_config = jsonencode({
     contents = {
-      packages = ["libdrm=2.4.131-r0"]
+      packages = ["libdrm"]
     }
   })
 }

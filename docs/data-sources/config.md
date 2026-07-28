@@ -26,6 +26,7 @@ This reads an apko configuration file into a structured form.
 
 - `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--config))
 - `id` (String) A unique identifier for this apko config.
+- `resolved_packages` (Map of List of Object) A map from the APK architecture to the list of resolved packages for that architecture. Each entry carries the `url` of the `.apk` to download plus the metadata from the package's APKINDEX entry: `name`, `version`, `arch`, `checksum` (the APKv2 package checksum, `Q1` + base64-encoded SHA1 of the control section, see the [APKv2 package checksum field](https://wiki.alpinelinux.org/wiki/Apk_spec#Package_Checksum_Field)), `origin`, `description`, `license`, `maintainer`, `homepage`, `repo_commit`, `build_date` (Unix seconds), `size`, `installed_size`, `provider_priority`, `provides`, and `dependencies`. The special `index` key contains the deduplicated union across all architectures.
 
 <a id="nestedatt--configs"></a>
 ### Nested Schema for `configs`

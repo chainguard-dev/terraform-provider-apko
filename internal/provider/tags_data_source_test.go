@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -27,7 +28,7 @@ contents:
   packages:
   - ca-certificates-bundle=20250911-r0
   - glibc-locale-posix=2.42-r2
-  - ko=0.18.0-r6
+  - ko
   - nodejs=24.18.0-r1 # Initial request will be satisfied by 'provides'
 EOF
   extra_packages = ["tzdata=2025b-r2"]
@@ -90,12 +91,15 @@ data "apko_tags" "nodejs-24" {
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "tags.1", "2025b-r2"),
 				resource.TestCheckResourceAttr("data.apko_tags.tzdata", "id", "2025b,2025b-r2"),
 
+				// ko is unpinned to avoid version drift; assert the tag-derivation
+				// structure (major, major.minor, major.minor.patch, full-rev)
+				// rather than a specific version.
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.#", "4"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.0", "0"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.1", "0.18"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.2", "0.18.0"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.3", "0.18.0-r6"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "id", "0,0.18,0.18.0,0.18.0-r6"),
+				resource.TestMatchResourceAttr("data.apko_tags.ko", "tags.0", regexp.MustCompile(`^\d+$`)),
+				resource.TestMatchResourceAttr("data.apko_tags.ko", "tags.1", regexp.MustCompile(`^\d+\.\d+$`)),
+				resource.TestMatchResourceAttr("data.apko_tags.ko", "tags.2", regexp.MustCompile(`^\d+\.\d+\.\d+$`)),
+				resource.TestMatchResourceAttr("data.apko_tags.ko", "tags.3", regexp.MustCompile(`^\d+\.\d+\.\d+-r\d+$`)),
+				resource.TestMatchResourceAttr("data.apko_tags.ko", "id", regexp.MustCompile(`^\d+,\d+\.\d+,\d+\.\d+\.\d+,\d+\.\d+\.\d+-r\d+$`)),
 
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.0", "24"),
@@ -138,7 +142,7 @@ contents:
   packages:
   - ca-certificates-bundle=20250911-r0
   - glibc-locale-posix=2.42-r2
-  - ko=0.18.0-r6
+  - ko
   - nodejs=24.18.0-r1
 EOF
   extra_packages = ["tzdata=2025b-r2"]
