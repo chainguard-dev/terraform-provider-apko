@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"chainguard.dev/apko/pkg/apk/apk"
 	"chainguard.dev/apko/pkg/build"
@@ -50,14 +51,37 @@ type ConfigDataSourceModel struct {
 var imageConfigurationSchema basetypes.ObjectType
 var imageConfigurationsSchema basetypes.ObjectType
 
-// resolvedPackageSchema describes a single resolved APK package: its name, the
-// URL of the .apk to download, and its APKv2 package checksum.
+// resolvedPackageSchema describes a single resolved APK package: the URL of the
+// .apk to download plus the metadata carried in the APKINDEX entry.
 var resolvedPackageSchema = basetypes.ObjectType{
 	AttrTypes: map[string]attr.Type{
-		"name":  basetypes.StringType{},
-		"url":   basetypes.StringType{},
-		"apkv2": basetypes.StringType{},
+		"name":              basetypes.StringType{},
+		"version":           basetypes.StringType{},
+		"arch":              basetypes.StringType{},
+		"url":               basetypes.StringType{},
+		"checksum":          basetypes.StringType{},
+		"origin":            basetypes.StringType{},
+		"description":       basetypes.StringType{},
+		"license":           basetypes.StringType{},
+		"maintainer":        basetypes.StringType{},
+		"homepage":          basetypes.StringType{},
+		"repo_commit":       basetypes.StringType{},
+		"build_date":        basetypes.Int64Type{},
+		"size":              basetypes.Int64Type{},
+		"installed_size":    basetypes.Int64Type{},
+		"provider_priority": basetypes.Int64Type{},
+		"provides":          basetypes.ListType{ElemType: basetypes.StringType{}},
+		"dependencies":      basetypes.ListType{ElemType: basetypes.StringType{}},
 	},
+}
+
+// stringListValue converts a []string into a Terraform list of strings.
+func stringListValue(ss []string) (basetypes.ListValue, diag.Diagnostics) {
+	vals := make([]attr.Value, len(ss))
+	for i, s := range ss {
+		vals[i] = types.StringValue(s)
+	}
+	return types.ListValue(basetypes.StringType{}, vals)
 }
 
 func init() {
@@ -129,9 +153,11 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			},
 			"resolved_packages": schema.MapAttribute{
 				MarkdownDescription: "A map from the APK architecture to the list of resolved packages for that architecture. " +
-					"Each entry contains the package `name`, the `url` of the `.apk` to download, and the `apkv2` package checksum " +
-					"(the [APKv2 package checksum field](https://wiki.alpinelinux.org/wiki/Apk_spec#Package_Checksum_Field), " +
-					"i.e. `Q1` + base64-encoded SHA1 of the package's control section). " +
+					"Each entry carries the `url` of the `.apk` to download plus the metadata from the package's APKINDEX entry: " +
+					"`name`, `version`, `arch`, `checksum` (the APKv2 package checksum, `Q1` + base64-encoded SHA1 of the control " +
+					"section, see the [APKv2 package checksum field](https://wiki.alpinelinux.org/wiki/Apk_spec#Package_Checksum_Field)), " +
+					"`origin`, `description`, `license`, `maintainer`, `homepage`, `repo_commit`, `build_date` (Unix seconds), " +
+					"`size`, `installed_size`, `provider_priority`, `provides`, and `dependencies`. " +
 					"The special `index` key contains the deduplicated union across all architectures.",
 				Computed: true,
 				ElementType: basetypes.ListType{
@@ -295,58 +321,16 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 	data.Configs = cfgMapValue
 
-	// Surface the resolved packages (name, .apk URL, and APKv2 checksum) per
+	// Surface the resolved packages (download URL + APKINDEX metadata) per
 	// architecture, so consumers can populate e.g. SLSA provenance
 	// resolvedDependencies. The special "index" key holds the deduplicated
 	// union across all architectures.
-	resolvedListType := basetypes.ListType{ElemType: resolvedPackageSchema}
-	rpMap := make(map[string]attr.Value, len(resolvedPkgs)+1)
-	indexSeen := make(map[string]struct{})
-	indexList := make([]attr.Value, 0)
-	for arch, pkgs := range resolvedPkgs {
-		// Normalize to the same canonical arch key used for "configs".
-		archKey := apkotypes.ParseArchitecture(arch.ToAPK()).String()
-
-		list := make([]attr.Value, 0, len(pkgs))
-		for _, rp := range pkgs {
-			obj, diags := types.ObjectValue(resolvedPackageSchema.AttrTypes, map[string]attr.Value{
-				"name":  types.StringValue(rp.Name),
-				"url":   types.StringValue(rp.URL()),
-				"apkv2": types.StringValue(rp.ChecksumString()),
-			})
-			resp.Diagnostics = append(resp.Diagnostics, diags...)
-			if diags.HasError() {
-				return
-			}
-			list = append(list, obj)
-
-			if _, ok := indexSeen[rp.URL()]; !ok {
-				indexSeen[rp.URL()] = struct{}{}
-				indexList = append(indexList, obj)
-			}
-		}
-
-		lv, diags := types.ListValue(resolvedPackageSchema, list)
-		resp.Diagnostics = append(resp.Diagnostics, diags...)
-		if diags.HasError() {
-			return
-		}
-		rpMap[archKey] = lv
-	}
-
-	indexListValue, diags := types.ListValue(resolvedPackageSchema, indexList)
+	resolvedPackages, diags := resolvedPackagesMap(resolvedPkgs)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
 		return
 	}
-	rpMap["index"] = indexListValue
-
-	resolvedPackagesValue, diags := types.MapValue(resolvedListType, rpMap)
-	resp.Diagnostics = append(resp.Diagnostics, diags...)
-	if diags.HasError() {
-		return
-	}
-	data.ResolvedPackages = resolvedPackagesValue
+	data.ResolvedPackages = resolvedPackages
 
 	data.Id = types.StringValue(hash)
 
@@ -364,6 +348,104 @@ func writeFile(dir, hash, variant string, ic apkotypes.ImageConfiguration) error
 	}
 	fn := fmt.Sprintf("%s.%s.apko.json", hash[0:6], variant)
 	return os.WriteFile(filepath.Join(dir, fn), b, 0644)
+}
+
+// resolvedPackagesMap converts the per-architecture resolved packages into the
+// Terraform value for the "resolved_packages" attribute: a map from the
+// canonical architecture to its list of packages, plus a deduplicated "index"
+// union across all architectures. Architectures are processed in sorted order
+// so the output (in particular the "index" union) is deterministic.
+func resolvedPackagesMap(resolvedPkgs map[apkotypes.Architecture][]*apk.RepositoryPackage) (basetypes.MapValue, diag.Diagnostics) {
+	resolvedListType := basetypes.ListType{ElemType: resolvedPackageSchema}
+	var diagnostics diag.Diagnostics
+
+	// Normalize to the same canonical arch keys used for "configs", and sort
+	// them so iteration (and the resulting "index" union) is deterministic.
+	byArch := make(map[string][]*apk.RepositoryPackage, len(resolvedPkgs))
+	archKeys := make([]string, 0, len(resolvedPkgs))
+	for arch, pkgs := range resolvedPkgs {
+		archKey := apkotypes.ParseArchitecture(arch.ToAPK()).String()
+		byArch[archKey] = pkgs
+		archKeys = append(archKeys, archKey)
+	}
+	sort.Strings(archKeys)
+
+	rpMap := make(map[string]attr.Value, len(byArch)+1)
+	indexSeen := make(map[string]struct{})
+	indexList := make([]attr.Value, 0)
+
+	for _, archKey := range archKeys {
+		pkgs := byArch[archKey]
+		list := make([]attr.Value, 0, len(pkgs))
+		for _, rp := range pkgs {
+			obj, diags := resolvedPackageObject(rp)
+			diagnostics = append(diagnostics, diags...)
+			if diags.HasError() {
+				return basetypes.MapValue{}, diagnostics
+			}
+			list = append(list, obj)
+
+			if _, ok := indexSeen[rp.URL()]; !ok {
+				indexSeen[rp.URL()] = struct{}{}
+				indexList = append(indexList, obj)
+			}
+		}
+
+		lv, diags := types.ListValue(resolvedPackageSchema, list)
+		diagnostics = append(diagnostics, diags...)
+		if diags.HasError() {
+			return basetypes.MapValue{}, diagnostics
+		}
+		rpMap[archKey] = lv
+	}
+
+	indexListValue, diags := types.ListValue(resolvedPackageSchema, indexList)
+	diagnostics = append(diagnostics, diags...)
+	if diags.HasError() {
+		return basetypes.MapValue{}, diagnostics
+	}
+	rpMap["index"] = indexListValue
+
+	m, diags := types.MapValue(resolvedListType, rpMap)
+	diagnostics = append(diagnostics, diags...)
+	return m, diagnostics
+}
+
+// resolvedPackageObject builds the Terraform object for a single resolved
+// package from its APKINDEX metadata.
+func resolvedPackageObject(rp *apk.RepositoryPackage) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diagnostics diag.Diagnostics
+	provides, diags := stringListValue(rp.Provides)
+	diagnostics = append(diagnostics, diags...)
+	deps, diags := stringListValue(rp.Dependencies)
+	diagnostics = append(diagnostics, diags...)
+	if diagnostics.HasError() {
+		return basetypes.ObjectValue{}, diagnostics
+	}
+
+	obj, diags := types.ObjectValue(resolvedPackageSchema.AttrTypes, map[string]attr.Value{
+		"name":     types.StringValue(rp.Name),
+		"version":  types.StringValue(rp.Version),
+		"arch":     types.StringValue(rp.Arch),
+		"url":      types.StringValue(rp.URL()),
+		"checksum": types.StringValue(rp.ChecksumString()),
+		"origin":   types.StringValue(rp.Origin),
+		// rp.URL() is the download URL (method); rp.Package.URL is the upstream
+		// homepage from the APKINDEX "U" field.
+		"description":       types.StringValue(rp.Description),
+		"license":           types.StringValue(rp.License),
+		"maintainer":        types.StringValue(rp.Maintainer),
+		"homepage":          types.StringValue(rp.Package.URL),
+		"repo_commit":       types.StringValue(rp.RepoCommit),
+		"build_date":        types.Int64Value(rp.BuildDate),
+		"size":              types.Int64Value(int64(rp.Size)),
+		"installed_size":    types.Int64Value(int64(rp.InstalledSize)),
+		"provider_priority": types.Int64Value(int64(rp.ProviderPriority)),
+		"provides":          provides,
+		"dependencies":      deps,
+	})
+	diagnostics = append(diagnostics, diags...)
+	return obj, diagnostics
 }
 
 func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) (map[string]*apkotypes.ImageConfiguration, map[apkotypes.Architecture][]*apk.RepositoryPackage, diag.Diagnostics) {
