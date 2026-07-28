@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"chainguard.dev/apko/pkg/apk/apk"
 	"chainguard.dev/apko/pkg/build"
 	apkotypes "chainguard.dev/apko/pkg/build/types"
 	"chainguard.dev/apko/pkg/sbom/generator/spdx"
@@ -43,10 +44,21 @@ type ConfigDataSourceModel struct {
 	Configs            types.Map         `tfsdk:"configs"`
 	ExtraPackages      []string          `tfsdk:"extra_packages"`
 	DefaultAnnotations map[string]string `tfsdk:"default_annotations"`
+	ResolvedPackages   types.Map         `tfsdk:"resolved_packages"`
 }
 
 var imageConfigurationSchema basetypes.ObjectType
 var imageConfigurationsSchema basetypes.ObjectType
+
+// resolvedPackageSchema describes a single resolved APK package: its name, the
+// URL of the .apk to download, and its APKv2 package checksum.
+var resolvedPackageSchema = basetypes.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"name":  basetypes.StringType{},
+		"url":   basetypes.StringType{},
+		"apkv2": basetypes.StringType{},
+	},
+}
 
 func init() {
 	sch, err := generateType(apkotypes.ImageConfiguration{})
@@ -114,6 +126,17 @@ func (d *ConfigDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				MarkdownDescription: "Default annotations to add.",
 				Optional:            true,
 				ElementType:         basetypes.StringType{},
+			},
+			"resolved_packages": schema.MapAttribute{
+				MarkdownDescription: "A map from the APK architecture to the list of resolved packages for that architecture. " +
+					"Each entry contains the package `name`, the `url` of the `.apk` to download, and the `apkv2` package checksum " +
+					"(the [APKv2 package checksum field](https://wiki.alpinelinux.org/wiki/Apk_spec#Package_Checksum_Field), " +
+					"i.e. `Q1` + base64-encoded SHA1 of the package's control section). " +
+					"The special `index` key contains the deduplicated union across all architectures.",
+				Computed: true,
+				ElementType: basetypes.ListType{
+					ElemType: resolvedPackageSchema,
+				},
 			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "A unique identifier for this apko config.",
@@ -211,7 +234,7 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Resolve the package list to specific versions (as much as we can with
 	// multi-arch), and overwrite the package list in the ImageConfiguration.
-	pls, diags := d.resolvePackageList(ctx, ic)
+	pls, resolvedPkgs, diags := d.resolvePackageList(ctx, ic)
 	resp.Diagnostics = append(resp.Diagnostics, diags...)
 	if diags.HasError() {
 		return
@@ -272,6 +295,59 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 	data.Configs = cfgMapValue
 
+	// Surface the resolved packages (name, .apk URL, and APKv2 checksum) per
+	// architecture, so consumers can populate e.g. SLSA provenance
+	// resolvedDependencies. The special "index" key holds the deduplicated
+	// union across all architectures.
+	resolvedListType := basetypes.ListType{ElemType: resolvedPackageSchema}
+	rpMap := make(map[string]attr.Value, len(resolvedPkgs)+1)
+	indexSeen := make(map[string]struct{})
+	indexList := make([]attr.Value, 0)
+	for arch, pkgs := range resolvedPkgs {
+		// Normalize to the same canonical arch key used for "configs".
+		archKey := apkotypes.ParseArchitecture(arch.ToAPK()).String()
+
+		list := make([]attr.Value, 0, len(pkgs))
+		for _, rp := range pkgs {
+			obj, diags := types.ObjectValue(resolvedPackageSchema.AttrTypes, map[string]attr.Value{
+				"name":  types.StringValue(rp.Name),
+				"url":   types.StringValue(rp.URL()),
+				"apkv2": types.StringValue(rp.ChecksumString()),
+			})
+			resp.Diagnostics = append(resp.Diagnostics, diags...)
+			if diags.HasError() {
+				return
+			}
+			list = append(list, obj)
+
+			if _, ok := indexSeen[rp.URL()]; !ok {
+				indexSeen[rp.URL()] = struct{}{}
+				indexList = append(indexList, obj)
+			}
+		}
+
+		lv, diags := types.ListValue(resolvedPackageSchema, list)
+		resp.Diagnostics = append(resp.Diagnostics, diags...)
+		if diags.HasError() {
+			return
+		}
+		rpMap[archKey] = lv
+	}
+
+	indexListValue, diags := types.ListValue(resolvedPackageSchema, indexList)
+	resp.Diagnostics = append(resp.Diagnostics, diags...)
+	if diags.HasError() {
+		return
+	}
+	rpMap["index"] = indexListValue
+
+	resolvedPackagesValue, diags := types.MapValue(resolvedListType, rpMap)
+	resp.Diagnostics = append(resp.Diagnostics, diags...)
+	if diags.HasError() {
+		return
+	}
+	data.ResolvedPackages = resolvedPackagesValue
+
 	data.Id = types.StringValue(hash)
 
 	// Save data into Terraform state
@@ -290,13 +366,13 @@ func writeFile(dir, hash, variant string, ic apkotypes.ImageConfiguration) error
 	return os.WriteFile(filepath.Join(dir, fn), b, 0644)
 }
 
-func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) (map[string]*apkotypes.ImageConfiguration, diag.Diagnostics) {
+func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.ImageConfiguration) (map[string]*apkotypes.ImageConfiguration, map[apkotypes.Architecture][]*apk.RepositoryPackage, diag.Diagnostics) {
 	_, ic2, err := fromImageData(ctx, ic, d.popts)
 	if err != nil {
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse apko config", err.Error())}
+		return nil, nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse apko config", err.Error())}
 	}
 
-	pls, missingByArch, err := build.LockImageConfiguration(ctx, *ic2,
+	pls, missingByArch, resolvedPkgs, err := build.LockImageConfigurationWithPackages(ctx, *ic2,
 		build.WithCache("", d.popts.planOffline, d.popts.cache),
 		build.WithSBOMGenerators(spdx.New()),
 		build.WithExtraKeys(d.popts.keyring),
@@ -307,12 +383,12 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 		b, merr := json.MarshalIndent(ic, "", "  ")
 		if merr != nil {
 			// If we can't marshal the config, just return the original error.
-			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", err.Error())}
+			return nil, nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", err.Error())}
 		}
 
 		// Otherwise include both the config and the error in the details.
 		details := fmt.Sprintf("apko config:\n%s\n\nerror:\n%s", string(b), err)
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", details)}
+		return nil, nil, diag.Diagnostics{diag.NewErrorDiagnostic("computing package locks", details)}
 	}
 
 	var diagnostics diag.Diagnostics
@@ -324,5 +400,5 @@ func (d *ConfigDataSource) resolvePackageList(ctx context.Context, ic apkotypes.
 		))
 	}
 
-	return pls, diagnostics
+	return pls, resolvedPkgs, diagnostics
 }
