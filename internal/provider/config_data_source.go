@@ -48,6 +48,59 @@ type ConfigDataSourceModel struct {
 var imageConfigurationSchema basetypes.ObjectType
 var imageConfigurationsSchema basetypes.ObjectType
 
+// TODO: These attributes are optional, but our schema generation using
+// schema.ObjectAttribute with AttributeTypes doesn't support field-level
+// optional/required controls. For now, remove them from the schema type
+// definition and from generated values in the Read method until we figure
+// out optional types.
+var strippedAttrPaths = [][]string{
+	{"certificates"},
+	{"contents", "runtime_keyring"},
+}
+
+// stripAttrType removes the attribute at the given path from the object type.
+func stripAttrType(t basetypes.ObjectType, path []string) basetypes.ObjectType {
+	if len(path) == 1 {
+		delete(t.AttrTypes, path[0])
+		return t
+	}
+	child, ok := t.AttrTypes[path[0]].(basetypes.ObjectType)
+	if !ok {
+		panic(fmt.Sprintf("expected %q to be an object type", path[0]))
+	}
+	t.AttrTypes[path[0]] = stripAttrType(child, path[1:])
+	return t
+}
+
+// stripAttrs removes the attribute at the given path from the attribute map,
+// rebuilding nested object values against the given (already stripped) type
+// as needed. The caller rebuilds the top-level object once all paths are
+// stripped.
+func stripAttrs(attrs map[string]attr.Value, t basetypes.ObjectType, path []string) diag.Diagnostics {
+	if len(path) == 1 {
+		delete(attrs, path[0])
+		return nil
+	}
+	childVal, ok := attrs[path[0]].(basetypes.ObjectValue)
+	if !ok {
+		return nil
+	}
+	childType, ok := t.AttrTypes[path[0]].(basetypes.ObjectType)
+	if !ok {
+		return nil
+	}
+	childAttrs := childVal.Attributes()
+	if diags := stripAttrs(childAttrs, childType, path[1:]); diags.HasError() {
+		return diags
+	}
+	newChild, diags := types.ObjectValue(childType.AttrTypes, childAttrs)
+	if diags.HasError() {
+		return diags
+	}
+	attrs[path[0]] = newChild
+	return diags
+}
+
 func init() {
 	sch, err := generateType(apkotypes.ImageConfiguration{})
 	if err != nil {
@@ -60,11 +113,9 @@ func init() {
 		panic("expected object type")
 	}
 
-	// TODO: Certificates are optional, but our schema generation using
-	// schema.ObjectAttribute with AttributeTypes doesn't support field-level
-	// optional/required controls. For now, remove certificates from the schema
-	// type definition. We also remove it from generated values in the Read method.
-	delete(imageConfigurationSchema.AttrTypes, "certificates")
+	for _, path := range strippedAttrPaths {
+		imageConfigurationSchema = stripAttrType(imageConfigurationSchema, path)
+	}
 
 	imageConfigurationsSchema = basetypes.ObjectType{
 		AttrTypes: map[string]attr.Type{
@@ -232,10 +283,15 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			return
 		}
 
-		// Remove certificates from the generated value to match the schema
-		// TODO: see above about optional types.
+		// Remove stripped attributes from the generated value to match the
+		// schema. TODO: see above about optional types.
 		attrs := cfg.Attributes()
-		delete(attrs, "certificates")
+		for _, path := range strippedAttrPaths {
+			resp.Diagnostics.Append(stripAttrs(attrs, imageConfigurationSchema, path)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
 		cfg, diags = types.ObjectValue(imageConfigurationSchema.AttrTypes, attrs)
 		resp.Diagnostics = append(resp.Diagnostics, diags...)
 		if diags.HasError() {
