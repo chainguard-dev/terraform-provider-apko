@@ -227,7 +227,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:ca8453a9e2b569edd346d0b0f7b670471b9bf4c89c16f7bf399954125d9a0d4b").String()),
+					repo.Digest("sha256:73a6e234794d5b365394d9a57b53700c06f2e0f9ca1fa52d95badceba35b063f").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -294,7 +294,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:ca8453a9e2b569edd346d0b0f7b670471b9bf4c89c16f7bf399954125d9a0d4b").String()),
+					repo.Digest("sha256:73a6e234794d5b365394d9a57b53700c06f2e0f9ca1fa52d95badceba35b063f").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -406,7 +406,7 @@ data "apko_config" "foo" {
 contents:
   packages:
     # This package pulls in libpciaccess only for x86_64.
-    - libdrm=2.4.131-r0
+    - libdrm=2.4.134-r0
   EOF
 }
 
@@ -436,7 +436,7 @@ func TestAccResourceApkoBuild_Layers(t *testing.T) {
 	repostr := repo.String()
 
 	// Need to update this if apko changes.
-	digest := repo.Digest("sha256:04758e5ce27fa6a0c46ec11b8b455633d2920aa3928405107ad1b34a30921ad0")
+	digest := repo.Digest("sha256:568f31a8bd75e5ebe188519bc99f820f992532af11e3a50638868e699b0dbf32")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() { testAccPreCheck(t) },
