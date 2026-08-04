@@ -48,6 +48,16 @@ type ConfigDataSourceModel struct {
 var imageConfigurationSchema basetypes.ObjectType
 var imageConfigurationsSchema basetypes.ObjectType
 
+// TODO: These attributes are optional, but our schema generation using
+// schema.ObjectAttribute with AttributeTypes doesn't support field-level
+// optional/required controls. For now, remove them from the schema type
+// definition and from generated values in the Read method until we figure
+// out optional types.
+var strippedAttrPaths = [][]string{
+	{"certificates"},
+	{"contents", "runtime_keyring"},
+}
+
 func init() {
 	sch, err := generateType(apkotypes.ImageConfiguration{})
 	if err != nil {
@@ -60,11 +70,9 @@ func init() {
 		panic("expected object type")
 	}
 
-	// TODO: Certificates are optional, but our schema generation using
-	// schema.ObjectAttribute with AttributeTypes doesn't support field-level
-	// optional/required controls. For now, remove certificates from the schema
-	// type definition. We also remove it from generated values in the Read method.
-	delete(imageConfigurationSchema.AttrTypes, "certificates")
+	for _, path := range strippedAttrPaths {
+		imageConfigurationSchema = stripAttrType(imageConfigurationSchema, path)
+	}
 
 	imageConfigurationsSchema = basetypes.ObjectType{
 		AttrTypes: map[string]attr.Type{
@@ -232,10 +240,15 @@ func (d *ConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			return
 		}
 
-		// Remove certificates from the generated value to match the schema
-		// TODO: see above about optional types.
+		// Remove stripped attributes from the generated value to match the
+		// schema. TODO: see above about optional types.
 		attrs := cfg.Attributes()
-		delete(attrs, "certificates")
+		for _, path := range strippedAttrPaths {
+			resp.Diagnostics.Append(stripAttrs(attrs, imageConfigurationSchema, path)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
 		cfg, diags = types.ObjectValue(imageConfigurationSchema.AttrTypes, attrs)
 		resp.Diagnostics = append(resp.Diagnostics, diags...)
 		if diags.HasError() {

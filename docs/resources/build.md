@@ -130,17 +130,7 @@ Required:
 - `keyring` (List of String)
 - `packages` (List of String)
 - `repositories` (List of String)
-- `runtime_keyring` (List of Object) (see [below for nested schema](#nestedobjatt--config--contents--runtime_keyring))
 - `runtime_repositories` (List of String)
-
-<a id="nestedobjatt--config--contents--runtime_keyring"></a>
-### Nested Schema for `config.contents.runtime_keyring`
-
-Required:
-
-- `content` (String)
-- `name` (String)
-
 
 
 <a id="nestedobjatt--config--entrypoint"></a>
@@ -246,17 +236,7 @@ Optional:
 - `keyring` (List of String)
 - `packages` (List of String)
 - `repositories` (List of String)
-- `runtime_keyring` (List of Object) (see [below for nested schema](#nestedobjatt--configs--config--contents--runtime_keyring))
 - `runtime_repositories` (List of String)
-
-<a id="nestedobjatt--configs--config--contents--runtime_keyring"></a>
-### Nested Schema for `configs.config.contents.runtime_keyring`
-
-Optional:
-
-- `content` (String)
-- `name` (String)
-
 
 
 <a id="nestedobjatt--configs--config--entrypoint"></a>
