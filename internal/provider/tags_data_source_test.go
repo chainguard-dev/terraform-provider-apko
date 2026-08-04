@@ -27,7 +27,7 @@ contents:
   packages:
   - ca-certificates-bundle=20250911-r0
   - glibc-locale-posix=2.42-r2
-  - ko=0.18.0-r6
+  - ko=0.19.1-r1
   - nodejs=24.18.0-r1 # Initial request will be satisfied by 'provides'
 EOF
   extra_packages = ["tzdata=2025b-r2"]
@@ -92,10 +92,10 @@ data "apko_tags" "nodejs-24" {
 
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.0", "0"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.1", "0.18"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.2", "0.18.0"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.3", "0.18.0-r6"),
-				resource.TestCheckResourceAttr("data.apko_tags.ko", "id", "0,0.18,0.18.0,0.18.0-r6"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.1", "0.19"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.2", "0.19.1"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "tags.3", "0.19.1-r1"),
+				resource.TestCheckResourceAttr("data.apko_tags.ko", "id", "0,0.19,0.19.1,0.19.1-r1"),
 
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.#", "4"),
 				resource.TestCheckResourceAttr("data.apko_tags.nodejs", "tags.0", "24"),
@@ -138,7 +138,7 @@ contents:
   packages:
   - ca-certificates-bundle=20250911-r0
   - glibc-locale-posix=2.42-r2
-  - ko=0.18.0-r6
+  - ko=0.19.1-r1
   - nodejs=24.18.0-r1
 EOF
   extra_packages = ["tzdata=2025b-r2"]
