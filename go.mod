@@ -5,7 +5,7 @@ go 1.26.4
 require (
 	chainguard.dev/apko v1.2.32
 	github.com/chainguard-dev/clog v1.8.1
-	github.com/chainguard-dev/terraform-provider-oci v0.1.6
+	github.com/chainguard-dev/terraform-provider-oci v0.1.7
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.21.7
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
