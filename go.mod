@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-provider-apko
 go 1.26.4
 
 require (
-	chainguard.dev/apko v1.2.32
+	chainguard.dev/apko v1.2.35
 	github.com/chainguard-dev/clog v1.8.1
 	github.com/chainguard-dev/terraform-provider-oci v0.1.7
 	github.com/google/go-cmp v0.7.0
@@ -21,7 +21,7 @@ require (
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.17 // indirect
-	chainguard.dev/sdk v0.1.163 // indirect
+	chainguard.dev/sdk v0.1.164 // indirect
 	cloud.google.com/go/auth v0.22.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
