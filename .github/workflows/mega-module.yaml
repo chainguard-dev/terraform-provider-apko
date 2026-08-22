@@ -187,7 +187,7 @@ jobs:
       working-directory: images
       env:
         TF_VAR_target_repository: localhost:5005/tf-apko
-        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:f014e0a4ff339169cb78d52abf355f03e05fb38bb0c5b26e2826baa090da5337
+        APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:669a8e904143a787f04141f1324f4a7ec4edacbab877685d1c72e48587e04181
         IMAGE_NAME: ${{ matrix.image }}
       run: |
         # Now change to our custom apko provider, note it may have a
