@@ -56,6 +56,7 @@ var imageConfigurationsSchema basetypes.ObjectType
 var strippedAttrPaths = [][]string{
 	{"certificates"},
 	{"contents", "runtime_keyring"},
+	{"format"},
 }
 
 func init() {
