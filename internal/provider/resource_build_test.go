@@ -362,6 +362,8 @@ contents:
     - openssl=3.0.7-r0
     - sysstat=12.6.2-r0
     - libcrypto3=3.0.8-r0
+    # libssl3 >= 3.6.4-r8 pulls in OpenSSL 4, which conflicts with openssl above.
+    - libssl3=3.6.4-r7
   EOF
 }
 
