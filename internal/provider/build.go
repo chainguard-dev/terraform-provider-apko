@@ -90,6 +90,7 @@ func fromImageData(_ context.Context, ic types.ImageConfiguration, popts Provide
 		build.WithExtraRepos(popts.repositories),
 		build.WithExtraBuildRepos(popts.buildRespositories),
 		build.WithSizeLimits(toSizeLimits(popts.sizeLimits)),
+		build.WithTransport(popts.transport),
 	}
 
 	o, ic2, err := build.NewOptions(opts...)
@@ -169,7 +170,8 @@ func doBuild(ctx context.Context, data BuildResourceModel, tempDir string) (v1.H
 		build.WithExtraKeys(data.popts.keyring),
 		build.WithExtraBuildRepos(data.popts.buildRespositories),
 		build.WithExtraRepos(data.popts.repositories),
-		build.WithSizeLimits(toSizeLimits(data.popts.sizeLimits)))
+		build.WithSizeLimits(toSizeLimits(data.popts.sizeLimits)),
+		build.WithTransport(data.popts.transport))
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
@@ -412,7 +414,8 @@ func doBuildFromConfigs(ctx context.Context, byArch map[string]types.ImageConfig
 				build.WithExtraKeys(popts.keyring),
 				build.WithExtraBuildRepos(popts.buildRespositories),
 				build.WithExtraRepos(popts.repositories),
-				build.WithSizeLimits(toSizeLimits(popts.sizeLimits)))
+				build.WithSizeLimits(toSizeLimits(popts.sizeLimits)),
+				build.WithTransport(popts.transport))
 			if err != nil {
 				return fmt.Errorf("failed to start apko build: %w", err)
 			}
