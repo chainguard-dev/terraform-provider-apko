@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"maps"
+	"net/http"
 	"runtime/debug"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -62,6 +64,7 @@ type ProviderOpts struct {
 	sizeLimits                                                 *SizeLimitsConfig
 	cache                                                      *apk.Cache
 	ropts                                                      []remote.Option
+	transport                                                  http.RoundTripper
 	planOffline                                                bool
 }
 
@@ -207,6 +210,9 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		cache:              apk.NewCache(true),
 		planOffline:        data.PlanOffline != nil && *data.PlanOffline,
 		ropts:              ropts,
+		// Share one pool across all builds, otherwise apko creates a fresh
+		// transport per build and redials every host each time.
+		transport: cleanhttp.DefaultPooledTransport(),
 	}
 
 	// Make provider opts available to resources and data sources.
