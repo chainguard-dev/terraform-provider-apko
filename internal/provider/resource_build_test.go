@@ -364,6 +364,8 @@ contents:
     - libcrypto3=3.0.8-r0
     # libssl3 >= 3.6.4-r8 pulls in OpenSSL 4, which conflicts with openssl above.
     - libssl3=3.6.4-r7
+    # Current libcurl-openssl4 pulls in OpenSSL 4 through itself and its krb5/ldap deps.
+    - libcurl4=7.87.0-r0
   EOF
 }
 
