@@ -161,7 +161,7 @@ jobs:
         path: images
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-terraform@142d22e4cec7c824db396585b9bc86f76f7c1732 # v1.6.35
+    - uses: chainguard-dev/actions/setup-terraform@805da2efdffdc42b8afd8880e575a48b471ef544 # v1.6.37
       with:
         terraform-version-file: 'tf-apko/.terraform-version'
         terraform-wrapper: false
