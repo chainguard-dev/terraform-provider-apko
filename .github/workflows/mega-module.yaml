@@ -166,7 +166,7 @@ jobs:
         terraform-version-file: 'tf-apko/.terraform-version'
         terraform-wrapper: false
 
-    - uses: chainguard-dev/actions/setup-registry@805da2efdffdc42b8afd8880e575a48b471ef544 # v1.6.37
+    - uses: chainguard-dev/actions/setup-registry@ec1df73a5b59652ce6862329ecc9a29ddaef9f46 # v1.6.39
       with:
         port: 5005
         disk: true
