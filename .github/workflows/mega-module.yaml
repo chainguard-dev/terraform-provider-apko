@@ -164,10 +164,12 @@ jobs:
         path: images
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-terraform@e94104128fff55b3c5e1831a8bbbf198603156f9 # v1.7.1
+    # chainguard-images/images pins required_version = ">= 1.4, < 1.15", so
+    # don't follow tf-apko/.terraform-version here.
+    - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
       with:
-        terraform-version-file: 'tf-apko/.terraform-version'
-        terraform-wrapper: false
+        terraform_version: '1.14.*'
+        terraform_wrapper: false
 
     - uses: chainguard-dev/actions/setup-registry@e94104128fff55b3c5e1831a8bbbf198603156f9 # v1.7.1
       with:
