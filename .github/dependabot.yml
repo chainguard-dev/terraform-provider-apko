@@ -16,3 +16,6 @@ updates:
           - "github.com/hashicorp/*"
     cooldown:
       default-days: 7
+      exclude:
+        - "chainguard.dev/apko"
+        - "golang.org/x/*"
