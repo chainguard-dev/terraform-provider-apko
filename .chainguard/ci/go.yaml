@@ -1,0 +1,130 @@
+# Copyright 2026 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+# Build, lint, and the acceptance tests on each supported Terraform version.
+version: 1
+
+environment:
+  packages:
+    - go-1.27~1.27
+    - bash
+    - git
+  vars:
+    GOTOOLCHAIN: local
+    GOTMPDIR: /var/tmp
+
+checks:
+  build:
+    description: Builds the provider.
+    trigger: [presubmit, postsubmit]
+    timeout: 10m
+    network:
+      egress: &goproxy
+        - proxy.golang.org
+        - sum.golang.org
+        - storage.googleapis.com
+    cmd: [go, build, -v, .]
+
+  lint:
+    description: >-
+      golangci-lint over the module, then go generate (terraform fmt on the
+      examples and tfplugindocs), failing if it leaves the tree dirty.
+    environment:
+      packages:
+        - go-1.27~1.27
+        - bash
+        - git
+        - golangci-lint~2.15
+        - terraform-1.14~1.14
+      vars:
+        GOTOOLCHAIN: local
+        GOTMPDIR: /var/tmp
+        CHECKPOINT_DISABLE: "1"
+    trigger: [presubmit, postsubmit]
+    resources: medium
+    timeout: 15m
+    network:
+      egress: *goproxy
+    steps:
+      - name: golangci-lint
+        cmd: golangci-lint run
+      - name: generate
+        script: |
+          go generate ./...
+          git diff --compact-summary --exit-code
+
+  # Every terraform-1.x package installs /usr/bin/terraform, so each version
+  # is its own check with its own environment.
+  acceptance-1-14:
+    description: &description >-
+      Runs go test ./internal/provider/ with TF_ACC=1. The tests resolve and
+      fetch packages from packages.wolfi.dev.
+    environment:
+      packages:
+        - go-1.27~1.27
+        - bash
+        - git
+        - terraform-1.14~1.14
+      vars: &vars
+        GOTOOLCHAIN: local
+        GOTMPDIR: /var/tmp
+        CHECKPOINT_DISABLE: "1"
+        TF_ACC: "1"
+    trigger: [presubmit, postsubmit]
+    resources: medium
+    timeout: 15m
+    network:
+      egress: &egress
+        - proxy.golang.org
+        - sum.golang.org
+        - storage.googleapis.com
+        - packages.wolfi.dev
+    cmd: &test [go, test, -v, -cover, ./internal/provider/]
+
+  acceptance-1-15:
+    description: *description
+    environment:
+      packages:
+        - go-1.27~1.27
+        - bash
+        - git
+        - terraform-1.15~1.15
+      vars: *vars
+    trigger: [presubmit, postsubmit]
+    resources: medium
+    timeout: 15m
+    network:
+      egress: *egress
+    cmd: *test
+
+  acceptance-1-16:
+    description: *description
+    environment:
+      packages:
+        - go-1.27~1.27
+        - bash
+        - git
+        - terraform-1.16~1.16
+      vars: *vars
+    trigger: [presubmit, postsubmit]
+    resources: medium
+    timeout: 15m
+    network:
+      egress: *egress
+    cmd: *test
+
+  acceptance-1-17:
+    description: *description
+    environment:
+      packages:
+        - go-1.27~1.27
+        - bash
+        - git
+        - terraform-1.17~1.17
+      vars: *vars
+    trigger: [presubmit, postsubmit]
+    resources: medium
+    timeout: 15m
+    network:
+      egress: *egress
+    cmd: *test

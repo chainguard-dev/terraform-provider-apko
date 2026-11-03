@@ -1,0 +1,115 @@
+# Copyright 2026 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+# Builds every image in chainguard-images/images that has a locked_config.json,
+# first with the released provider and then with the one built from the tree.
+version: 1
+
+environment:
+  packages:
+    - go-1.27~1.27
+    - bash
+    - git
+    - cosign
+    - crane
+    - docker-cli
+    # chainguard-images/images requires < 1.15.
+    - terraform-1.14~1.14
+  services:
+    - docker
+    - uses: registry
+      with: {port: "5005"}
+  vars:
+    GOTOOLCHAIN: local
+    # /tmp is a RAM tmpfs capped at a quarter of memory. The image builds
+    # stage their layers in TMPDIR, so keep it on the scratch disk.
+    TMPDIR: /var/tmp
+    CHECKPOINT_DISABLE: "1"
+    TF_IN_AUTOMATION: "true"
+    TF_VAR_target_repository: localhost:5005/tf-apko
+    # The apko the reproducibility check rebuilds with. Keep it in step with
+    # the chainguard.dev/apko version in go.mod.
+    APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:a40d704f7539801051896d3a87f512ff94f50b5948cc29ec2e3a56510e33645e
+
+# One instance per image. pytorch and its reproducibility rebuilds overflow
+# medium's 40Gi of scratch disk, so it gets more.
+plans:
+  images:
+    environment:
+      packages: [bash, git, jq, sed]
+    network:
+      egress: [github.com]
+    cmd:
+      - bash
+      - -euo
+      - pipefail
+      - -c
+      - |
+        git clone -q --depth 1 --filter=blob:none --no-checkout \
+          https://github.com/chainguard-images/images /var/tmp/images
+        git -C /var/tmp/images ls-tree -r --name-only HEAD images/ \
+          | sed -n 's|^images/\([^/]*\)/locked_config\.json$|\1|p' \
+          | jq -R . | jq -s 'map({name: ., vars: {IMAGE: .}}
+              + if . == "pytorch" then {resources: "large-disk"} else {} end)' > "${CG_PLAN}"
+
+checks:
+  mega-module:
+    description: >-
+      Applies chainguard-images/images for one image twice: with the released
+      apko provider, then with the provider built from the tree through
+      dev_overrides. The second apply also checks the build reproduces with
+      APKO_IMAGE.
+    trigger: [presubmit, postsubmit]
+    resources: medium
+    timeout: 45m
+    foreach: plans.images
+    network:
+      egress:
+        - github.com
+        - proxy.golang.org
+        - sum.golang.org
+        - storage.googleapis.com
+        # Terraform providers: the registry, then HashiCorp's releases or the
+        # GitHub release assets of third-party providers.
+        - registry.terraform.io
+        - releases.hashicorp.com
+        - release-assets.githubusercontent.com
+        - objects.githubusercontent.com
+        # Packages and the images the tests run.
+        - apk.cgr.dev
+        - packages.cgr.dev
+        - packages.wolfi.dev
+        - cgr.dev
+        - 9236a389bd48b984df91adc1bc924620.r2.cloudflarestorage.com
+        - ghcr.io
+        - pkg-containers.githubusercontent.com
+        # The docker-in-docker daemon pulls through this mirror.
+        - mirror.gcr.io
+        # Fetched by the tests inside the images.
+        - raw.githubusercontent.com
+        - pypi.org
+        - files.pythonhosted.org
+        - spdx.org
+    shell: bash
+    script: |
+      set -euo pipefail
+      provider=$PWD
+      go build .
+
+      git clone -q --depth 1 https://github.com/chainguard-images/images /var/tmp/images
+      cd /var/tmp/images
+
+      terraform init -input=false
+      # Populates the registry with what the released provider builds, so the
+      # second apply starts from the same state as a real update.
+      terraform apply -input=false -auto-approve -parallelism=4 -var "image_name=${IMAGE}"
+
+      cat > /var/tmp/terraformrc <<EOF
+      provider_installation {
+        dev_overrides {
+          "chainguard-dev/apko" = "${provider}"
+        }
+      }
+      EOF
+      TF_CLI_CONFIG_FILE=/var/tmp/terraformrc \
+        terraform apply -input=false -auto-approve -parallelism=4 -var "image_name=${IMAGE}"
