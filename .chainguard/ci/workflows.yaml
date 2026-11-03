@@ -1,7 +1,7 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-# Lints the GitHub Actions workflows that remain (digestabot, release).
+# Lints the GitHub Actions workflow that remains (release).
 version: 1
 
 environment:

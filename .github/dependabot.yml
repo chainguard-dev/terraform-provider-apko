@@ -14,8 +14,10 @@ updates:
       terraform:
         patterns:
           - "github.com/hashicorp/*"
+    # The deps agent moves it together with APKO_IMAGE (.chainguard/deps.yaml).
+    ignore:
+      - dependency-name: "chainguard.dev/apko"
     cooldown:
       default-days: 7
       exclude:
-        - "chainguard.dev/apko"
         - "golang.org/x/*"
