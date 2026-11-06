@@ -29,7 +29,7 @@ environment:
     TF_VAR_target_repository: localhost:5005/tf-apko
     # The apko the reproducibility check rebuilds with. The deps agent
     # (.chainguard/deps.yaml) keeps it on chainguard.dev/apko's release.
-    APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:a51e74b0e76a45f5ebdc15d96acd4673f3c9bb3e5510c4aeb39c02b01a801be4
+    APKO_IMAGE: ghcr.io/wolfi-dev/apko:latest@sha256:8cb86ec406b376b13bbca9b5e2cd4cf77195862151d3a8a10fd14c928f1399e1
 
 # One instance per image. pytorch and its reproducibility rebuilds overflow
 # medium's 40Gi of scratch disk, so it gets more.
