@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	chainguard.dev/apko v1.4.15
 	github.com/chainguard-dev/clog v1.8.1
-	github.com/chainguard-dev/terraform-provider-oci v0.2.4
+	github.com/chainguard-dev/terraform-provider-oci v0.2.6
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.22.1
 	github.com/hashicorp/go-cleanhttp v0.5.2
@@ -155,7 +155,7 @@ require (
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp v0.0.0-20260727155853-b88d891fe743 // indirect
 	golang.org/x/mod v0.42.0 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
