@@ -8,12 +8,16 @@ import (
 	"sort"
 	"strings"
 
+	"chainguard.dev/apko/pkg/apk/apk"
+	"chainguard.dev/apko/pkg/build"
 	apkotypes "chainguard.dev/apko/pkg/build/types"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -51,7 +55,7 @@ func (d *TagsDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				AttributeTypes:      imageConfigurationSchema.AttrTypes,
 			},
 			"target_package": schema.StringAttribute{
-				MarkdownDescription: "The package name to extract tags for.",
+				MarkdownDescription: "The package name to extract tags for. This matches a package in the config with this exact name, then a package whose name starts with `<target_package>-` (e.g. `foo` matches `foo-1.23`), and finally a package that declares `<target_package>` in its APK `provides` metadata (e.g. `kubectl` provided by `kubernetes-1.28`).",
 				Required:            true,
 			},
 			"tags": schema.ListAttribute{
@@ -134,6 +138,19 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	if found == "" {
+		// Neither the exact name nor the prefix heuristic matched, so fall back
+		// on the "provides" metadata of the locked packages. This handles e.g.
+		// "kubectl" being provided by "kubernetes-1.28", or "foo-bar" being
+		// provided by "foo-fips-bar".
+		var diags diag.Diagnostics
+		found, diags = d.findProvider(ctx, ic, pkgs, data.TargetPackage.ValueString())
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
+	if found == "" {
 		resp.Diagnostics.AddError(fmt.Sprintf("Unable to find package: %s...", data.TargetPackage.ValueString()), fmt.Sprintf("...in package list:\n\t%s", strings.Join(ic.Contents.Packages, "\n\t")))
 		return
 	}
@@ -148,6 +165,74 @@ func (d *TagsDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// findProvider resolves the locked packages in the image configuration to
+// discover what each of them provides, since the locked package list itself
+// does not carry this information, and returns the name of the package that
+// provides target, or an empty string if no package does.
+func (d *TagsDataSource) findProvider(ctx context.Context, ic apkotypes.ImageConfiguration, pkgs map[string]string, target string) (string, diag.Diagnostics) {
+	_, ic2, err := fromImageData(ctx, ic, d.popts)
+	if err != nil {
+		return "", diag.Diagnostics{diag.NewErrorDiagnostic("Unable to parse apko config", err.Error())}
+	}
+
+	_, _, resolved, err := build.LockImageConfigurationWithPackages(ctx, *ic2,
+		build.WithCache("", d.popts.planOffline, d.popts.cache),
+		build.WithExtraKeys(d.popts.keyring),
+		build.WithExtraBuildRepos(d.popts.buildRespositories),
+		build.WithExtraRepos(d.popts.repositories),
+		build.WithSizeLimits(toSizeLimits(d.popts.sizeLimits)),
+		build.WithTransport(d.popts.transport))
+	if err != nil {
+		return "", diag.Diagnostics{diag.NewErrorDiagnostic(fmt.Sprintf("Unable to resolve packages providing %s", target), err.Error())}
+	}
+
+	found, err := providerOf(target, pkgs, resolved)
+	if err != nil {
+		return "", diag.Diagnostics{diag.NewErrorDiagnostic("Multiple packages match", err.Error())}
+	}
+	if found != "" {
+		tflog.Debug(ctx, fmt.Sprintf("package %s is provided by %s=%s", target, found, pkgs[found]))
+	}
+	return found, nil
+}
+
+// providerOf returns the name of the package in pkgs (a map from package name
+// to locked version) that declares target in its "provides" on any of the
+// resolved architectures. It returns an empty string if no package provides
+// target, and an error if multiple packages with different versions do.
+func providerOf(target string, pkgs map[string]string, resolved map[apkotypes.Architecture][]*apk.RepositoryPackage) (string, error) {
+	providers := sets.New[string]()
+	for _, rpkgs := range resolved {
+		for _, rpkg := range rpkgs {
+			// Only consider the packages (and versions) that were locked in
+			// the configuration we are extracting tags from.
+			if ver, ok := pkgs[rpkg.Name]; !ok || ver != rpkg.Version {
+				continue
+			}
+			for _, prov := range rpkg.Provides {
+				// Provides entries take the form "name" or "name=version".
+				name := prov
+				if idx := strings.IndexAny(prov, "=<>~"); idx >= 0 {
+					name = prov[:idx]
+				}
+				if name == target {
+					providers.Insert(rpkg.Name)
+					break
+				}
+			}
+		}
+	}
+
+	var found string
+	for _, pkg := range sets.List(providers) {
+		if found != "" && pkgs[found] != pkgs[pkg] {
+			return "", fmt.Errorf("multiple packages provide %s with different versions: %s (%s) and %s (%s)", target, found, pkgs[found], pkg, pkgs[pkg])
+		}
+		found = pkg
+	}
+	return found, nil
 }
 
 // Copied from https://github.com/chainguard-dev/apko/blob/894dcbee4f44709e5702be03d19a581aeadb5941/pkg/apk/apk.go#L197

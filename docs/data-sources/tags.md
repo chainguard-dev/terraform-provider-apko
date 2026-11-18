@@ -18,7 +18,7 @@ This reads an apko configuration file into a structured form.
 ### Required
 
 - `config` (Object) The parsed structure of the apko configuration. (see [below for nested schema](#nestedatt--config))
-- `target_package` (String) The package name to extract tags for.
+- `target_package` (String) The package name to extract tags for. This matches a package in the config with this exact name, then a package whose name starts with `<target_package>-` (e.g. `foo` matches `foo-1.23`), and finally a package that declares `<target_package>` in its APK `provides` metadata (e.g. `kubectl` provided by `kubernetes-1.28`).
 
 ### Read-Only
 
