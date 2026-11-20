@@ -54,8 +54,8 @@ github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UF
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/chainguard-dev/clog v1.8.1 h1:Lab3GEDsVm1J9XGlpWEBuzXX7eETRmd0vN5PYoNyT+Y=
 github.com/chainguard-dev/clog v1.8.1/go.mod h1:5MQOZi+Iu7fV7GcJG8ag8rCB5elEOpqRMKEASgnGVdo=
-github.com/chainguard-dev/terraform-provider-oci v0.2.6 h1:MGndmFfuHdb2uTlj3GZx2jaJiiBT6kIb1e6gZLCiGCQ=
-github.com/chainguard-dev/terraform-provider-oci v0.2.6/go.mod h1:EQm7eRZL7GHytU9RXK1iYSc1TRQsbozQZuMp66S6HNc=
+github.com/chainguard-dev/terraform-provider-oci v0.2.7 h1:g9ro1LpxMiR7fGx0GfngnTDj1VK44FR8SspyyTLv/0w=
+github.com/chainguard-dev/terraform-provider-oci v0.2.7/go.mod h1:EQm7eRZL7GHytU9RXK1iYSc1TRQsbozQZuMp66S6HNc=
 github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/cloudflare/circl v1.6.4 h1:pOXuDTCEYyzydgUpQ0CQz3LsinKjiSk6nNP5Lt5K64U=
