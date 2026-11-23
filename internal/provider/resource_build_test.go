@@ -227,7 +227,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:73a6e234794d5b365394d9a57b53700c06f2e0f9ca1fa52d95badceba35b063f").String()),
+					repo.Digest("sha256:b14ad80612a361e0e6967ea8bcd5071977eb6f8197e02fcf0937057a7286d48a").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -294,7 +294,7 @@ resource "apko_build" "foo" {
 				resource.TestCheckResourceAttr("apko_build.foo", "repo", repostr),
 				resource.TestCheckResourceAttr("apko_build.foo", "image_ref",
 					// With pinned packages we should always get this digest.
-					repo.Digest("sha256:73a6e234794d5b365394d9a57b53700c06f2e0f9ca1fa52d95badceba35b063f").String()),
+					repo.Digest("sha256:b14ad80612a361e0e6967ea8bcd5071977eb6f8197e02fcf0937057a7286d48a").String()),
 
 				// Check that the build's amd64 predicate exists, the digest
 				// matches, and the creation timestamp is what we expect.
@@ -440,7 +440,7 @@ func TestAccResourceApkoBuild_Layers(t *testing.T) {
 	repostr := repo.String()
 
 	// Need to update this if apko changes.
-	digest := repo.Digest("sha256:568f31a8bd75e5ebe188519bc99f820f992532af11e3a50638868e699b0dbf32")
+	digest := repo.Digest("sha256:d352fe838b00182eb1e725d3d041a3514fff33ba18f942661a257e5d9b135f0b")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() { testAccPreCheck(t) },
