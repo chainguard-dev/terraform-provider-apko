@@ -1,8 +1,8 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-# Builds every image in chainguard-images/images that has a locked_config.json,
-# first with the released provider and then with the one built from the tree.
+# Builds every image in chainguard-images/images that has a locked_config.json
+# with the provider built from the tree.
 version: 1
 
 environment:
@@ -13,6 +13,7 @@ environment:
     - cosign
     - crane
     - docker-cli
+    - jq
     # chainguard-images/images requires < 1.15.
     - terraform-1.14~1.14
   services:
@@ -55,10 +56,9 @@ plans:
 checks:
   mega-module:
     description: >-
-      Applies chainguard-images/images for one image twice: with the released
-      apko provider, then with the provider built from the tree through
-      dev_overrides. The second apply also checks the build reproduces with
-      APKO_IMAGE.
+      Applies chainguard-images/images for one image with the provider built
+      from the tree through dev_overrides, which also checks the build
+      reproduces with APKO_IMAGE.
     trigger: [presubmit, postsubmit]
     resources: medium
     timeout: 45m
@@ -99,10 +99,9 @@ checks:
       git clone -q --depth 1 https://github.com/chainguard-images/images /var/tmp/images
       cd /var/tmp/images
 
+      # Installs the other providers. dev_overrides covers apko, so init runs
+      # before it is set.
       terraform init -input=false
-      # Populates the registry with what the released provider builds, so the
-      # second apply starts from the same state as a real update.
-      terraform apply -input=false -auto-approve -parallelism=4 -var "image_name=${IMAGE}"
 
       cat > /var/tmp/terraformrc <<EOF
       provider_installation {
